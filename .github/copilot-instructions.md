@@ -1,26 +1,30 @@
-# Copilot Routing for Shared Claude Setup
+# Copilot Workspace Instructions
 
-This file is the Copilot-facing entry point for workspace instructions.
+Primary source: [CLAUDE.md](../CLAUDE.md)
 
-Primary instruction source: [CLAUDE.md](../CLAUDE.md)
+## Shared Snippets
+
+[Coding Standards](../.claude/prompt-snippets/coding-standards.md)
+[Token Efficiency](../.claude/prompt-snippets/token-efficiency.md)
+[SCC Profile](../.claude/prompt-snippets/scc-profile.md)
+[Agent Gates](../.claude/prompt-snippets/agent-gates.md)
 
 ## Scope
 
-- Treat `projects/` as the home for all project-specific work.
-- Keep workspace-wide rules in `CLAUDE.md` and `.github/`.
-- Keep project overrides inside `projects/<project>/.claude/`.
+- `projects/` is the home for all project work.
+- Workspace-wide rules live in `CLAUDE.md` and `.github/`.
+- Project overrides live in `projects/<project>/.claude/`.
 
 ## Operating Rules
 
-1. Follow the shared instruction layer before proposing edits.
+1. Follow shared instruction layer before proposing edits.
 2. Keep responses concise and actionable.
-3. Ask before changing global governance files or project scope.
-4. Use the approved shared tools: ccusage, rtk, caveman, planning-with-files.
+3. Ask before changing governance files (ARCHITECTURE.md, DECISIONS.md, CLAUDE.md).
+4. Approved tools: ccusage, rtk, caveman, planning-with-files (all projects); superpowers, graphify (EnzymeFinder only).
+5. Respect the handoff path: plan → implement → review → gate → commit.
 
 ## References
 
-- [CLAUDE.md](../CLAUDE.md)
 - [.github/AGENTS.md](../AGENTS.md)
-- [.github/TOKEN_EFFICIENCY.md](../TOKEN_EFFICIENCY.md)
 - [.github/SCC_PROFILE.md](../SCC_PROFILE.md)
-- [.github/instructions/PROJECT_SCOPING.md](PROJECT_SCOPING.md)
+- [.github/TOKEN_EFFICIENCY.md](../TOKEN_EFFICIENCY.md)
