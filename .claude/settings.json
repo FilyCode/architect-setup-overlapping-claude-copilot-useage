@@ -1,19 +1,9 @@
 {
-  "model": "claude-3-5-sonnet",
-  "temperature": 0.2,
-  "max_tokens": 8000,
-  "tools": {
-    "approved": ["ccusage", "rtk", "caveman", "planning-with-files"],
-    "project_specific": {
-      "<project>": ["superpowers", "graphify"]
-    }
+  "model": "claude-sonnet-4-6",
+  "permissions": {
+    "allow": [],
+    "ask": [],
+    "deny": []
   },
-  "token_limits": {
-    "warning_threshold": 0.8,
-    "error_threshold": 0.95
-  },
-  "memory": {
-    "session_dir": "/memories/session",
-    "project_base": "projects"
-  }
+  "env": {}
 }

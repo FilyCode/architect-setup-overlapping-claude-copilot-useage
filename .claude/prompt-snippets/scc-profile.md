@@ -17,6 +17,10 @@
 ## Monitoring
 - `qstat` → active jobs; `qacct` → post-run diagnostics (exit_status, maxvmem); `qgpus` → GPU inventory
 
+## Login Node Policy
+- Never run `pytest` or any process >~15s directly on the login node — the process reaper kills anything over ~30s CPU, silently, with no error output.
+- Route anything longer through `qsub`; track with `qstat -j <JOB_ID>`. Full pattern: `.claude/context/runbook.md`.
+
 ## Escalation Triggers
 - Repeated OOM or timeout despite profile-conform requests
 - Regular need for >28 cores or >512G memory

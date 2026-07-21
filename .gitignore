@@ -1,2 +1,3 @@
 # Local override — machine-specific, never commit
 AGENTS.override.md
+CLAUDE.local.md

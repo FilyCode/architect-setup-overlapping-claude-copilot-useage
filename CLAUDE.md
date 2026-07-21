@@ -44,6 +44,6 @@ Project-specific overrides live in `projects/<project>/.claude/CLAUDE.md`.
 
 ## Approved Tools
 
-Globally active for all projects: `ccusage`, `rtk`, `caveman`, `planning-with-files`
-Project-specific (EnzymeFinder only): `superpowers` (in `.claude/skills/`), `graphify`
-Excluded: `everything-claude-code`, `GSD`, `ruflo`, `claude-mem`
+Globally active for all projects: `ccusage`, `rtk`, `caveman`, `planning-with-files`, `superpowers` (global Claude Code plugin, scope: user), `frontend-design`, `mcp-builder`, `skill-creator`, `webapp-testing` (via `example-skills` plugin from the `anthropic-agent-skills` marketplace, scope: user)
+Project-specific (EnzymeFinder only): `graphify`
+Excluded: `everything-claude-code`, `GSD`, `ruflo`, `claude-mem`, `skill-finder` (no real skill by that name), `task-observer` (overlaps `memory-curator` agent), `impeccable` (defer until BileAcidDB web launch)
