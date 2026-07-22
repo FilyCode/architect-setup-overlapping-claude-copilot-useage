@@ -13,7 +13,7 @@ State the actual decision, the stakes, and known constraints in 2-4 sentences. T
 
 ## Step 2: Check the decision actually supports a council
 
-Identify 2-5 genuinely distinct angles this decision turns on (not generic categories — angles specific to this decision). If you can't find at least 2 distinct angles, stop here: say so, and answer the question directly instead of manufacturing personas to hit a roster size.
+Identify 2-5 genuinely distinct angles this decision turns on (not generic categories — angles specific to this decision). If you can't find at least 2 distinct angles, stop here: say so, and answer the question directly instead of manufacturing personas to hit a roster size. No file gets written to `docs/council/` in this case — the process ends with a direct chat answer only, since no real council process ran.
 
 ## Step 3: Generate the roster
 
@@ -41,5 +41,5 @@ The Chairman (not one of the debating personas) weighs every position plus the p
 ## Step 7: Write the output
 
 1. Create `docs/council/` in the active project if it doesn't exist.
-2. Write the full verdict (all of Steps 1-6, not just the Chairman's summary) to `docs/council/<topic-slug>-<date>.md` — slug the question to kebab-case, date as YYYY-MM-DD.
+2. Write the full verdict (all of Steps 1-6, not just the Chairman's summary) to `docs/council/<topic-slug>-<date>.md` — slug the question to kebab-case, date as YYYY-MM-DD. Keep the slug to ~6-8 words, capturing the subject, not the literal question.
 3. In chat, reply with **only**: the verdict headline, confidence level, 2-3 key bullets from the synthesis, and the file path. Do not repeat the full report in chat — the file already has it, and duplicating a long report in both places costs roughly double the tokens for identical content.
