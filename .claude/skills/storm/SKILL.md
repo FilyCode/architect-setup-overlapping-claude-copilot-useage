@@ -23,7 +23,7 @@ State the topic in one sentence. Roster is the fixed 6 below, plus an optional 7
 
 For each persona: run 2-3 web searches grounded in that persona's specific lens (not generic searches — phrase each query for that persona's angle, e.g. Skeptic searches for failure/misconception evidence, Economist searches for market/cost data). Produce, per persona:
 - **Core Lens:** that persona's specific interpretation of the topic.
-- **Critical Evidence:** the concrete data/examples backing this view (cite what the search actually returned, don't invent).
+- **Critical Evidence:** the concrete data/examples backing this view (cite what the search actually returned, don't invent). Before citing a source for a specific quote or claim, confirm the claim actually appears in that specific source — not just that the source is real and topically related; a true fact attributed to the wrong URL is still a citation error.
 - **Unique Insight:** a conclusion non-obvious from any other persona's angle.
 
 If a persona's searches turn up thin (obscure/sparse topic), say so for that persona rather than padding with weak or fabricated evidence — this gap becomes a Phase 2 blind spot instead.
