@@ -3,7 +3,14 @@
   "permissions": {
     "allow": [],
     "ask": [],
-    "deny": []
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*_rsa)",
+      "Read(**/*credentials*)",
+      "Read(**/secrets/**)"
+    ]
   },
   "env": {}
 }
