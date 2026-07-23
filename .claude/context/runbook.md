@@ -22,6 +22,8 @@ Track with `qstat -j <JOB_ID>`. Results land in `logs/pytest_qsub.$JOB_ID.out`.
 
 Each project that runs pytest on the SCC needs its own `scripts/scc-submissions/run_pytest_qsub.sh` — this runbook entry documents the pattern, not a shared script (job scripts are project-specific: paths, modules, conda envs differ).
 
+**Token-efficient defaults:** `run_pytest_qsub.sh` should invoke pytest with `--tb=short -q` — full verbose tracebacks and passing-test lines cost real context for no benefit; `rtk`'s generic Bash-output filter still runs on top but cutting the output at the source is cheaper than filtering it after. On repeat runs while fixing a failure, use `--last-failed` so the agent only reruns and re-reads what's still broken, not the whole green suite.
+
 ## Job lifecycle
 
 `User/Agent → script from template → qsub → SGE queue → qstat/qacct → output`
