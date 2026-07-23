@@ -40,6 +40,7 @@ The Chairman (not one of the debating personas) weighs every position plus the p
 
 ## Step 7: Write the output
 
-1. Create `docs/council/` in the active project if it doesn't exist.
-2. Write the full verdict (all of Steps 1-6, not just the Chairman's summary) to `docs/council/<topic-slug>-<date>.md` — slug the question to kebab-case, date as YYYY-MM-DD. Keep the slug to ~6-8 words, capturing the subject, not the literal question.
-3. In chat, reply with **only**: the verdict headline, confidence level, 2-3 key bullets from the synthesis, and the file path. Do not repeat the full report in chat — the file already has it, and duplicating a long report in both places costs roughly double the tokens for identical content.
+1. Resolve the active project: the project whose files you're currently working in for this task. If that's ambiguous (e.g. invoked from the bare workspace root with no specific project in play), use the project recorded as active in `PROJECT_STATE.md`; if neither resolves, use the workspace root.
+2. Create `docs/council/` in the active project if it doesn't exist.
+3. Write the full verdict (all of Steps 1-6, not just the Chairman's summary) to `docs/council/<topic-slug>-<date>.md` — slug the question to kebab-case, date as YYYY-MM-DD. Keep the slug to ~6-8 words, capturing the subject, not the literal question.
+4. In chat, reply with **only**: the verdict headline, confidence level, 2-3 key bullets from the synthesis, and the file path. Do not repeat the full report in chat — the file already has it, and duplicating a long report in both places costs roughly double the tokens for identical content.

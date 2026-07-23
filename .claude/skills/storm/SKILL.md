@@ -37,6 +37,7 @@ After all personas are done:
 
 ## Step 4: Write the output
 
-1. Create `docs/research/` in the active project if it doesn't exist.
-2. Write the full report (all personas' Phase 1 analysis + full Phase 2 synthesis) to `docs/research/<topic-slug>-<date>.md` — slug the topic to kebab-case, date as YYYY-MM-DD.
-3. In chat, reply with **only**: the topic, which personas were used (noting the 7th if present), a 3-line executive summary, and the file path. Do not repeat the full report in chat.
+1. Resolve the active project: the project whose files you're currently working in for this task. If that's ambiguous (e.g. invoked from the bare workspace root with no specific project in play), use the project recorded as active in `PROJECT_STATE.md`; if neither resolves, use the workspace root.
+2. Create `docs/research/` in the active project if it doesn't exist.
+3. Write the full report (all personas' Phase 1 analysis + full Phase 2 synthesis) to `docs/research/<topic-slug>-<date>.md` — slug the topic to kebab-case, date as YYYY-MM-DD.
+4. In chat, reply with **only**: the topic, which personas were used (noting the 7th if present), a 3-line executive summary, and the file path. Do not repeat the full report in chat — the file already has it, and duplicating a long report in both places costs roughly double the tokens for identical content.
