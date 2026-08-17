@@ -217,6 +217,63 @@ them here would churn the config repo. Still unversioned; revisit if that matter
 
 ---
 
+### [2026-08-17] [DECISION-016]: Remove the evidence-before-completion Stop hook (DECISION-013 superseded)
+
+**Change**: The prompt-based `Stop` hook added in DECISION-013 is removed from
+`~/.claude/settings.json`. `.claude/rules/verification.md` remains as the only mechanism —
+advisory, not enforced.
+
+**Rationale**: Every single run of the hook failed with "Hook evaluator API error ... model
+(haiku) ... may not exist or you may not have access to it" — 100% failure rate, all
+session, both with an explicit `"model": "haiku"` and with the field omitted (the omitted
+case still resolved to haiku internally, confirmed by the identical error text, so the
+default was already the cheap model — this was never a cost problem). The failure is in the
+hook evaluator's own access path, not a config choice; no `availableModels` restriction or
+`ANTHROPIC_DEFAULT_HAIKU_MODEL` override was found to explain it, and normal chat calls to
+haiku via `--model haiku` succeed. A `hook_non_blocking_error` never blocked a turn, but its
+stderr surfaced in every session — pure noise for zero enforcement, the opposite of the
+intended effect.
+
+**Impact**: Chat noise stops. The evidence-before-completion rule is advisory again, same as
+before DECISION-013. Revisit if the hook evaluator's haiku access is ever fixed upstream —
+the hook config itself was correct schema-wise and can be restored by re-adding the `Stop`
+block removed here.
+
+---
+
+### [2026-08-17] [DECISION-017]: Replace it with a deterministic, size-gated check
+
+**Change**: A command-type `Stop` hook replaces
+the removed prompt hook. No model call, so it cannot fail the way DECISION-016 describes.
+It reads the transcript's tail, measures the current turn (files touched, characters
+changed via Edit/Write/MultiEdit), and is a silent no-op below 4 files / ~4,000 changed
+characters. Above that threshold, it checks `last_assistant_message` against a completion-
+claim regex and an evidence-signal regex (test counts, exit codes, qacct/qstat, file:line
+refs, fenced code blocks); if it reads as a bare claim with no evidence signal nearby, it
+exits 2 and sends the turn back with what to point to. Any exception anywhere in the script
+exits 0 — a broken check must never become a new source of spurious blocking.
+
+The script lives in `workspace-config/hooks/large-change-check.py`, symlinked to
+`~/.claude/hooks/large-change-check.py` — same pattern as DECISION-015, so this piece of
+config is version-controlled too rather than repeating that gap for a new file.
+
+**Rationale**: The user asked for something cheap that only checks after large changes, not
+every small thing. Gating by size cannot be done in hook config — `Stop` supports neither a
+`matcher` nor an `if` field — so the gate lives inside the script itself, which is why it
+must be fast: measured at 42-52ms against real session transcripts, including a 3.9MB one,
+comparable to the rtk `PreToolUse` hook's own 55ms median. Validated offline against 5
+synthetic scenarios (small/no-claim, large/bare-claim, large/with-evidence, unreadable
+transcript, large/no-claim-language) before being wired into the live session.
+
+**Impact**: Small turns cost nothing — same as before DECISION-013 ever existed. Large turns
+get a real, working check, at the cost of one extra turn only when it actually fires.
+Traded semantic judgment (what the broken LLM evaluator would have done, had it worked) for
+keyword heuristics that cannot silently fail — matches recorded shapes in
+`.claude/rules/verification.md` only approximately, and can misfire on phrasing in both
+directions. Acceptable tradeoff per the user's explicit choice over the log-only alternative.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design

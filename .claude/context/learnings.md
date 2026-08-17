@@ -50,17 +50,30 @@ incapable of firing, a checkpoint silently dropping a field, a cached column rep
 **Why:** every one was already covered by a written rule. CLAUDE.md and rules are context, not
 enforcement — the docs say so explicitly.
 
-**Fix:** anything that must hold every time goes in a hook. A prompt-based `Stop` hook now
-checks completion claims for supporting evidence (DECISION-013). Keep prose for judgment
-calls; use hooks for invariants.
+**Fix:** anything that must hold every time goes in a hook — but the guarantee depends on
+what kind. A **command hook** (script/shell) is deterministic: the rtk `PreToolUse` hook has
+run 2,100+ times this workspace's history with zero failures. A **prompt hook** adds a model
+call in the loop, and that call can fail independently of the logic being sound: the
+completion-evidence `Stop` hook added under DECISION-013 had a 100% API-error rate against
+the evaluator's default fast model (haiku access failing in that specific code path, not a
+config mistake — confirmed by testing both an explicit and an omitted `model` field) and was
+removed the same day (DECISION-016). It produced zero real evaluations, only visible error
+noise every turn — worse than the prose it replaced, which at least sometimes worked.
+
+**Revised rule:** prefer a command hook for invariants when the check can be scripted at
+all. Reach for a prompt hook only when the judgment genuinely needs a model, and verify it
+is actually succeeding (check `hookEvent` + `type` in transcript attachments) before trusting
+it as enforcement — don't assume a hook "holds" just because it's configured.
 
 ## Audit trail
 
 - **2026-07-23:** full workspace audit. Plugin versions checked against primary manifests (not changelog summaries): superpowers 6.1.1 = latest, example-skills and research-skills current. Found and fixed `planning-with-files` stale hand-copy (see entry above). No skill has sat provably unused 30+ days yet (too early to tell — this is the first audit). Added `permissions.deny` hardening to shared `settings.json`, wired `continuous-improvement.md` into `CLAUDE.md`, wired `.claude/settings.json` pointer files into 4 previously-unwired projects. Evaluated `research-ops-skills` and `K-Dense-AI/scientific-agent-skills` — both real, both skipped, no concrete active need yet.
 - **2026-08-17:** full instruction-stack audit against current Anthropic docs plus 24 external
   repos. Adopted path-scoped `.claude/rules/` (DECISION-010); retired the 13-agent topology for
-  3 real subagents (011); retired the Copilot layer (012); added the evidence Stop hook (013);
-  recorded that the GitHub issue board is no longer authoritative (014). Memory consolidated
+  3 real subagents (011); retired the Copilot layer (012); added the evidence Stop hook (013,
+  removed same day as 016 — the hook evaluator's haiku access failed 100% of the time, pure
+  noise for zero enforcement); recorded that the GitHub issue board is no longer authoritative
+  (014). Memory consolidated
   35 files -> 18, with closed investigations moved into `projects/<p>/docs/history/`. Freed
   ~1.2 GB in home (superseded Claude versions) and 472 MB in project space (dead binaries).
   Installed `pyright-lsp` and `diagram-design`. Skipped ECC, SuperClaude, BMAD, Archon,
