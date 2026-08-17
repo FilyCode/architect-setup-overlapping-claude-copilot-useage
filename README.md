@@ -11,6 +11,10 @@ Published repo: [FilyCode/architect-setup-overlapping-claude-copilot-useage](htt
 
 ## What belongs here
 
+- `workspace-config/` — the workspace root's Claude Code config (`CLAUDE.md`,
+  `ARCHITECTURE.md`, `DECISIONS.md`, `rules/`, `agents/`). The workspace root is not a git
+  repo, so these live here and are symlinked back. This is the version-controlled copy.
+
 - `.claude/skills/` — `council`, `storm`, `ccusage`, `rtk`, `caveman`, `workspace-audit`.
   All explicit-invocation only, so they cost no context until typed.
 - `.claude/context/` — `runbook.md`, `domain-glossary.md`, `learnings.md`.
