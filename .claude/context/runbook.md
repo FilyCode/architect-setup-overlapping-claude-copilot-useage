@@ -1,6 +1,6 @@
 # Runbook
 
-Operational procedures proven across projects. Detail lives here; `.claude/prompt-snippets/scc-profile.md` links to this file rather than embedding it, per token-efficiency context-hygiene rule.
+Operational procedures proven across projects. Detail lives here; `.claude/rules/scc.md` links to this file rather than embedding it, to keep always-on context small.
 
 ## Running tests on the SCC (never on the login node)
 

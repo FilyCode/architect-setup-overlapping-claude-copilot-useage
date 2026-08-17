@@ -1,56 +1,28 @@
-# Workspace Instructions
+# Shared config repo
 
-**Owner**: Philipp Trollmann
-**Scope**: Workspace-wide; applies to all projects under `projects/`.
-Project-specific overrides live in `projects/<project>/.claude/CLAUDE.md`.
+Owner: Philipp Trollmann. Originally the instruction layer shared between Claude Code and
+GitHub Copilot. **Copilot was retired 2026-08-17** (usage limits); the Copilot mirror is at
+`_archive/2026-08-17-copilot-layer/` and is fully recoverable from git.
 
----
+Workspace-wide rules for Claude Code are **not** here — they live at the workspace root in
+`/projectnb/liu-scc/philipp/CLAUDE.md` and `.claude/rules/`, which load automatically.
+This repo now carries only what has no workspace-root equivalent.
 
-## Coding Standards
+## Layout
 
-@.claude/prompt-snippets/coding-standards.md
-[Coding Standards](./.claude/prompt-snippets/coding-standards.md)
+- `.claude/skills/` — `council`, `storm`, `ccusage`, `rtk`, `caveman`, `workspace-audit`.
+  All explicit-invocation only.
+- `.claude/context/` — `runbook.md`, `domain-glossary.md`, `learnings.md` (cross-project
+  patterns; promotion bar is 3+ recurrences across 2+ projects), `parked-extensions.md`
+  (plugins disabled but still on disk, with re-enable commands — check it before installing
+  anything new).
+- `docs/superpowers/` — specs and plans from skill-building work.
 
----
+## Conventions
 
-## Token Efficiency and Model Routing
-
-@.claude/prompt-snippets/token-efficiency.md
-[Token Efficiency](./.claude/prompt-snippets/token-efficiency.md)
-
----
-
-## BU SCC Profile
-
-@.claude/prompt-snippets/scc-profile.md
-[SCC Profile](./.claude/prompt-snippets/scc-profile.md)
-
----
-
-## Agent Gates
-
-@.claude/prompt-snippets/agent-gates.md
-[Agent Gates](./.claude/prompt-snippets/agent-gates.md)
-
----
-
-## Continuous Improvement
-
-@.claude/prompt-snippets/continuous-improvement.md
-[Continuous Improvement](./.claude/prompt-snippets/continuous-improvement.md)
-
----
-
-## Memory Layout
-
-- Session memory: `/memories/session/` (cleared after curation)
-- Project memory: `projects/<project>/phases/` (persistent)
-- Workspace memory: `.github/` and root docs (persistent)
-
----
-
-## Approved Tools
-
-Globally active for all projects: `ccusage`, `rtk`, `caveman`, `council`, `storm` (custom-built, this repo's `.claude/skills/`), `superpowers` (global Claude Code plugin, scope: user), `planning-with-files` (global Claude Code plugin, scope: user, via `OthmanAdi/planning-with-files` marketplace — v3.8.1, migrated 2026-07-23 off a hand-copied v2.37.0 file that had drifted 70+ releases stale), `frontend-design`, `mcp-builder`, `skill-creator`, `webapp-testing` (via `example-skills` plugin from the `anthropic-agent-skills` marketplace, scope: user), `research-skills` (dossier/grants/litreview/patent, via `claude-code-skills` marketplace, scope: user)
-Project-specific (EnzymeFinder only): `graphify`
-Excluded: `everything-claude-code`, `GSD`, `ruflo`, `claude-mem`, `skill-finder` (no real skill by that name), `task-observer` (overlaps `memory-curator` agent), `impeccable` (defer until BileAcidDB web launch), `research-ops-skills` and `K-Dense-AI/scientific-agent-skills` (both real and evaluated 2026-07-23; skipped — no concrete active need, and stacking more onto an already-large skill listing works against the token-efficiency goal, not for it)
+- Rules belong in the workspace root `.claude/rules/`, not here. This repo is for skills,
+  context and history.
+- Do not hand-copy a skill that has an upstream marketplace — install the plugin instead.
+  This has gone wrong three times; see `.claude/context/learnings.md`.
+- The repo name still mentions Copilot. Renaming means renaming the GitHub remote too —
+  left alone deliberately rather than done silently.

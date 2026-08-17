@@ -1,6 +1,9 @@
 ---
 name: storm
 description: Deep multi-perspective research — 6 fixed personas (Practitioner, Academic, Skeptic, Economist, Historian, Fund Giver/Politician) each run grounded web searches and produce Core Lens/Critical Evidence/Unique Insight, then get synthesized into contradictions/consensus/blind-spots. Use only on explicit invocation ("do a STORM pass on X", "run STORM research on this topic") for topics that need citation-grounded, many-angle research — not for quick lookups. Full report goes to docs/research/<topic-slug>-<date>.md in the active project; chat gets a short summary only.
+disable-model-invocation: true
+context: fork
+background: false
 ---
 
 # STORM

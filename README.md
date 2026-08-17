@@ -1,28 +1,31 @@
-# Shared Claude/Copilot Config
+# Shared Claude config
 
-This repository contains the workspace-shared instruction layer for Claude Code and GitHub Copilot.
+Skills, cross-project context, and design history for the liu-scc workspace.
 
 Published repo: [FilyCode/architect-setup-overlapping-claude-copilot-useage](https://github.com/FilyCode/architect-setup-overlapping-claude-copilot-useage)
 
-## Use
-
-Sync this repository into the workspace with `git subtree` and keep the root `CLAUDE.md` aligned with it.
+> The name is historical. This was a shared Claude Code + GitHub Copilot instruction layer
+> until **2026-08-17**, when Copilot was retired after its usage limits were cut. The Copilot
+> half is archived at `_archive/2026-08-17-copilot-layer/` in the workspace and recoverable
+> from git history. Renaming the repo means renaming the GitHub remote, so it was left alone.
 
 ## What belongs here
 
-- `CLAUDE.md` for shared routing and workspace-wide rules
-- `.github/copilot-instructions.md` for Copilot entry points
-- `.github/instructions/` for compact shared rules
-- `.claude/settings.json` for shared Claude CLI settings
+- `.claude/skills/` — `council`, `storm`, `ccusage`, `rtk`, `caveman`, `workspace-audit`.
+  All explicit-invocation only, so they cost no context until typed.
+- `.claude/context/` — `runbook.md`, `domain-glossary.md`, `learnings.md`.
+- `docs/superpowers/` — specs and plans from skill-building work.
 
 ## What does not belong here
 
-- Project-specific architecture or sprint state
-- One-off work notes that should live in the active project docs
-- EnzymeFinder-only rules unless they are explicitly marked as project overrides
+- **Workspace rules.** Those live at the workspace root in `CLAUDE.md` and `.claude/rules/`,
+  which Claude Code loads automatically. Rules placed here do not load.
+- Project-specific architecture or sprint state.
+- One-off work notes — those go in the active project's docs.
 
-## Project Layout
+## Layout it assumes
 
-- Workspace-wide rules stay in `CLAUDE.md` and `.github/`.
-- Project-specific rules stay in `projects/<project>/.claude/`.
-- Active project state stays under `projects/<project>/docs/` and `projects/<project>/phases/`.
+- Workspace-wide rules: `/projectnb/liu-scc/philipp/CLAUDE.md` and `.claude/rules/`
+- Workspace subagents: `.claude/agents/` (`critic-reviewer`, `alignment-officer`, `scc-monitor`)
+- Project rules: `projects/<project>/.claude/`
+- Project state: `projects/<project>/phases/` and `projects/<project>/docs/`

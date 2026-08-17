@@ -1,6 +1,9 @@
 ---
 name: council
 description: Multi-persona decision stress-test — Critic + Chairman (fixed) plus 2-5 dynamic personas debate a decision, peer-review each other anonymously, and get synthesized into a verdict. Use only on explicit invocation ("run this through council", "get a council verdict on X") for genuinely multi-angle decisions — not for routine questions. Full report goes to docs/council/<topic-slug>-<date>.md in the active project; chat gets a short summary only.
+disable-model-invocation: true
+context: fork
+background: false
 ---
 
 # Council
