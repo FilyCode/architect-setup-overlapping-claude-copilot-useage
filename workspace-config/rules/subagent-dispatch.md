@@ -9,6 +9,25 @@ efficiency/simplicity), and, when a plan or phase doc exists to check against,
 drift). Run these in parallel — none depends on another's output. This does not replace
 superpowers' `requesting-code-review` for smaller, ad hoc checks; that stays available.
 
+## Release/publication gate: security-specialist
+
+Before a project goes to production or publication (a public code release, a public
+API/DB launch, a paper submission with a code/data release) — not every wave, and not
+routine development: dispatch `security-specialist` for a full checklist pass, tailored
+to what the target actually is (see the agent's own Step 1 surface detection). As of
+2026-08-18 no project has a built web/API/DB-with-users surface yet (EnzymeFinder's
+P14a and Bile_acid_database's public launch are both future), so most runs today
+correctly terminate at "not applicable" — that's expected, re-run when a web tier
+actually lands. The universal tier (secrets hygiene, git-history secret scan,
+dependency scanning, prompt-injection/agent-trust-boundary, supply-chain/CI pinning,
+key rotation, data-licence compliance) applies to every project regardless of surface,
+including the pure-batch ones — "publication" for those means a paper + public code
+release, and secrets/licence checks still apply even with no web surface at all.
+Complementary to the native `/security-review` skill (diff-scoped, not a full-project
+gate) and to whatever CI a given project already runs (check first — EnzymeFinder
+already has `bandit`, `detect-private-key`, `gitleaks`, and CodeQL; don't have the
+agent re-derive by hand what CI already automates on every push).
+
 ## Brainstorming: research-scout
 
 For a non-trivial design decision during `brainstorming`, dispatch `research-scout`
@@ -47,4 +66,5 @@ time, same limitation as any other prose rule in this workspace.
 ## Existing agent tiers (for reference)
 
 `critic-reviewer` opus, `alignment-officer` sonnet, `docs-sync` sonnet, `scc-monitor`
-haiku, `research-scout` haiku/low.
+haiku, `research-scout` haiku/low, `security-specialist` opus (release/publication gate
+only, not wave-end).

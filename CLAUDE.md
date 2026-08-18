@@ -16,8 +16,9 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
 
 - `workspace-config/` — the workspace root's config, symlinked back to `/projectnb/liu-scc/philipp/`:
   - `CLAUDE.md`, `ARCHITECTURE.md`, `DECISIONS.md` → workspace root
-  - `rules/*.md` → `.claude/rules/` (2 always-on, 6 path-scoped)
-  - `agents/*.md` → `.claude/agents/` (`critic-reviewer`, `alignment-officer`, `scc-monitor`)
+  - `rules/*.md` → `.claude/rules/` (3 always-on, 6 path-scoped)
+  - `agents/*.md` → `.claude/agents/` (`critic-reviewer`, `alignment-officer`, `scc-monitor`,
+    `docs-sync`, `research-scout`, `security-specialist`)
 - `.claude/skills/` — `council`, `storm`, `ccusage`, `rtk`, `caveman`, `workspace-audit`.
   All explicit-invocation only except `caveman`; also symlinked into the workspace root's
   `.claude/skills/` so they load project-wide rather than only inside this repo.

@@ -78,7 +78,9 @@ patterns), `alignment-officer` (scope conformance, `memory: project`), `scc-moni
 diagnosis, `memory: project`), `docs-sync` (governance-doc drift after a wave, read-only
 by design, deliberately **no** `memory` field — see the memory/Write-Edit gotcha below),
 `research-scout` (cheap single-agent best-practices check during brainstorming,
-haiku/low-effort). A previous 13-agent
+haiku/low-effort), `security-specialist` (release/publication-gate security checklist,
+opus, surface-aware — most 2026 runs correctly terminate at "not applicable" since no
+project has a built web surface yet). A previous 13-agent
 topology was archived 2026-08-17 — it was never executable in Claude Code and superpowers
 covers most of what it described. Dispatch rules (when to run which, model/effort
 tiering for any subagent) live in `.claude/rules/subagent-dispatch.md`.

@@ -434,6 +434,88 @@ repos exist."
 
 ---
 
+### [2026-08-18] [DECISION-022]: Security baseline — added `security-specialist`, closed an active credential-read gap, fixed EnzymeFinder CI
+
+**Problem**: User asked for an end-of-project (pre-production/publication) security
+checklist plus lighter ongoing dev-time enforcement, and explicitly asked for a
+multi-agent brainstorm (best-practice research + security specialist + senior-dev
+critique) to find gaps in a draft. Initial scouting wrongly concluded EnzymeFinder has a
+live FastAPI server; a `critic-reviewer` validation pass (dispatched via `Workflow`,
+`agentType: critic-reviewer`) caught this and two other wrong premises before anything
+was finalized — full verdict cited below, not summarized from memory.
+
+**Corrected premises** (re-derived from live source, not assumed):
+- No project has a built web/API/DB-with-users surface. EnzymeFinder's P14a REST API and
+  Bile_acid_database's public launch are both planned, not built — `fastapi` isn't even a
+  dependency anywhere. Confirmed by the user separately: EnzymeFinder → software app now,
+  web use later; Bile_acid_database → public webservice later; the other 6 projects are
+  publication pipelines only, no web surface planned, but still must never carry secrets.
+- EnzymeFinder already runs real security automation this design didn't credit:
+  `.pre-commit-config.yaml` (bandit, detect-private-key), `.github/workflows/secret-scan.yml`
+  (gitleaks), `.github/workflows/codeql.yml` (CodeQL weekly), and a bandit CI job.
+- **A currently-active gap, not a future one**: the `permissions.deny` credential-read
+  block (blocking `.env`/`*.pem`/`*credentials*`/`secrets/**`) existed only in the shared
+  config repo's own `.claude/settings.json` — which only applies when a session's trust
+  root IS that repo. Verified Claude Code does not cascade settings across directory
+  levels (fetched from `code.claude.com/docs/en/settings`, not assumed). This session's
+  actual trust root (the workspace root) and all 8 project repos had **no deny block at
+  all** — confirmed via grep across every `.claude/settings.json` in the workspace. Fixed
+  immediately: added the same deny block to the workspace root's `.claude/settings.json`
+  and to all 8 project repos' `.claude/settings.json` (backups kept only for the 3 repos
+  where the file isn't git-tracked: `K4-K26`, `MqnE_cofactor_finding`, `TBI`).
+- **`settings.local.json` pre-approved `Bash(git push *)` with no permission prompt**,
+  directly contradicting `CLAUDE.md`'s own "pushing needs explicit approval" rule — every
+  push-confirmation in this workspace's history was this session's own conversational
+  discipline, not anything technically enforced. User chose to remove it (asked, not
+  assumed) — `git push` now goes through a real prompt.
+- The one incident that actually happened (`.ncbi/api_key`) predates `secret-scan.yml`
+  entirely and would not have been caught by it — GitHub's `gitleaks-action` scans a
+  push's new commits, not full history. The manual hash-comparison method used at the
+  time remains the only thing that actually caught it.
+
+**Change**: Added `security-specialist` (opus, `maxTurns: 25`, no `memory`, report-only)
+as a release/publication-gate agent — deliberately not wave-end, not an always-on rule,
+and not a separate gate skill (`critic-reviewer` argued convincingly for cutting both of
+those: their entire function is 3-4 sentences, already covered by `subagent-dispatch.md`
+and by `critic-reviewer`'s own item 6). Registered it there instead, alongside a
+corrected, context-specific checklist: the original 19-item consumer-SaaS list's biggest
+gap was **prompt injection / agent trust boundary** — this workspace runs an LLM with
+broad Bash/Python access ingesting untrusted `WebFetch`/NCBI/KEGG content, which the
+original checklist didn't address at all despite covering session cookies. Added:
+supply-chain/CI pinning, key rotation runbook, data-licence compliance (real blocker for
+Bile_acid_database's HMDB-derived data), denial-of-wallet framing (not just login
+rate-limiting — the realistic abuse target for a public scientific API is expensive
+queries), SSRF, PHI handling, backup/integrity. De-prioritized (not deleted): password
+KDF, session cookies, bot-protection-on-signup, RLS — a public **read-only** API/DB
+plausibly has no accounts at all; the agent's Step 1 checks this before applying them.
+
+**Fixed in EnzymeFinder's CI** (approved explicitly, since CLAUDE.md gates touching CI):
+wired `pip-audit` into `ci.yml`'s security job — it was already declared in
+`pyproject.toml:71`'s `[dev]` extras and never invoked anywhere; SHA-pinned
+`actions/checkout`, `actions/setup-python`, `github/codeql-action/{init,analyze}`,
+`actions/upload-artifact`, and `gitleaks/gitleaks-action` in `codeql.yml`/`secret-scan.yml`
+(resolved via `gh api` against the real tags, not guessed — `codeql-action@v3` and
+`gitleaks-action@v2` are both annotated tags, dereferenced to their actual commit SHAs);
+added top-level `permissions: contents: read` to `ci.yml` and `secret-scan.yml`
+(`codeql.yml` already had job-scoped permissions).
+
+**Not done**: `research-scout`'s recommendation of Gitleaks+TruffleHog as a dual
+pre-commit/CI gate was not adopted wholesale — gitleaks is already in place; TruffleHog
+and a pre-push full-history scan (to actually catch what CI's incremental scan can't)
+remain open for a future session. `osv-scanner` for future non-Python dependencies
+(R/Bioconductor) not evaluated. `CLAUDE.md`/`ARCHITECTURE.md`'s agent list and rule count
+were also stale (listed 3 of 6 agents, "2 always-on" vs actual 3) — fixed as part of this
+round since `critic-reviewer` flagged them in the same pass.
+
+**Impact**: One active security gap (workspace-wide credential-read protection) closed
+immediately rather than left as a future design item — found only because a validation
+pass re-derived the claim instead of trusting the plan's own narrative, which is exactly
+the failure shape `verification.md` exists to catch. `security-specialist` is real but
+intentionally low-cost today (most runs terminate at "not applicable" until a web
+surface exists) and does real work once P14a or Bile_acid_database's launch lands.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design
