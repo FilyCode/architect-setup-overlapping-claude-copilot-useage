@@ -1,8 +1,8 @@
 ---
 name: workspace-audit
-description: Periodic health check of the Claude Code / Copilot setup — instruction drift, unused skills, stale plugin versions, home-quota creep, and promotion of recurring patterns into learnings.md. Run after finishing a development branch, after a broad maintenance pass, or roughly monthly.
+description: Periodic health check of the Claude Code / Copilot setup — instruction drift, unused skills, stale plugin versions, home-quota creep, promotion of recurring patterns into learnings.md, and an optional external scan for new Anthropic docs, model changes, and new repos/plugins worth evaluating. Run after finishing a development branch, after a broad maintenance pass, or roughly monthly.
 disable-model-invocation: true
-allowed-tools: Read Grep Glob Bash(du *) Bash(ls *) Bash(claude plugin *) Bash(curl -s https://api.github.com/*)
+allowed-tools: Read Grep Glob WebFetch WebSearch Bash(du *) Bash(ls *) Bash(claude plugin *) Bash(curl -s https://api.github.com/*)
 ---
 
 # Workspace audit
@@ -70,5 +70,34 @@ command entries that reappear after every plugin update. Re-run:
 `.claude/context/learnings.md`: the same pattern must recur 3+ times across 2+ distinct
 tasks or projects. Promote what clears it; leave the rest in session memory.
 
-**6. Log it.** Append the audit date and outcome to the bottom of `learnings.md`, even when
+**6. External scan (optional, run at most monthly, separate from steps 1-5).** Steps 1-5
+only look inward. This step looks outward: has anything changed upstream that this
+workspace should adopt or react to?
+
+- Fetch `https://code.claude.com/docs/en/overview`, `.../whats-new`, and `.../sub-agents` —
+  diff against what this workspace currently assumes (frontmatter fields it doesn't use yet,
+  new hook events, changed defaults). Cross-check any claim from a third-party repo against
+  these primary docs before acting on it — a claimed feature that turns out to be the repo's
+  own invention has cost real time here before.
+- Spot-check for model changes (`claude-api` skill's reference data, or the models page) —
+  new model IDs, deprecated aliases, changed default effort levels.
+- `WebSearch` for new Claude Code plugins/skills/repos released since the last run (search
+  something like `claude code skill plugin <month> <year>` or check
+  `github.com/hesreallyhim/awesome-claude-code` for recent additions). For any new tool
+  under real consideration, also check its maintainer/trust status independently (repo
+  archived? maintainer active? any rug-pull/security incident?) — do not evaluate on
+  technical fit alone. A 2026-08-18 case (GSD/`gsd-build`) found a real creator rug-pull
+  and repo archival that a feature-only evaluation would have missed entirely; see
+  `.claude/context/repo-research-2026-08-18.md`. Judge fit against
+  this workspace's actual shape — most will be redundant with something already adopted;
+  see `.claude/context/repo-research-*.md` for the standard of evaluation expected (concept
+  broken out per-item, verdict against what's already here, not a README summary).
+- Save findings to a new `.claude/context/repo-research-<date>.md` (one file per run, do not
+  overwrite prior ones — they're a dated record) following the format of the existing files
+  in that directory. Only implement something from this step immediately if it's a strict,
+  low-risk improvement with no design tradeoff (a stale reference, a confirmed-real feature
+  with an obvious fit); anything bigger goes in the file for a deliberate decision later,
+  same as steps 1-5 feed `learnings.md` rather than auto-applying.
+
+**7. Log it.** Append the audit date and outcome to the bottom of `learnings.md`, even when
 nothing changed. An audit with no trail did not happen.

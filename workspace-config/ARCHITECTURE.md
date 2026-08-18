@@ -9,7 +9,8 @@
 ## Layers
 
 1. **Workspace governance** — root docs (`CLAUDE.md`, this file, `DECISIONS.md`,
-   `PROJECT_STATE.md`, `ROADMAP.md`) and `.claude/rules/`
+   `PROJECT_STATE.md`) and `.claude/rules/` (`ROADMAP.md` was planned in DECISION-002 but
+   never created — not tracked here until it exists)
 2. **Project execution** — code and phase-based docs under `projects/<project>/`
 3. **Session memory** — auto memory at `~/.claude/projects/<project>/memory/`
 
@@ -62,8 +63,8 @@ Loaded automatically every session:
 |---|---|---|
 | Personal preferences | `~/.claude/CLAUDE.md` | always |
 | Workspace instructions | `CLAUDE.md` | always |
-| Always-on rules | `.claude/rules/scc.md`, `verification.md` | always |
-| Path-scoped rules | `.claude/rules/{python,shell,r,enzymefinder,codebase-navigation}.md` | when a matching file is touched |
+| Always-on rules | `.claude/rules/scc.md`, `verification.md`, `subagent-dispatch.md` | always |
+| Path-scoped rules | `.claude/rules/{python,shell,r,enzymefinder,codebase-navigation,bileaciddb}.md` | when a matching file is touched |
 | Auto memory index | `~/.claude/projects/<project>/memory/MEMORY.md` | always (first 200 lines) |
 | Memory topic files | same directory | on demand |
 | Project instructions | `projects/<project>/.claude/CLAUDE.md` | when working in that project |
@@ -72,9 +73,15 @@ Not always-on: skills load their descriptions only; subagents run in isolated co
 hooks run outside the conversation.
 
 **Subagents** (`.claude/agents/`, project scope): `critic-reviewer` (senior review,
-re-derives correctness from source), `alignment-officer` (scope conformance), `scc-monitor`
-(SGE diagnosis). A previous 13-agent topology was archived 2026-08-17 — it was never
-executable in Claude Code and superpowers covers most of what it described.
+re-derives correctness from source, no `memory` — stays fresh rather than trusting cached
+patterns), `alignment-officer` (scope conformance, `memory: project`), `scc-monitor` (SGE
+diagnosis, `memory: project`), `docs-sync` (governance-doc drift after a wave, read-only
+by design, deliberately **no** `memory` field — see the memory/Write-Edit gotcha below),
+`research-scout` (cheap single-agent best-practices check during brainstorming,
+haiku/low-effort). A previous 13-agent
+topology was archived 2026-08-17 — it was never executable in Claude Code and superpowers
+covers most of what it described. Dispatch rules (when to run which, model/effort
+tiering for any subagent) live in `.claude/rules/subagent-dispatch.md`.
 
 **Enforcement** vs **guidance**: rules and `CLAUDE.md` shape behaviour but are advisory.
 Anything that must hold every time is a hook in `~/.claude/settings.json`.
@@ -121,5 +128,4 @@ cost. See [.claude/rules/codebase-navigation.md](.claude/rules/codebase-navigati
 
 - [.claude/rules/](.claude/rules/) — scheduler, storage, verification, language and project rules
 - [DECISIONS.md](DECISIONS.md) — workspace-wide decision log
-- [ROADMAP.md](ROADMAP.md) — active priorities
 - [PROJECT_STATE.md](PROJECT_STATE.md) — current state

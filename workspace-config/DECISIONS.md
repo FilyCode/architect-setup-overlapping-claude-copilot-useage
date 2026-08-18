@@ -274,9 +274,143 @@ directions. Acceptable tradeoff per the user's explicit choice over the log-only
 
 ---
 
+### [2026-08-18] [DECISION-018]: Second-round audit — subagent memory, external-scan step, doc drift cleanup
+
+**Change**: Verified (against the live current docs at `code.claude.com`, not a third-party
+repo's claim) that Claude Code subagents support a `memory: user|project|local` frontmatter
+field for persistent, cross-invocation memory separate from main-session auto-memory,
+plus `maxTurns`, `disallowedTools`, `effort`, `color`. Added `memory: project` to
+`scc-monitor` so recurring SGE failure signatures accumulate instead of resetting every
+invocation, and `maxTurns: 40` to `critic-reviewer` as insurance against a runaway opus
+review loop. Extended the `workspace-audit` skill with a new optional step 6 ("External
+scan") covering Anthropic doc/model changes and new repos/plugins, addressing a real gap:
+the skill only ever looked inward. Fixed a stale model pin (`claude-sonnet-4-6`) left in
+the shared repo's own `.claude/settings.json` since the DECISION-009 dual-tool era, a dead
+permission entry for the deleted `.claude/bin/claude` binary, a dead `AGENTS.md` reference
+in this workspace's own governance list (archived under DECISION-011), the missing
+`bileaciddb.md` row in ARCHITECTURE.md's rule table, and dead `ROADMAP.md` links in the
+"Related Documents" footers of this file and ARCHITECTURE.md — `ROADMAP.md` was planned in
+DECISION-002 but per DECISION-015 was deliberately never moved/created; the historical
+decision text recording that is left untouched, only the current-state footer links (which
+implied the file exists) were removed.
+
+**Not changed**: `~/.claude/settings.json`'s `autoMode.environment` block still describes
+the workspace root as having "no remotes configured" and assumes a single repo, which is
+wrong — two real repos (`architect-setup-overlapping-claude-copilot-useage`,
+`projects/EnzymeFinder`) push to private `FilyCode/*` GitHub remotes. An edit attempt was
+blocked by the Claude Code auto-mode classifier (self-modification of trust/permission
+config); left for the user to fix directly or explicitly re-authorize.
+
+**Also researched, not adopted**: `getagentseal/codeburn` (multi-tool usage tracker —
+redundant with the already-installed `ccusage` skill while only Claude Code is in active
+use) and `dietrichgebert/ponytail` (active minimalism nudge — overlaps existing
+`simplify`/`code-review` skills and this workspace's own CLAUDE.md philosophy). Full
+itemized findings from `shanraisshan/claude-code-best-practice` in
+`.claude/context/repo-research-2026-08-18.md`.
+
+**Impact**: `scc-monitor` should get measurably better at repeat-pattern diagnosis over
+time; `critic-reviewer` has a safety bound it didn't have before; the monthly audit process
+now has an external-facing half instead of only checking its own drift; five small
+doc-accuracy gaps closed. The `autoMode.environment` staleness remains open.
+
+---
+
+### [2026-08-18] [DECISION-019]: Expand the agent roster; make review additive, not manual-only
+
+**Problem**: The user has been manually asking for `critic-reviewer` after each wave of
+work. Superpowers' own `requesting-code-review` skill always dispatches a generic
+`general-purpose` subagent with its own bundled template — it has no concept of this
+workspace's named agents and never will, since editing the plugin's own skill files
+would silently fork from upstream (the same anti-pattern documented three times already
+in `learnings.md`). Separately, the old DECISION-001 12-agent topology had a
+`Context Engineer` whose job — detecting drift between actual work and `ARCHITECTURE.md`/
+governance docs — has no equivalent today, and this very audit found exactly that kind
+of drift by hand (stale table rows, dead cross-references) three separate times this
+month.
+
+**Change**: Added two new project-scope agents and one new always-on rule file, rather
+than editing the plugin:
+
+- `docs-sync` (sonnet, `memory: project`, read-only) — a trimmed revival of the old
+  Context Engineer's actual job (detect doc/reality drift, propose exact fixes) without
+  its PR-based workflow or `.github/` assumptions, which don't fit how this workspace
+  actually operates. Never edits governance files directly — same approval gate as
+  everything else.
+- `research-scout` (haiku, `effort: low`) — a deliberately cheap, single-agent
+  best-practices/alternatives check for brainstorming, distinct from a full multi-agent
+  research fan-out (the pattern this session itself used for the repo-research task
+  earlier today, which is not meant to run on every design decision).
+- `.claude/rules/subagent-dispatch.md` (new always-on rule) — states when to dispatch
+  which agent (wave-end: `critic-reviewer` + `alignment-officer` + `docs-sync` in
+  parallel, additive to superpowers' generic reviewer, not a replacement for it;
+  brainstorming: `research-scout` for non-trivial decisions only) and a model/effort
+  tiering table for **any** subagent dispatch, not just the named agents.
+
+**Why the tiering table, and why it can only be guidance**: Claude Code subagents default
+to `model: inherit` unless a dispatch sets otherwise. Superpowers' own SKILL.md files are
+procedural markdown with no programmatic model/effort control — confirmed against the
+actual `requesting-code-review` and `subagent-driven-development` skill sources, not
+assumed. This means every `general-purpose` worker superpowers spawns silently inherits
+whatever the parent session is running (e.g. every micro-task review at opus if the main
+session is on opus), a real, community-documented limitation of the framework, not a
+Claude Code bug. Claude Code itself has no hook-level mechanism to force a model
+selection on a dispatch, so the tiering table is prose guidance like the rest of this
+workspace's rules — it depends on being applied each time, same limitation already
+recorded for every other non-hook rule here.
+
+**Tested before committing to it**: `skills: [simplify]` preload on `critic-reviewer` was
+tried and confirmed (via a live dispatch, not assumed) to silently do nothing — native
+skills aren't resolvable through that mechanism, at least not `simplify`. Reverted; the
+manual "Simplicity and reuse" checklist item added earlier today (before this entry)
+remains the actual working fix for that gap.
+
+**Not changed**: `alignment-officer` gained `memory: project` for the same accumulation
+rationale as `scc-monitor`. `critic-reviewer` deliberately did **not** get a `memory`
+field — its entire value is re-deriving correctness fresh from source each time; cached
+"patterns" would work against that design.
+
+**Impact**: Wave-end review no longer depends on the user remembering to ask for it —
+codified in a rule, though rules remain guidance, not a hard gate. Adds real per-wave
+cost (up to 3 additional subagent dispatches instead of 0-1); the tiering table is the
+counterweight, aimed at keeping that cost proportionate rather than eliminating it.
+
+---
+
+### [2026-08-18] [DECISION-020]: Remove `memory` from `docs-sync` — the grant is unscoped and unrevokable
+
+**Problem**: `docs-sync` (added in DECISION-019) was given `memory: project` on the same
+reasoning as `scc-monitor`/`alignment-officer`. Its core value proposition, unlike
+theirs, was framed as a **hard** guarantee — "never edits governance files directly."
+Live-tested (not assumed): a `memory`-enabled subagent's Write/Edit tools worked on an
+arbitrary file with no restriction to the memory directory, no block, no prompt. Adding
+`disallowedTools: Write, Edit` alongside `memory` was tested as a fix and also failed to
+revoke the grant. Full writeup in `.claude/context/learnings.md`.
+
+**Change**: Removed `memory` from `docs-sync` entirely, restoring `tools: Read, Grep,
+Glob, Bash` as the complete tool set — no Write/Edit exist for this agent at all now.
+Traded the recurring-drift-pattern accumulation benefit for keeping the guarantee this
+agent was specifically built to provide. `alignment-officer` and `scc-monitor` keep
+`memory: project` unchanged — their existing prose constraints ("do not write
+implementation code," "never change source") were never claiming a harder guarantee than
+the rest of this workspace's advisory rules, so this finding doesn't newly weaken them.
+
+**Also verified same session**: the GSD/GSTACK frameworks raised as a possible
+superpowers replacement are real, but switching was declined — the actual gap (no native
+model/effort routing) was already closed via DECISION-019's tiering rule, which works
+regardless of skill framework. Independently confirmed GSD's creator ran a crypto-token
+rug-pull and the original repo was archived 2026-06-26 — a real trust/security finding,
+not taken on the word of the source that raised it. Full detail:
+`.claude/context/repo-research-2026-08-18.md`. `workspace-audit`'s external-scan step now
+also checks a candidate tool's maintainer/trust status, not just technical fit.
+
+**Impact**: `docs-sync` is read-only in fact, not just in its own prompt. One documented,
+reusable finding (`memory` + `disallowedTools` interaction) that would otherwise have
+been silently wrong the next time anyone reached for this pattern.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design
-- [ROADMAP.md](ROADMAP.md) — Future phases
 - [PROJECT_STATE.md](PROJECT_STATE.md) — Current sprint
 - [.claude/rules/](.claude/rules/) — Scheduler, storage, verification and language rules

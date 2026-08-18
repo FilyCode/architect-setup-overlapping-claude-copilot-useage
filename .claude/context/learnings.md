@@ -65,6 +65,27 @@ all. Reach for a prompt hook only when the judgment genuinely needs a model, and
 is actually succeeding (check `hookEvent` + `type` in transcript attachments) before trusting
 it as enforcement — don't assume a hook "holds" just because it's configured.
 
+## `memory:` on a subagent grants unrestricted Write/Edit — `disallowedTools` cannot revoke it
+
+**Found:** 2026-08-18, while building `docs-sync`, a deliberately read-only agent meant to
+propose governance-doc fixes without ever applying them itself.
+
+**Why it matters:** Claude Code's own docs state `memory: user|project|local` "automatically
+enables Read, Write, and Edit tools so the subagent can manage memory files." Tested
+live, not assumed: a `memory`-enabled agent's Edit tool worked on an arbitrary file
+completely outside its memory directory, no block, no permission prompt. Adding
+`disallowedTools: Write, Edit` alongside `memory` did **not** revoke the grant either —
+tested a second time, same result. There is currently no documented frontmatter
+combination that gives a memory-enabled subagent a hard, tool-level read-only guarantee.
+
+**Fix:** if an agent's core value is a technical (not prose) guarantee that it cannot
+write outside a scope, do not give it `memory:` at all — the accumulation benefit is not
+worth silently losing the guarantee. `docs-sync` ships with no `memory` field for exactly
+this reason. Agents whose "don't touch X" was already prose-only before this (e.g.
+`critic-reviewer`'s "do not edit source," `alignment-officer`'s "do not write
+implementation code") are unaffected in practice — they were never claiming a harder
+guarantee than the rest of this workspace's rules provide.
+
 ## Audit trail
 
 - **2026-07-23:** full workspace audit. Plugin versions checked against primary manifests (not changelog summaries): superpowers 6.1.1 = latest, example-skills and research-skills current. Found and fixed `planning-with-files` stale hand-copy (see entry above). No skill has sat provably unused 30+ days yet (too early to tell — this is the first audit). Added `permissions.deny` hardening to shared `settings.json`, wired `continuous-improvement.md` into `CLAUDE.md`, wired `.claude/settings.json` pointer files into 4 previously-unwired projects. Evaluated `research-ops-skills` and `K-Dense-AI/scientific-agent-skills` — both real, both skipped, no concrete active need yet.
