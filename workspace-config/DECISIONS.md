@@ -296,10 +296,10 @@ implied the file exists) were removed.
 
 **Not changed**: `~/.claude/settings.json`'s `autoMode.environment` block still describes
 the workspace root as having "no remotes configured" and assumes a single repo, which is
-wrong — two real repos (`architect-setup-overlapping-claude-copilot-useage`,
-`projects/EnzymeFinder`) push to private `FilyCode/*` GitHub remotes. An edit attempt was
-blocked by the Claude Code auto-mode classifier (self-modification of trust/permission
-config); left for the user to fix directly or explicitly re-authorize.
+wrong — the workspace root holds multiple independent project git repos (see DECISION-021
+for the corrected, verified count), each pushing to a private `FilyCode/*` GitHub remote.
+An edit attempt was blocked by the Claude Code auto-mode classifier (self-modification of
+trust/permission config); left for the user to fix directly or explicitly re-authorize.
 
 **Also researched, not adopted**: `getagentseal/codeburn` (multi-tool usage tracker —
 redundant with the already-installed `ccusage` skill while only Claude Code is in active
@@ -406,6 +406,31 @@ also checks a candidate tool's maintainer/trust status, not just technical fit.
 **Impact**: `docs-sync` is read-only in fact, not just in its own prompt. One documented,
 reusable finding (`memory` + `disallowedTools` interaction) that would otherwise have
 been silently wrong the next time anyone reached for this pattern.
+
+---
+
+### [2026-08-18] [DECISION-021]: Correct a hardcoded "two repos" assumption — caught by the user
+
+**Problem**: DECISION-018 and a `~/.claude/settings.json` fix both asserted "two real
+repos (architect-setup-overlapping-claude-copilot-useage, projects/EnzymeFinder)" under
+the workspace root. The user caught this as misleading: more project repos already exist
+and more get added over time.
+
+**Verified** (`git remote -v` across every `projects/*/` directory, not assumed): the
+workspace root actually holds — the shared config repo, plus `projects/Bile_acid_database`,
+`CaMES_homologue_search`, `EanB_homologue_search`, `EnzymeFinder`, `K4-K26`, and
+`Sulfotrans` (all with `FilyCode/*` GitHub remotes), plus `projects/MqnE_cofactor_finding`
+(a git repo, no remote yet), plus `projects/TBI` (not a git repo at all).
+
+**Change**: Corrected the `settings.json` line to state the general fact — check
+per-directory, don't assume a fixed list — with the verified 2026-08-18 count included as
+a snapshot, not a claim about the future. Corrected DECISION-018's text to point here
+instead of repeating the wrong count.
+
+**Impact**: A workspace-fact claim should either be phrased so it can't go stale (state
+the general rule) or explicitly dated as a snapshot — not asserted as if it were a fixed
+architectural constant, especially for something as fast-changing as "how many project
+repos exist."
 
 ---
 
