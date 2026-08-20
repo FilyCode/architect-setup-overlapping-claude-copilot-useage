@@ -9,13 +9,14 @@ efficiency/simplicity), and, when a plan or phase doc exists to check against,
 drift). Run these in parallel — none depends on another's output. This does not replace
 superpowers' `requesting-code-review` for smaller, ad hoc checks; that stays available.
 
-`critic-reviewer`'s own Output section (item 5) backs this up: on an APPROVED verdict, it
-closes with a one-line reminder to consider dispatching docs-sync now, since it already
-knows its own verdict — no separate mechanism needed to reconstruct that. (An earlier
-`SubagentStop`-hook version of this nudge was built, tested, and reverted the same day —
-see DECISION-024. The hook's keyword heuristic for "clean review" failed on 16/16 real
-review transcripts, and a live test of the delivery path was inconclusive; the
-agent-side reminder above avoids both problems entirely.)
+`critic-reviewer`'s own Output section (item 5) backs this up: on an APPROVED verdict from
+a wave-end-shaped review, it closes with a one-line reminder to consider dispatching
+docs-sync now, since it already knows its own verdict — no separate mechanism needed to
+reconstruct that. Ignore the reminder when docs-sync already ran that wave, or the review
+was one of the smaller ad hoc `requesting-code-review` checks this section explicitly
+keeps separate from wave-end review — a docs-sync suggestion doesn't apply there. (An
+earlier `SubagentStop`-hook version of this nudge was built, tested, and reverted the same
+day — see DECISION-024 for what it got wrong and how that was verified.)
 
 ## Release/publication gate: security-specialist
 

@@ -63,7 +63,8 @@ plan-quality issue, not an implementer error.
 3. **What you verified and how** — name the files you re-derived from, so the caller can
    tell what was actually checked versus assumed
 4. **Optional improvements**, clearly separated
-5. If the verdict is APPROVED, close with a one-line reminder to the caller: consider
-   dispatching `docs-sync` now to check for governance-doc drift while the wave's changes
-   are fresh (per `subagent-dispatch.md`'s wave-end review section). Omit this line
-   entirely on CHANGES REQUIRED — fix the findings first.
+5. If the verdict is APPROVED **and** the review covers a wave's worth of change (not a
+   small ad hoc single-file check), close with a one-line reminder to the caller: consider
+   dispatching `docs-sync` now to check for governance-doc drift while the changes are
+   fresh (per `subagent-dispatch.md`'s wave-end review section). Omit this line on
+   CHANGES REQUIRED, and omit it for small ad hoc reviews where it doesn't apply.

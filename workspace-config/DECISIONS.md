@@ -518,6 +518,9 @@ surface exists) and does real work once P14a or Bile_acid_database's launch land
 
 ### [2026-08-20] [DECISION-023]: Added a `SubagentStop` hook to nudge docs-sync after a clean critic-reviewer pass
 
+**Superseded by DECISION-024 the same day** — the hook described below was found broken
+and reverted. Read this entry as history of what was tried and why, not as current state.
+
 **Problem**: User reported recurring documentation drift — governance docs going stale
 because dispatching `docs-sync` after a wave depends on the main session remembering the
 prose rule in `subagent-dispatch.md`, with nothing enforcing it. Also asked me to
@@ -581,15 +584,24 @@ through static analysis alone.
 with two blocking findings, both re-derived from real artifacts rather than from the
 hook's own docstring:
 
-**B1 (verified independently, not taken on faith)**: the `ISSUE_RE`/`NEGATION_RE`
-negation-window technique, copied from `large-change-check.py`, does not transfer to
-review prose. Real reviews negate *after* the keyword or by count — `"0 Blocking"`,
-`"Blocking: none"`, `"non-blocking"` — none of which the hook's preceding-word negation
-check catches, since it only looks for a negator *before* the match. Against 47 real
-review-shaped closing messages pulled from this workspace's own subagent transcripts, the
-nudge fired on 0 of 16 genuinely clean reviews. I independently grepped
-`~/.claude/projects/*/subagents/agent-*.jsonl` for the cited phrasings myself before
-accepting this — they are real, not fabricated by the review.
+**B1 (verified independently, not taken on faith — and re-verified a second time after a
+follow-up review flagged the first count as unreproducible)**: the `ISSUE_RE`/
+`NEGATION_RE` negation-window technique, copied from `large-change-check.py`, does not
+transfer to review prose. Real reviews negate *after* the keyword or by count —
+`"0 Blocking"`, `"Blocking: none"`, `"non-blocking"` — none of which the hook's
+preceding-word negation check catches, since it only looks for a negator *before* the
+match. The original review reported "0 of 16 genuinely clean reviews out of 47
+review-shaped messages"; a later independent replay of the restored hook against the
+real transcript corpus (`~/.claude/projects/*/*/subagents/agent-*.jsonl` — note the extra
+`*/`, corrected from this entry's first draft, which had omitted the session-uuid level
+and matched zero files) could not reproduce those exact counts under two reasonable
+definitions, but got the same direction and conclusion: 0/7 fired on transcripts with an
+explicit `Verdict: APPROVED` line, 0/10 fired when loosened to "APPROVED appears anywhere
+in the final message" across all subagent types, plus one false-positive fire on a
+`CHANGES REQUIRED` transcript — strengthening, not weakening, the case against the hook.
+The cited negation phrasings themselves were confirmed present in real transcripts both
+times. Treat "the heuristic never fires on a real clean review" as the verified claim;
+treat any specific count before this correction as approximate.
 
 **B2 (claimed the hook's `additionalContext` targets the subagent, not the parent,
 based on decompiling the installed Claude Code binary)**: live-tested this directly
