@@ -516,6 +516,64 @@ surface exists) and does real work once P14a or Bile_acid_database's launch land
 
 ---
 
+### [2026-08-20] [DECISION-023]: Added a `SubagentStop` hook to nudge docs-sync after a clean critic-reviewer pass
+
+**Problem**: User reported recurring documentation drift — governance docs going stale
+because dispatching `docs-sync` after a wave depends on the main session remembering the
+prose rule in `subagent-dispatch.md`, with nothing enforcing it. Also asked me to
+research `ruvnet/ruflo` as a possible framework adoption.
+
+**ruflo**: dispatched to `research-scout` (haiku). Verdict: skip. It's a general-purpose
+agent meta-harness (vector memory, multi-agent swarms, cross-LLM federation) solving
+problems this workspace doesn't have — the 6 purpose-built agents already outperform 100
+generic ones for our specific gate points. Consistent with the earlier GSD/GSTACK
+rejection (DECISION-021/022 area): heavier frameworks keep getting evaluated and
+correctly declined in favor of the lightweight, purpose-built dispatch system already in
+place.
+
+**docs-sync nudge — brainstormed via `superpowers:brainstorming` (bounded path)**:
+classified bounded (existing hook pattern + existing rule file to extend, not a new
+subsystem). Two decisions made with the user: (1) trigger scoped to `critic-reviewer`
+only, not `alignment-officer` too — one docs-sync dispatch per wave is enough, and
+critic-reviewer is the agent that always runs; (2) soft non-blocking nudge, not a hard
+block — `SubagentStop`'s exit-2 block prevents the *subagent itself* from stopping (per
+the Claude Code hooks schema, confirmed by grepping the installed CLI binary for the
+`SubagentStop`/`agent_type`/`hookSpecificOutput` strings and cross-checking against the
+full settings.json JSON schema returned by the `update-config` skill), not the parent
+session — the wrong target, since critic-reviewer has no `Agent` tool to dispatch
+docs-sync with anyway.
+
+**A WebFetch summary of `code.claude.com/docs/en/hooks` was not trusted at face value**:
+it read suspiciously fluent (invented an undocumented `PostToolBatch`/`TaskCompleted`
+framing, an exact `last_assistant_message` field name) — WebFetch summarizes through a
+small model that can hallucinate specifics. Verified independently by grepping the
+installed `claude` binary's strings for the real event/field names before building
+anything on top of the claim, per this workspace's own verification discipline.
+
+**Built**: `workspace-config/hooks/docs-sync-nudge.py` (symlinked into
+`~/.claude/hooks/`, same pattern as `large-change-check.py`), registered in
+`~/.claude/settings.json` under `hooks.SubagentStop` with `matcher: "critic-reviewer"`.
+Deterministic keyword heuristic (no API calls) parses the subagent's closing message
+(falling back to tailing `transcript_path` if `last_assistant_message` is absent) for a
+clean-verdict pattern, and suppresses the nudge if issue-indicating language is also
+present. **A real bug was caught during pipe-testing**: the issue-word list included the
+bare word "blocking", which also fired on the negated phrase "no blocking issues found",
+silently suppressing the nudge on a genuinely clean review. Fixed by reusing
+`large-change-check.py`'s own negation-window technique (an issue-word match only counts
+if not preceded within ~25 chars by a negation word). Re-tested against a clean-verdict
+case, an issues-found case, a wrong-`agent_type` case, and malformed/empty input — all
+behave as intended.
+
+`subagent-dispatch.md`'s wave-end review section updated with a note describing the hook
+as a backstop, not a replacement for the prose rule.
+
+**Not yet done**: a live end-to-end smoke test (an actual `critic-reviewer` dispatch,
+confirming the `additionalContext` really surfaces in the parent session's next turn) —
+flagged to the user as the one part of this design that couldn't be fully verified
+through static analysis alone.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design
