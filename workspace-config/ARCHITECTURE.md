@@ -1,6 +1,6 @@
 # System Architecture: liu-scc Workspace
 
-**Last updated**: 2026-08-17
+**Last updated**: 2026-08-18
 **Scope**: Workspace-wide governance, SCC integration, and agent configuration
 **Audience**: Engineers, agents, and future collaborators
 
