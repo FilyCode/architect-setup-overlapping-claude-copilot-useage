@@ -9,14 +9,13 @@ efficiency/simplicity), and, when a plan or phase doc exists to check against,
 drift). Run these in parallel — none depends on another's output. This does not replace
 superpowers' `requesting-code-review` for smaller, ad hoc checks; that stays available.
 
-A `SubagentStop` hook (`hooks/docs-sync-nudge.py`, matcher `critic-reviewer`) backs this
-up: whenever critic-reviewer's closing message reads as a clean pass (no blocking issues
-found), it injects a reminder into the parent session's context to consider dispatching
-docs-sync, so the "documentation always seems to go stale" failure mode doesn't depend
-purely on the main session remembering. It's a soft, non-blocking, keyword-heuristic
-nudge only — not scoped to alignment-officer too, since one docs-sync dispatch per wave
-is enough and critic-reviewer is the agent that always runs. Skip or ignore the nudge
-when docs-sync already ran that wave or clearly doesn't apply.
+`critic-reviewer`'s own Output section (item 5) backs this up: on an APPROVED verdict, it
+closes with a one-line reminder to consider dispatching docs-sync now, since it already
+knows its own verdict — no separate mechanism needed to reconstruct that. (An earlier
+`SubagentStop`-hook version of this nudge was built, tested, and reverted the same day —
+see DECISION-024. The hook's keyword heuristic for "clean review" failed on 16/16 real
+review transcripts, and a live test of the delivery path was inconclusive; the
+agent-side reminder above avoids both problems entirely.)
 
 ## Release/publication gate: security-specialist
 

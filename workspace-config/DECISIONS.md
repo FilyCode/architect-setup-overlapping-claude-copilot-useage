@@ -574,6 +574,61 @@ through static analysis alone.
 
 ---
 
+### [2026-08-20] [DECISION-024]: Reverted the DECISION-023 `SubagentStop` hook — replaced with a one-line agent-side reminder
+
+**Problem**: dispatched a real `critic-reviewer` review of DECISION-023's own new hook
+(`docs-sync-nudge.py`) as the promised live smoke test. It came back CHANGES REQUIRED
+with two blocking findings, both re-derived from real artifacts rather than from the
+hook's own docstring:
+
+**B1 (verified independently, not taken on faith)**: the `ISSUE_RE`/`NEGATION_RE`
+negation-window technique, copied from `large-change-check.py`, does not transfer to
+review prose. Real reviews negate *after* the keyword or by count — `"0 Blocking"`,
+`"Blocking: none"`, `"non-blocking"` — none of which the hook's preceding-word negation
+check catches, since it only looks for a negator *before* the match. Against 47 real
+review-shaped closing messages pulled from this workspace's own subagent transcripts, the
+nudge fired on 0 of 16 genuinely clean reviews. I independently grepped
+`~/.claude/projects/*/subagents/agent-*.jsonl` for the cited phrasings myself before
+accepting this — they are real, not fabricated by the review.
+
+**B2 (claimed the hook's `additionalContext` targets the subagent, not the parent,
+based on decompiling the installed Claude Code binary)**: live-tested this directly
+rather than trusting either the original docstring's assumption or the review's
+counter-claim. Swapped the hook for a version that unconditionally emits a unique marker
+string, dispatched a trivial `critic-reviewer` (haiku) task, then grepped every relevant
+transcript for the marker. Result was **inconclusive, not confirmatory of B2**: the
+marker appeared in neither the subagent's own transcript nor cleanly in the parent's (the
+two "hits" in the parent transcript were self-referential — my own `Write` and `grep`
+commands echoing the search string back, not an injected context block). The test was
+also confounded by the hook firing once on an unrelated internal event
+(`agent_type: ""`, tied to a `ScheduleWakeup` check-in) despite the `critic-reviewer`
+matcher, which overwrote the capture file before the real dispatch's payload could be
+inspected. Whether `additionalContext` reaches the parent or the subagent on a genuine
+named-agent completion remains unsettled from this session; not worth a second smoke
+test since B1 alone already kills the design.
+
+**Decision**: adopted the review's own "optional" alternative instead of trying to patch
+the regex. Deleted `hooks/docs-sync-nudge.py` (both the repo copy and the
+`~/.claude/hooks/` symlink) and the `hooks.SubagentStop` entry in `~/.claude/settings.json`.
+Added one line to `agents/critic-reviewer.md`'s Output section instead: on an APPROVED
+verdict, close with a reminder to consider dispatching docs-sync. This needs no regex, no
+transcript parsing, and no question about hook delivery targets — the reminder travels
+through the ordinary Task/Agent result, exactly the way critic-reviewer's review text
+always has.
+
+**Also observed, not chased further**: the smoke-test critic-reviewer (haiku) subagent's
+own transcript showed repeated "waiting for task content" / "standing by" turns instead
+of doing the one assigned action — an anomaly in that dispatch, not something this
+decision depends on resolving.
+
+**Impact**: caught before the hook could cause real harm — it had only fired once for a
+real critic-reviewer completion (a CHANGES REQUIRED verdict, correctly silent either way)
+before this reversal. Reinforces `verification.md`'s point again: a live smoke test,
+promised and actually run, is what caught a design that four synthetic pipe-tests and a
+plausible-sounding docstring both missed.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design
