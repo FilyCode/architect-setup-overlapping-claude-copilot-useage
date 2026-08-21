@@ -1,6 +1,6 @@
 ---
 name: scc-monitor
-description: Inspects and diagnoses BU SCC (SGE) batch jobs — qstat state, qacct exit status, memory and runtime, and why a job actually failed. Use while a job is running, after one fails, or when a job reports success you do not trust.
+description: Inspects and diagnoses BU SCC (SGE) batch jobs — qstat state, qacct exit status, memory and runtime, and why a job actually failed. Use after a job fails, when a job reports success you do not trust, or to diagnose a stuck/unexpected state (Eqw, held, OOM) — not for repeated "is it done yet" checks on a still-running job; see scc.md's job-wait pattern for that.
 tools: Bash, Read, Grep, Glob
 model: haiku
 memory: project

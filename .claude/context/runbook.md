@@ -18,7 +18,9 @@ qsub -v PYTEST_ARGS="tests/test_foo.py" scripts/scc-submissions/run_pytest_qsub.
 qsub -v PYTEST_FILTER="not some_marker" scripts/scc-submissions/run_pytest_qsub.sh
 ```
 
-Track with `qstat -j <JOB_ID>`. Results land in `logs/pytest_qsub.$JOB_ID.out`.
+Track with a single backgrounded wait loop, not repeated `qstat -j <JOB_ID>` checks — see
+`.claude/rules/scc.md`'s "Waiting on a job without burning tokens". Results land in
+`logs/pytest_qsub.$JOB_ID.out`.
 
 Each project that runs pytest on the SCC needs its own `scripts/scc-submissions/run_pytest_qsub.sh` — this runbook entry documents the pattern, not a shared script (job scripts are project-specific: paths, modules, conda envs differ).
 

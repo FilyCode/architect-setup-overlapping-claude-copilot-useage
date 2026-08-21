@@ -24,6 +24,33 @@ that the expected output artifact exists on disk before treating a job as succes
 Do not submit many jobs that hit the same external API at once; stagger them or chain
 with `qsub -hold_jid`.
 
+## Waiting on a job without burning tokens
+
+Watch a submitted job with a single backgrounded shell loop, never repeated foreground
+`qstat`/`qacct` calls or "check again" round-trips — each round-trip re-pays the full
+accumulated context (see `subagent-dispatch.md` for the incident that motivates this).
+
+- Wrap the wait in one `Bash(run_in_background=true)` call, with a bail-out: `qstat -j
+  <jobid>` keeps returning exit code 0 indefinitely for a job stuck in `hqw` (held) or
+  `Eqw` (error, will never start — see `.claude/agents/scc-monitor.md`), so a bare
+  `until ! qstat -j <jobid> ...` loop can spin forever. Give it a deadline derived from
+  the job's `h_rt` (see "Job defaults" above; a real 12h job here has been observed to
+  queue 10-15 min before starting, so pad well past `h_rt` alone), e.g.:
+  `deadline=$(( $(date +%s) + <h_rt_seconds> + 3600 )); while qstat -j <jobid> >/dev/null 2>&1; do [ $(date +%s) -ge $deadline ] && { echo "TIMEOUT: job <jobid> still in the queue system after deadline — check state with qstat -u phitro"; break; }; sleep 45; done`
+- A 30-60s sleep interval is fine and costs zero tokens per iteration — only the final
+  notification costs anything, so there is no reason to stretch it toward the job's
+  runtime (that only delays the notification for no savings). Stretch past ~60s only on
+  multi-hour jobs, and only to avoid hammering the qmaster with `qstat` calls.
+- Neither the loop exiting nor a `qacct` `exit_status 0` alone proves success — always
+  check the output artifact exists on disk once the loop exits (see "Verifying a job"
+  above). `qacct` can also lag briefly right after a job leaves the queue ("job id not
+  found") — retry once after a few seconds before treating that as a real failure.
+- Never dispatch a subagent whose task is "wait for job X and report back" — see
+  `subagent-dispatch.md`. Do the wait yourself (or in the dispatching session/fork); it is
+  near-free there and expensive to re-pay inside a subagent's reloaded context.
+- `scc-monitor` is for diagnosing *why* a job failed or a reported success can't be
+  trusted — not a target for repeated "is it done yet" checks.
+
 ## Storage
 Home (`/usr3/graduate/phitro`) is capped at 10GB with a 7-day grace. Anything large —
 model weights, caches, envs, node_modules, container images — belongs under

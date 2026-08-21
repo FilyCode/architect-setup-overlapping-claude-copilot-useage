@@ -1,5 +1,28 @@
 # Subagent dispatch: review gate and model/effort tiering
 
+## Never dispatch "wait and report" as a subagent's task
+
+A dispatched subagent's context is expensive to reload — every "still waiting, check
+again" round-trip re-pays its full accumulated history. A real incident burned 1M+ tokens
+this way: an implementer subagent was told to wait for an SGE job and report back, and
+polled `qstat`/`qacct` across ~4 separate round-trips at ~230k tokens each.
+
+Do not dispatch a subagent whose task is, or includes as a multi-turn loop, "wait for
+job/agent X to finish, then report." Instead:
+
+- If a subagent's task genuinely needs to wait on something external as one internal
+  step, it must do so inside a single `Bash(run_in_background=true)` shell-level loop
+  (see `scc.md`'s "Waiting on a job without burning tokens") — never repeated foreground
+  status-check calls across turns.
+- If the wait is the *entire* reason for dispatch, don't dispatch at all — the caller
+  (main session or a fork) checks directly instead; it is near-free there since it is not
+  reloading a subagent's accumulated history each time, and only dispatches the real
+  downstream-processing subagent once the artifact exists.
+- The same applies to waiting on another dispatched subagent/fork: never re-message or
+  nudge it on a timer to ask if it is done — either it delivers a task notification on
+  completion, or (for `/loop` dynamic pacing) use `ScheduleWakeup` with a delay sized to
+  the actual expected duration, never a short fixed interval "just in case."
+
 ## Wave-end review (additive — the generic reviewer stays available)
 
 At the end of a wave, before finishing a branch, or after a big task (or several
