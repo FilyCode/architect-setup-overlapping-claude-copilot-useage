@@ -23,6 +23,32 @@ job/agent X to finish, then report." Instead:
   completion, or (for `/loop` dynamic pacing) use `ScheduleWakeup` with a delay sized to
   the actual expected duration, never a short fixed interval "just in case."
 
+## A dispatch's factual claims become code
+
+A subagent cannot tell which of the caller's assertions were verified. It will faithfully
+write a wrong count, file list or dependency claim into the repo and into prose. On
+2026-08-24 three of the caller's unchecked claims reached commits this way; one ("stage 7c
+depends only on stage 1 and stage 7a") became the final review's only Critical finding.
+
+Every factual claim in a dispatch is either verified before sending, or explicitly labelled
+`UNVERIFIED — check this before relying on it`. The high-risk classes are counts ("hardcoded
+in five files"), enumerations of sites to change, and dependency claims. Verifying costs one
+grep; not verifying costs a review round and a commit that has to be undone.
+
+The same applies in reverse: when a subagent challenges one of your claims, check the artifact
+before overruling it. On the same day a subagent correctly disputed a stale-exemption claim and
+the caller's doubt was the thing that was wrong.
+
+## Concurrent dispatches need declared file ownership
+
+Never dispatch two implementers that touch the same file. When several tasks queue behind one
+shared file, say in each dispatch exactly which files it owns and which are off-limits because
+another agent holds them.
+
+An agent that waited while other commits landed is working from a stale read: tell it what
+changed underneath it and instruct it to re-read before editing. Also tell it which currently
+failing checks are *not* its own, or it will start repairing someone else's work.
+
 ## Wave-end review (additive — the generic reviewer stays available)
 
 At the end of a wave, before finishing a branch, or after a big task (or several

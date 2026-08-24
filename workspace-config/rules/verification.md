@@ -19,6 +19,16 @@ code ran. Every failure below actually happened in this workspace.
   resumed runs are wrong, silently. Test the round-trip's downstream consequence.
 - A cached column or stored flag is trusted as current. Re-check against the live source
   before reporting something as missing or needing manual work.
+- A gate that passes because it never exercises the path in use. A regression check ran the
+  statistic on the *production* artifacts and passed, while the new code path it was meant to
+  protect produced a null result for every input. When you add a code path, assume the existing
+  gate does not cover it, and add a positive control on the new path specifically.
+- A parser validated against a fixture its own author wrote. The fixture encodes the same
+  misunderstanding as the parser, so it passes a dry run and fails on first real input.
+  Validate against a real artifact, or state plainly that it is unvalidated.
+- Two artifacts compared positionally when their row order is not guaranteed. Align on a
+  unique key first. An unstable sort on a tied key is itself a reproducibility bug even when
+  every value is correct — row order that changes between runs is not reproducible output.
 - A check that cannot fail, because it matches the wrong field. A docstring stating what a
   check does is not evidence the check works. Test it against a real case that should trip it.
 - A named metric appears in a governance doc as evidence without three basic checks having been

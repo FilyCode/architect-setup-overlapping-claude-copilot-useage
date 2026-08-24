@@ -48,8 +48,25 @@ accumulated context (see `subagent-dispatch.md` for the incident that motivates 
 - Never dispatch a subagent whose task is "wait for job X and report back" — see
   `subagent-dispatch.md`. Do the wait yourself (or in the dispatching session/fork); it is
   near-free there and expensive to re-pay inside a subagent's reloaded context.
+- **`qstat -j <jobid>` returns non-zero transiently** under qmaster load, so `while qstat -j
+  ... ; do` can exit while the job is still running. This is the opposite failure to the
+  `hqw`/`Eqw` one above and bit a real wait loop on 2026-08-24: the loop exited with the job
+  in state `r` at 2 of 20 tasks, and only an artifact count caught it. Wait on the LISTING
+  form instead, and require several consecutive absences before declaring a job finished:
+  `absent=0; while [ $absent -lt 3 ]; do qstat -u phitro 2>/dev/null | grep -q "^ *<jobid> " && absent=0 || absent=$((absent+1)); sleep 45; done`
 - `scc-monitor` is for diagnosing *why* a job failed or a reported success can't be
   trusted — not a target for repeated "is it done yet" checks.
+
+## Reading a job log
+
+**SGE appends to `-o` logs, it does not truncate.** A log path reused across runs accumulates
+them, oldest first. On 2026-08-24 one sweep log held four runs, three of them pre-fix showing
+`significant=0`, and reading its head twice nearly produced a false failure report. Always:
+
+- check the log's mtime against the job's `end_time` from `qacct` before believing it;
+- anchor on the LAST `=== ... started:` line, not the head of the file;
+- remember a differently-named job writes a different log — a stale log at the path you
+  expected is not evidence the new job failed.
 
 ## Storage
 Home (`/usr3/graduate/phitro`) is capped at 10GB with a 7-day grace. Anything large —
