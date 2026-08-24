@@ -39,6 +39,14 @@ The same applies in reverse: when a subagent challenges one of your claims, chec
 before overruling it. On the same day a subagent correctly disputed a stale-exemption claim and
 the caller's doubt was the thing that was wrong.
 
+**"The brief is wrong" is a first-class finding.** A retrospective on the MqnE_cofactor_finding
+project (2026-08-24) found reviewers repeatedly and correctly identifying that a plan or brief's
+*premise* — not the implementation — was wrong, then filing it as "plan-quality issue, not this
+task's fault" and stopping there with no escalation, because the fix is upstream prose rather
+than a code change. When a reviewer flags that the brief itself is wrong, escalate it at the
+severity its content would warrant if it were an implementation bug, and route it back to
+whoever owns the plan — don't let the out-of-scope label itself close it out.
+
 ## Concurrent dispatches need declared file ownership
 
 Never dispatch two implementers that touch the same file. When several tasks queue behind one
@@ -57,6 +65,12 @@ efficiency/simplicity), and, when a plan or phase doc exists to check against,
 `alignment-officer` (completeness/scope conformance) and `docs-sync` (governance-doc
 drift). Run these in parallel — none depends on another's output. This does not replace
 superpowers' `requesting-code-review` for smaller, ad hoc checks; that stays available.
+
+**Self-verification is not independent review.** Don't skip dispatching a reviewer for a task
+just because it "looks like" a governance-doc correction rather than novel computation. The same
+MqnE retrospective above found this reasoning used to close a whole task group without any
+independent review — and every one of that project's biggest missed findings lived in the
+doc-framing layer, not the computation layer, i.e. exactly the layer that rationale skipped.
 
 `critic-reviewer`'s own Output section (item 5) backs this up: on an APPROVED verdict from
 a wave-end-shaped review, it closes with a one-line reminder to consider dispatching
@@ -96,27 +110,19 @@ same wave, not necessarily the same parallel batch, given the account's concurre
 
 Before a project goes to production or publication (a public code release, a public
 API/DB launch, a paper submission with a code/data release) — not every wave, and not
-routine development: dispatch `security-specialist` for a full checklist pass, tailored
-to what the target actually is (see the agent's own Step 1 surface detection). As of
-2026-08-18 no project has a built web/API/DB-with-users surface yet (EnzymeFinder's
-P14a and Bile_acid_database's public launch are both future), so most runs today
-correctly terminate at "not applicable" — that's expected, re-run when a web tier
-actually lands. The universal tier (secrets hygiene, git-history secret scan,
-dependency scanning, prompt-injection/agent-trust-boundary, supply-chain/CI pinning,
-key rotation, data-licence compliance) applies to every project regardless of surface,
-including the pure-batch ones — "publication" for those means a paper + public code
-release, and secrets/licence checks still apply even with no web surface at all.
-Complementary to the native `/security-review` skill (diff-scoped, not a full-project
-gate) and to whatever CI a given project already runs (check first — EnzymeFinder
-already has `bandit`, `detect-private-key`, `gitleaks`, and CodeQL; don't have the
-agent re-derive by hand what CI already automates on every push).
+routine development: dispatch `security-specialist`. Its own file carries the full
+checklist and surface detection; don't duplicate that here. Applies even to pure-batch
+projects with no web surface — "publication" for those means a paper + public code
+release, and the universal checks (secrets, licence, CI pinning) still apply. Check
+what CI already automates first (e.g. EnzymeFinder already runs `bandit`,
+`detect-private-key`, `gitleaks`, CodeQL) rather than having the agent re-derive it by
+hand. Complementary to the native `/security-review` skill, which is diff-scoped, not a
+full-project gate.
 
 ## Brainstorming: research-scout
 
 For a non-trivial design decision during `brainstorming`, dispatch `research-scout`
-first — cheap, single-agent, checks the codebase then does one bounded external pass.
-Skip it for small/obvious decisions; it exists to catch "there's already a known better
-way to do this," not to gate every brainstorm.
+first (see its own description for scope). Skip it for small/obvious decisions.
 
 **One external premise check at project start, and at any reframing.** Before building an
 analysis pipeline around an assumed premise about the target itself, do one PDB/PubMed (or
@@ -130,7 +136,7 @@ kind of premise error this catches cheaply.
 
 Claude Code subagents default to `model: inherit` — same model as the parent session —
 unless the dispatch explicitly sets otherwise. A named agent under `.claude/agents/`
-already carries its own tier (see below); a generic dispatch (superpowers'
+already carries its own tier in its front matter; a generic dispatch (superpowers'
 `general-purpose` workers, `subagent-driven-development` task slices, ad hoc `Agent`
 calls) does not, and silently inherits whatever the parent session is running — this is
 a real, documented gap in how superpowers itself works (its skills are procedural
@@ -154,8 +160,6 @@ This is guidance, not enforcement — there is no hook-level mechanism to force 
 selection on a subagent dispatch, so this depends on it actually being applied each
 time, same limitation as any other prose rule in this workspace.
 
-## Existing agent tiers (for reference)
-
-`critic-reviewer` opus, `alignment-officer` sonnet, `docs-sync` sonnet, `scc-monitor`
-haiku, `research-scout` haiku/low, `security-specialist` opus (release/publication gate
-only, not wave-end).
+A named agent under `.claude/agents/` already declares its own model/effort in its own
+front matter — that is the actual source of truth. Read the agent file rather than
+keeping a duplicate lookup table here.
