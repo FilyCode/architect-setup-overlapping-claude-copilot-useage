@@ -41,6 +41,28 @@ keeps separate from wave-end review — a docs-sync suggestion doesn't apply the
 earlier `SubagentStop`-hook version of this nudge was built, tested, and reverted the same
 day — see DECISION-024 for what it got wrong and how that was verified.)
 
+**Minor-triage content test.** Before filing a review finding as Minor, answer in writing: *if
+this finding is correct, does any currently-stated conclusion change?* If yes, it is not a Minor,
+no matter how small the suggested edit looks — a finding phrased as a wording complaint ("stated
+unhedged," "unacknowledged") can still be a category error underneath, and severity
+misclassification of a real finding is how defects survive multiple review rounds undetected.
+Cheap mechanical backstop: re-read the parked Minor list again at every wave's end, not only the
+wave it was filed in — Minors otherwise never get revisited.
+
+**Unenumerated-objection slot.** Every review dispatch — wave-end or ad hoc — ends with: *"list
+the strongest objection to this work that I did not ask you about."* Reviewers already do this
+occasionally unprompted; the slot converts it into routine rather than luck. This targets the
+enumeration specifically, not tone: adding adversarial-sounding language to a dispatch is cheap and
+harmless, but there is no evidence tone changes what a reviewer actually finds — enumeration does.
+
+**Domain-role reviewer at wave end, not only after a crisis.** Alongside critic-reviewer/
+alignment-officer/docs-sync, include a reviewer in the target domain's professional role (e.g. a
+biologist-role pass on a biology project) as a routine part of wave-end review, not something
+convened only after an external panel or incident forces it. A correctness/completeness/drift
+review is structurally unable to produce a premise-level or domain-plausibility finding — only a
+domain-role pass can, and by the time a crisis convenes one, the defect has usually already shipped
+for a while.
+
 ## Release/publication gate: security-specialist
 
 Before a project goes to production or publication (a public code release, a public
@@ -66,6 +88,14 @@ For a non-trivial design decision during `brainstorming`, dispatch `research-sco
 first — cheap, single-agent, checks the codebase then does one bounded external pass.
 Skip it for small/obvious decisions; it exists to catch "there's already a known better
 way to do this," not to gate every brainstorm.
+
+**One external premise check at project start, and at any reframing.** Before building an
+analysis pipeline around an assumed premise about the target itself, do one PDB/PubMed (or
+domain-equivalent database) lookup directly on the target — not just on the surrounding method.
+Make it a standing habit to resolve any external ID (PDB/accession/etc.) that a pipeline returns
+repeatedly, rather than treating the repetition as an incidental curiosity; a project's own top
+structural-search hit turning out to be the query's own already-published structure is exactly the
+kind of premise error this catches cheaply.
 
 ## Model and effort tiering for any subagent dispatch
 

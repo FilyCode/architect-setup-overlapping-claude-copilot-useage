@@ -21,6 +21,34 @@ code ran. Every failure below actually happened in this workspace.
   before reporting something as missing or needing manual work.
 - A check that cannot fail, because it matches the wrong field. A docstring stating what a
   check does is not evidence the check works. Test it against a real case that should trip it.
+- A named metric appears in a governance doc as evidence without three basic checks having been
+  done: quote its defining formula from the code and state in one sentence what it physically
+  measures; compute it on the control/negative arm too (if both arms saturate, the metric cannot
+  support the comparison at that setting — that, not "the interval was too wide," is the real
+  lesson); and state the physical state of the modelled system (e.g. holo/apo, ligands present,
+  which cofactors) and whether it matches the claim being made. All three are needed — each
+  catches a different failure, and none substitutes for another.
+- **Positive-control corollary:** if a positive control scores below a candidate on the same
+  metric, the metric is suspect, not the control. A yardstick that fails on a case it should have
+  passed easily is broken before it says anything about the harder case.
+- A number that supports or closes a claim in a governance doc (decisions/findings/summary/status
+  files) traces only to chat-report or ledger prose, never to a committed script + output
+  artifact. Plausibility is not provenance — a wrong number survives review precisely because it
+  looks right; require it to resolve to something on disk before it is cited as evidence.
+- Report-generating code contains a hardcoded numeric literal in its prose output, rather than
+  formatting a value computed from data. This is the mechanism, not just a symptom — a literal
+  sitting in a template is exactly how a fabricated statistic gets produced and then gets cited as
+  if it were computed.
+- Two populations/rates/groups get compared without first listing every axis they could differ on
+  (taxonomy, detection method, window or distance scale, copy number, annotation quality,
+  sampling) and stating which were matched and which were not. Fixing only the one axis you were
+  told about just relocates the confound to the next one.
+- A claim written into multiple locations gets its scope qualifier updated in only one of them.
+  This is asymmetric in practice: a strengthening edit naturally recruits the author to hunt down
+  every place the old, weaker claim lived, but an edit that *undercuts* an existing claim gets
+  written once and the other locations are never revisited because nothing there looks wrong, only
+  unsupported. When a finding undercuts an existing claim, grep for that claim's other homes
+  before considering the fix committed.
 
 **Before overwriting** a canonical-named output with a `--redo`-style regeneration, archive
 the previous version first. Do not rely on git as an implicit safety net for output
