@@ -24,8 +24,8 @@ code ran. Every failure below actually happened in this workspace.
 - A named metric appears in a governance doc as evidence without three basic checks having been
   done: quote its defining formula from the code and state in one sentence what it physically
   measures; compute it on the control/negative arm too (if both arms saturate, the metric cannot
-  support the comparison at that setting — that, not "the interval was too wide," is the real
-  lesson); and state the physical state of the modelled system (e.g. holo/apo, ligands present,
+  support the comparison at that setting — that, not "the window/threshold was too wide," is the
+  real lesson); and state the physical state of the modelled system (e.g. holo/apo, ligands present,
   which cofactors) and whether it matches the claim being made. All three are needed — each
   catches a different failure, and none substitutes for another.
 - **Positive-control corollary:** if a positive control scores below a candidate on the same

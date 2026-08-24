@@ -46,8 +46,8 @@ this finding is correct, does any currently-stated conclusion change?* If yes, i
 no matter how small the suggested edit looks — a finding phrased as a wording complaint ("stated
 unhedged," "unacknowledged") can still be a category error underneath, and severity
 misclassification of a real finding is how defects survive multiple review rounds undetected.
-Cheap mechanical backstop: re-read the parked Minor list again at every wave's end, not only the
-wave it was filed in — Minors otherwise never get revisited.
+Optional, cheap mechanical backstop: re-read the parked Minor list again at every wave's end, not
+only the wave it was filed in — Minors otherwise never get revisited.
 
 **Unenumerated-objection slot.** Every review dispatch — wave-end or ad hoc — ends with: *"list
 the strongest objection to this work that I did not ask you about."* Reviewers already do this
@@ -61,7 +61,10 @@ biologist-role pass on a biology project) as a routine part of wave-end review, 
 convened only after an external panel or incident forces it. A correctness/completeness/drift
 review is structurally unable to produce a premise-level or domain-plausibility finding — only a
 domain-role pass can, and by the time a crisis convenes one, the defect has usually already shipped
-for a while.
+for a while. No dedicated domain-role agent exists yet — dispatch a generic agent with an explicit
+domain-role prompt and explicit `model`/`effort` per this file's tiering section. Fold it into the
+same wave, not necessarily the same parallel batch, given the account's concurrency cap
+(`feedback_subagent_dispatch.md` memory: 2-3 concurrent, account-dependent).
 
 ## Release/publication gate: security-specialist
 
