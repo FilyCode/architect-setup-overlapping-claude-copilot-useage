@@ -6,7 +6,9 @@ paths:
 
 # Shell scripts
 
-- `set -euo pipefail` at the top.
+- `set -euo pipefail` at the top. Exception: a pure test/regression harness that must keep
+  running after one check fails, in order to report all of them, may use `set -u` alone with a
+  comment saying why — see `software/bin/rtk_selftest.sh`.
 - `#!/bin/bash -l` (login shell) whenever the script calls `module load` — a plain
   `#!/bin/bash` will not have the module system available and fails obscurely.
 - SGE directives belong in the header: `-P liu-scc`, `-l h_rt=`, `-l mem_per_core=`,

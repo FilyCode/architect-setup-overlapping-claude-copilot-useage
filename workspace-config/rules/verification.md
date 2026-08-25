@@ -60,6 +60,91 @@ code ran. Every failure below actually happened in this workspace.
   unsupported. When a finding undercuts an existing claim, grep for that claim's other homes
   before considering the fix committed.
 
+**The `rtk` filter itself can manufacture a false negative.** rtk's PreToolUse hook rewrites
+`cmd` into `rtk cmd`, and rtk subcommands parse their own flags — so a collision changes the
+*answer*, not just the formatting, and always in the reassuring direction. All of the following
+were reproduced on rtk 0.39.0 (2026-08-25) and are now excluded from rewriting; they are listed
+because the *shapes* generalise, not because these particular commands still bite:
+
+- `grep -v` / `-vn` / `-nv` returned the **matching** lines instead of the non-matching ones —
+  rtk ate `-v` as its own verbosity flag. `grep -h` / `-hn` printed rtk's usage banner and zero
+  matches. Both exit 0.
+- `grep -l N PAT F` — `-l`, `-m` and `-t` are **value-taking** rtk options (`--max-len`,
+  `--max`, `--file-type`), so they swallow the following token. `grep -l 5 a.txt b.txt` returned
+  `0 matches for 'a.txt'` rc=1 where raw grep listed both files rc=0. This one is
+  **data-dependent**: a word pattern makes the int parse fail and rtk falls back to raw, so
+  `grep -l foo f` looks perfectly fine. No regex over the flag can see that difference.
+- `diff A B` on differing files kept the correct content but returned **exit 0** instead of 1,
+  inverting any `diff a b && …` or `if diff …` gate.
+- `git log` silently injects `--no-merges`. Output is byte-identical to `git log --no-merges`:
+  the merge commit is dropped **and the count is backfilled** with an older commit, so `-4`
+  returns four lines and looks complete while a `--no-ff` merge reads as a fast-forward. Merges
+  are dropped anywhere in history, not only at HEAD.
+
+Because three distinct collision classes turned up in `grep` alone — each after the previous
+list looked complete — the policy is no longer an enumeration: **any flagged `grep`/`rg` runs
+raw**, and bare `grep PAT F` keeps its compaction. The adversary is a third-party argument
+parser on its own release cadence, and the cost of over-excluding is correct-but-verbose output.
+
+**`rtk find` and `rtk tree` cannot prove absence. This one is not fixed.** They silently omit
+hidden paths *and* gitignored paths, and misreport their own total count as if it were complete.
+Measured in the config repo: raw `find . -name '*.md'` returns **41** hits, `rtk find` returns
+**24**, and its header says `24F`. A gitignored `results/` directory disappears the same way —
+which collides directly with this file's own rule about checking mostly-gitignored output
+directories on disk. There is no flag to include either class.
+
+The config excludes `find` only when the *query text* names a dot path. **That is the wrong
+axis and does not solve the class**: the blindness depends on where the hits are, not how the
+query is spelled, so a plain `find . -name '*.py'` is still rewritten and still blind. `find` is
+left rewritten because it is ~58% of all token savings. So: never conclude a file does not exist
+from `rtk find`. Use `rtk proxy find …`, or `rtk grep` (verified clean on both hidden and
+gitignored paths), or `RTK_DISABLED=1 find …`.
+
+Config: `~/.config/rtk/config.toml`, a **symlink into
+`architect-setup-.../workspace-config/rtk/config.toml`** so it is version-controlled like the
+rules themselves. It did not exist at all before 2026-08-25, so `exclude_commands` was empty and
+nothing was ever excluded. If it goes missing, rtk reverts to rewriting everything with **no
+warning of any kind** — which is why it is not left loose in a quota-capped home directory.
+
+Verified by `bash software/bin/rtk_selftest.sh`: **55/55** — 40 rewrite-decision checks, 12 that
+execute the hook's own resolved command and require it to match the *absolute native binary* on
+both stdout and exit code, and 3 asserting the residuals above. `rtk verify` 145/145. The
+harness is falsifiable, and that was tested rather than assumed: emptying `exclude_commands`
+drives it to FAIL=38, exit 1.
+
+Standing caveats that no config can fix:
+
+- **Pipelines ARE rewritten.** `grep foo f | sort` becomes `rtk grep foo f | sort`; the same for
+  `cat`, `ls`, `diff`, `wc`. Only `find … | …` happens to decline. An earlier version of this
+  section offered a pipeline as a safe escape hatch — that was **wrong**, and wrong in the worst
+  direction, since it was offered for exactly the cases that break.
+- **The escape hatch that does work is the `RTK_DISABLED=1` command prefix.** `RTK_DISABLED=1
+  grep -vn foo f` makes the hook decline with an explicit message. Setting `RTK_DISABLED` in the
+  parent environment does *not* work — that was the form tested when this file previously, and
+  incorrectly, claimed the variable was ignored outright. `rtk proxy <cmd>` and `rtk run "<cmd>"`
+  also bypass the filter and were verified faithful to the native binary.
+- **No exit code from an rtk-wrapped command is evidence.** rtk preserves some (`grep` no-match
+  still returns 1) and destroys others.
+- **`head -N file` under-delivers.** It rewrites to `rtk read --max-lines N` and returns about
+  half the requested lines (`head -20` gave 10, `head -5` gave 2). It does append
+  `[N more lines]`, so this is disclosed rather than silent, but it does not say that lines you
+  explicitly asked for were withheld. `head -n 20` and `head -c 100` are not rewritten at all.
+- **A structurally odd result means suspect the filter before the data** — a usage banner where
+  matches belonged, an implausible "identical", a header count that disagrees with the listing
+  under it.
+- **Not audited for content fidelity:** `rtk pytest`, `rtk git diff`, `rtk git stash show`,
+  `rtk ls`. (`rtk read` was checked and is faithful — md5-identical to `cat`.)
+
+Two lessons here generalise beyond rtk, and both were produced by review rounds *after* this
+section was first written and believed complete:
+
+- **Match the command as invoked, not as idealised.** `^git log\b` failed to cover
+  `git -C <dir> log` and `git --no-pager log` — the spellings actually used in practice.
+- **A positive control built from a convenient fixture proves nothing.** The `-l` collision
+  passed a `grep -l foo f` check while corrupting `grep -l 5 …`, because the safe and broken
+  cases differ by the argument's *type*, not the flag. Pick the fixture that should trip the
+  check, not the one that is easy to write.
+
 **Before overwriting** a canonical-named output with a `--redo`-style regeneration, archive
 the previous version first. Do not rely on git as an implicit safety net for output
 directories that are mostly gitignored.
