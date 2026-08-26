@@ -145,6 +145,46 @@ repeatedly, rather than treating the repetition as an incidental curiosity; a pr
 structural-search hit turning out to be the query's own already-published structure is exactly the
 kind of premise error this catches cheaply.
 
+## Plan review before implementation
+
+After `writing-plans` produces a plan doc (architectural path only — bounded-path short
+in-chat designs skip this, the dispatch cost isn't justified) and its own self-review, but
+before `executing-plans`/`subagent-driven-development` starts Task 1: dispatch a
+**plan-critique wave** against the plan and its spec. Same mechanics as wave-end review
+above (parallel, rtk position stated verbatim, unenumerated-objection slot, minor-triage
+content test) — the difference is what it targets (the plan text, not a diff) and when it
+runs (before work starts, not after).
+
+- Reuse `critic-reviewer` (plan-shaped: feasibility, missing tasks, edge cases) and a
+  domain-role reviewer (same ad hoc dispatch as the wave-end section's domain-role
+  paragraph) — this is the same premise-checking discipline, just moved a stage earlier so
+  a bad premise is caught before it is copied into every task that inherits it.
+- Scale the number of dispatches to the plan's size and complexity: **minimum 3**
+  (critic-reviewer + one domain-role reviewer + one issue-specific angle, chosen from what
+  the plan actually touches — security, data-integrity, concurrency, etc.), up to **~10**
+  for a large or high-stakes plan — one per major task-cluster or distinct risk axis
+  (correctness, domain plausibility, security, performance, data-integrity, concurrency,
+  external-API/rate-limit behavior, backward-compat, test-coverage gaps, premise/instrument
+  choice). Pick the count from the plan's actual content, not a fixed default. The
+  account's concurrency cap still applies (2-3 concurrent, `feedback_subagent_dispatch.md`)
+  — a 10-agent wave runs in batches, not literally at once.
+- Tell each dispatch to verify cheap claims empirically, not just read the plan — grep that
+  a referenced function/signature actually exists, run a two-line script against real data
+  if the plan asserts a library or format behavior. This is what catches "a plan's own
+  example code carries the bug" (`verification.md`) before it propagates into every task
+  that copies it.
+- Blocking/Important findings against the plan get fixed in the plan doc directly, before
+  Task 1 starts — "the brief is wrong" is a first-class finding here too (see above),
+  applied one stage earlier than a wave-end review would catch it.
+- A reviewer may surface an unrelated pre-existing codebase defect while checking the plan.
+  Report it, then judge case by case whether fixing it fits this plan — file overlap with a
+  plan task is not an automatic block; a fix that belongs in the same file a task already
+  touches can be folded into that task directly (still declare ownership per "Concurrent
+  dispatches need declared file ownership" above so the fix and the task edit don't race).
+  If it doesn't fit this plan's scope or timing, don't fix it blind — document it: what it
+  is, where, and when it should be fixed (a follow-up task, a `DECISIONS.md` entry, or a
+  known-issues note in the plan doc itself), so it doesn't evaporate as a chat-only mention.
+
 ## Model and effort tiering for any subagent dispatch
 
 Claude Code subagents default to `model: inherit` — same model as the parent session —
