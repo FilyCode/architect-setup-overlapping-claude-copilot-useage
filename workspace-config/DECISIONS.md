@@ -1,6 +1,6 @@
 # Decision Log: liu-scc (Workspace-Wide)
 
-**Last updated**: 2026-05-06
+**Last updated**: 2026-08-25
 **Format**: `[YYYY-MM-DD] [DECISION-XXX]: Title | Rationale | Impact`
 **Scope**: Only workspace-wide decisions live here. Project-specific decisions live in `projects/<project>/DECISIONS.md` and `projects/<project>/phases/<phase>/DECISIONS.md`.
 
@@ -638,6 +638,77 @@ real critic-reviewer completion (a CHANGES REQUIRED verdict, correctly silent ei
 before this reversal. Reinforces `verification.md`'s point again: a live smoke test,
 promised and actually run, is what caught a design that four synthetic pipe-tests and a
 plausible-sounding docstring both missed.
+
+---
+
+### [2026-08-25] [DECISION-025]: rtk PreToolUse filter switched from rewrite-everything to an allowlist of `cat`
+
+**Problem**: rtk's PreToolUse hook rewrote `cmd` into `rtk cmd` for 53 command families.
+rtk subcommands parse their own flags, so a collision changed the *answer*, not just the
+formatting — always toward a reassuring false negative ("no matches", "identical", exit 0).
+Reproduced on rtk 0.39.0, all silent, all exit 0: `grep -v`/`-vn`/`-nv` returned the
+**matching** lines instead of the non-matching ones (`-v` eaten as rtk's own verbosity flag);
+`grep -h`/`-hn` printed rtk's usage banner and zero matches; `grep -l 5 a b` swallowed `5` as
+`--max-len` and searched for `a`; `diff` on differing files kept correct content but turned
+exit 1 into exit 0, inverting `diff a b && …` gates; `git log` silently injected `--no-merges`,
+dropping the merge **and backfilling the count** so a `-4` looked complete and a `--no-ff`
+merge read as a fast-forward; `find`/`tree` omitted every hidden **and** gitignored path while
+reporting their own total as complete (in the config repo: native `find . -name '*.md'` = 41
+hits, `rtk find` = 24, header `24F`). `~/.config/rtk/config.toml` did not exist at all, so
+`[hooks] exclude_commands` was empty and none of this was ever excluded.
+
+**First attempt, and why it was insufficient**: a blocklist excluding the known-bad shapes.
+Review found four independent holes in a six-entry list — the `-v` regex only matched clusters
+*ending* in v/h so `grep -vn` still corrupted; `^git log\b` missed `git -C <dir> log` and
+`git --no-pager log`; and two "escape hatches" this workspace had documented were false in the
+dangerous direction (a pipeline **is** rewritten, and `RTK_DISABLED=1` **does** work as a
+command prefix). An enumeration can only encode the failures somebody happened to try, against
+a third-party argument parser on its own release cadence.
+
+**What decided it was measurement, not caution**: rtk's own usage DB
+(`~/.local/share/rtk/history.db`, 36,449 commands) shows a **median saving of 0 tokens per
+call**; 61% of calls saved nothing, 82% saved under 100; the **10 largest calls are 91%** of all
+lifetime savings. `rtk find`'s entire 1136.9M was a single `find / -name '*'` — its other 770
+calls saved 0.1M combined. `rtk grep` saved 12.0M across 6,954 calls (0.6%) while being the
+largest corruption source. The "98.8% saved" headline was true and irrelevant: it described two
+mistaken commands (`find /`, `cat` on a multi-GB database), which want *bounding* (`-maxdepth`,
+`| head -n N`), not compression.
+
+**Change**: the hook now rewrites **only `cat`** (to `rtk read`). Expressed as four exclusion
+patterns matching every command whose name is not exactly `cat`, rather than a list of the 53
+current adapters, so any adapter a future rtk release adds is excluded automatically instead of
+silently opting itself in. `cat` is kept because `rtk read` is the only adapter both verified
+faithful (byte-identical to `/usr/bin/cat` across tabs, unicode, 5000-char lines and a missing
+trailing newline) and carrying recurring value — 5 of the 10 biggest savings are `cat` on huge
+database files, truncated *with disclosure*. `config.toml` moved into
+`workspace-config/rtk/config.toml` with `~/.config/rtk/config.toml` as a symlink, matching
+`rules/` and `agents/`; a missing or unparseable config restores "rewrite everything" with no
+warning of any kind, so it must not sit unversioned in a quota-capped home.
+
+**Verified**: `software/bin/rtk_selftest.sh` 52/52 — 1 config-parse assertion, 34 must-run-raw,
+3 allowlist, 8 executing the hook's own resolved command and requiring it to match the
+*absolute native binary* on stdout and exit code, 4 asserting `rtk read` stays byte-identical to
+`cat`, 2 pinning the head/tail bug. `rtk verify` 145/145. Falsifiable both ways and tested
+rather than assumed: emptying `exclude_commands` → FAIL=41; an invalid-TOML config → FAIL=41
+with the parse assertion firing by name.
+
+**Known and not fixable by config**: `head -N`/`tail -N` bypass `exclude_commands` entirely (an
+rtk bug — even an explicit `^head\b` fails while `^[^c]` correctly excludes `ls` and `grep`), so
+`head -20` still returns about half the requested lines, disclosed as `[N more lines]`; use
+`head -n 20`, which runs raw. An unparseable config silently restores zero exclusions — a TOML
+*basic* string rejects `\s` as an invalid escape, a mistake made and caught during this work,
+which is why the patterns are single-quoted TOML *literal* strings and the harness asserts rtk
+actually parsed them.
+
+**Impact**: closes a false-negative class that specifically defeats the "no matches" /
+"identical" / exit-0 checks a reviewer's whole job depends on — directly relevant to
+`subagent-dispatch.md`'s wave-end review gate, whose verbatim rtk warning shrank from a hazard
+list to one line. The residual failure mode changes from *silent wrong answer* to *verbose right
+answer*. Scope is global: the hook is registered once in `~/.claude/settings.json` and no
+project-level rtk hook or config exists. Three method lessons were folded into
+`verification.md`: check an aggregate's distribution before optimising for it; match the command
+as invoked, not as idealised; and a positive control built from a convenient fixture proves
+nothing.
 
 ---
 

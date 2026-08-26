@@ -28,6 +28,7 @@ Project-specific rules live in that project's `CLAUDE.md`.
 
 ## Tooling
 
-Workspace-specific: `rtk` (token filter, applied automatically via a PreToolUse hook —
-`rtk gain` for savings), `caveman`, `ccusage`, `council`, `storm`, `graphify`.
+Workspace-specific: `rtk` (PreToolUse hook; since 2026-08-25 it filters **only `cat`** —
+everything else runs raw. Why, and the two remaining gotchas: `.claude/rules/verification.md`),
+`caveman`, `ccusage`, `council`, `storm`, `graphify`.
 Installed plugins announce themselves; no need to list them here.

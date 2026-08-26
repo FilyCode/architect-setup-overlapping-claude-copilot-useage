@@ -19,6 +19,10 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
   - `rules/*.md` → `.claude/rules/` (3 always-on, 6 path-scoped)
   - `agents/*.md` → `.claude/agents/` (`critic-reviewer`, `alignment-officer`, `scc-monitor`,
     `docs-sync`, `research-scout`, `security-specialist`)
+  - `rtk/config.toml` → `~/.config/rtk/config.toml`, and `rtk/rtk_selftest.sh` →
+    `software/bin/rtk_selftest.sh`. Same symlink rule: a missing or unparseable rtk config
+    silently restores "rewrite every Bash command" with no warning, so it is version-controlled
+    rather than left loose in a quota-capped home. See DECISION-025.
 - `.claude/skills/` — `council`, `storm`, `ccusage`, `rtk`, `caveman`, `workspace-audit`.
   All explicit-invocation only except `caveman`; also symlinked into the workspace root's
   `.claude/skills/` so they load project-wide rather than only inside this repo.
