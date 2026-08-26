@@ -89,17 +89,18 @@ misclassification of a real finding is how defects survive multiple review round
 Optional, cheap mechanical backstop: re-read the parked Minor list again at every wave's end, not
 only the wave it was filed in — Minors otherwise never get revisited.
 
-**Every review dispatch must warn about the `rtk` filter.** A reviewer's job is mostly
-negative checks — "unmodified", "no stale reference", "no matches", "nothing swept in" — and
-rtk's Bash hook produces exactly that class of false result. Include this line verbatim in
-every review dispatch: *"`rtk` rewrites Bash commands and can invert a result; confirm any
-negative finding with `RTK_DISABLED=1 <cmd>` or `rtk proxy <cmd>`, and never treat an exit code
-from an rtk-wrapped command as evidence. A pipeline is NOT a bypass — it is rewritten too. Never
-conclude a file does not exist from `rtk find`, which silently omits hidden and gitignored
-paths."* Details and the verified failure list are in `verification.md`. This costs one sentence
-per dispatch; without it a reviewer reports a clean bill of health it never actually
-established — and note that this round's reviewers found four independent holes in the exclusion
-list itself, including two escape hatches this file had documented backwards.
+**Every review dispatch must state the `rtk` position.** A reviewer's job is mostly negative
+checks — "unmodified", "no stale reference", "no matches", "nothing swept in" — which is exactly
+the class rtk used to corrupt. Since 2026-08-25 rtk filters **only `cat`**, so this is now a
+short line rather than a hazard list. Include verbatim: *"`rtk` filters only `cat` (to
+`rtk read`); every other command runs raw, so grep/find/diff/git output is trustworthy. Two
+exceptions: `head -N`/`tail -N` are still rewritten and under-deliver — use `head -n N` — and no
+exit code from an rtk-wrapped command is evidence. If anything looks structurally odd, re-run it
+with an `RTK_DISABLED=1` prefix; a pipeline is not a bypass."* Detail in `verification.md`.
+
+Worth remembering why this line exists at all: when rtk did filter everything, one review round
+found four independent holes in a six-entry exclusion list, including two escape hatches this
+file had documented backwards.
 
 **Unenumerated-objection slot.** Every review dispatch — wave-end or ad hoc — ends with: *"list
 the strongest objection to this work that I did not ask you about."* Reviewers already do this

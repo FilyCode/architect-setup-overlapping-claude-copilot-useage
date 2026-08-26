@@ -1,66 +1,50 @@
-# rtk config — hand-authored 2026-08-25. Real file lives in this repo; ~/.config/rtk/config.toml
-# is a symlink to it, matching how workspace-config/rules and workspace-config/agents work.
-# Reason: an unversioned copy in a quota-capped home directory would vanish silently, and a
-# missing config restores rtk's default "rewrite everything" with NO warning of any kind.
+# rtk config — hand-authored 2026-08-25. The real file lives in this repo;
+# ~/.config/rtk/config.toml is a symlink to it, matching workspace-config/rules and
+# workspace-config/agents. A missing OR unparseable config makes rtk fall back to rewriting
+# EVERYTHING with no warning of any kind, so it must not sit unversioned in a quota-capped home.
 #
-# WHY THIS FILE EXISTS
-# rtk's PreToolUse hook rewrites `cmd` into `rtk cmd`. rtk subcommands parse their own flags,
-# so a caller's flag can collide with rtk's flag namespace and change the ANSWER, not just the
-# formatting — always toward a reassuring false negative ("no matches", "identical", exit 0).
-# Verified on rtk 0.39.0. Full failure list and standing caveats: .claude/rules/verification.md
-# Regression harness: software/bin/rtk_selftest.sh
+# POLICY: allowlist. Only `cat` is rewritten (to `rtk read`). Everything else runs raw.
+#
+# Why, from the usage DB (~/.local/share/rtk/history.db, 36,449 commands):
+#   - median saving per call is 0 tokens; 61% of calls saved nothing, 82% saved under 100
+#   - the top 10 calls are 91% of all lifetime savings
+#   - `rtk find`'s entire 1136.9M is ONE call, `find / -name '*'` (2026-07-22, 99.8% of it);
+#     the other 770 find calls saved 0.1M combined
+#   - `rtk grep` saved 12.0M over 6,954 calls (0.6%) while being the biggest corruption source
+# So routine compaction buys ~nothing, and the real wins were two pathological commands
+# (`find /`, `cat` on a multi-GB database) that should be BOUNDED, not compressed.
+#
+# `cat` is kept because `rtk read` is the only adapter both verified faithful (byte-identical
+# to /usr/bin/cat across tabs, unicode, 5000-char lines, and a missing trailing newline) and
+# carrying recurring value — 5 of the 10 biggest savings are `cat` on huge database files, and
+# rtk read truncates those *with disclosure*.
+#
+# Failure modes this replaces (all reproduced on rtk 0.39.0, all silent, all exit 0):
+#   grep -v/-vn/-nv  returned MATCHING lines instead of non-matching (-v eaten as rtk verbosity)
+#   grep -h/-hn      printed rtk's usage banner, 0 matches
+#   grep -l 5 a b    -l/-m/-t are value-taking rtk options that swallow the next token
+#   diff A B         exit 1 became exit 0, inverting `diff a b && ...` gates
+#   git log          silently injects --no-merges, dropping merges and backfilling the count
+#   find / tree      omit hidden AND gitignored paths, misreporting their own total as complete
+# Detail: .claude/rules/verification.md   Harness: software/bin/rtk_selftest.sh
 
 [hooks]
 exclude_commands = [
-  # --- grep / rg: ANY flagged invocation runs raw -------------------------------------------
-  # Deliberately NOT an enumeration of colliding flags. Three separate collision classes were
-  # found here, and each was found only after the previous "complete" list shipped:
-  #   -v  eaten as rtk's own verbosity  -> returned MATCHING lines instead of non-matching
-  #   -h  eaten as rtk's own help       -> printed a usage banner, 0 matches, exit 0
-  #   -l/-m/-t are VALUE-TAKING rtk options (--max-len/--max/--file-type), so they swallow the
-  #           FOLLOWING TOKEN. `grep -l 5 a.txt b.txt` -> "0 matches for 'a.txt'" rc=1 where
-  #           raw grep listed both files rc=0. Data-dependent: only bites when the next token
-  #           parses as the option's type, so `grep -l foo f` looks fine and no regex over the
-  #           flag alone can see the difference.
-  # The adversary is a third-party clap parser with its own release cadence, so enumerating it
-  # is a losing game. Bare `grep PAT F` keeps its compaction; anything with a flag goes raw.
-  # Cost ceiling is the whole grep line item (11.6M of 1963.0M lifetime savings, 0.59%), and
-  # the failure mode of over-excluding is correct-but-verbose output.
-  "^(grep|rg)\\s+(.*\\s+)?-",
-
-  # --- diff: content is correct on 0.39.0, but exit 1 becomes exit 0 -------------------------
-  # so `diff a b && ...` and `if diff ...` gates invert.
-  "^diff\\b",
-
-  # --- git log: rtk silently injects --no-merges ---------------------------------------------
-  # Output is byte-identical to `git log --no-merges`: the merge commit is dropped AND the
-  # count is backfilled with an older commit, so `-4` returns four lines and looks complete
-  # while a --no-ff merge reads as a fast-forward. Merges are dropped anywhere in history,
-  # not just at HEAD. NOT anchored as "^git log" — that misses every form with a global
-  # option before the subcommand (`git -C <dir> log`, `git --no-pager log`), both of which
-  # rtk still rewrites and still corrupts.
-  "^git\\b.*\\slog\\b",
-
-  # --- tree, and find when the query names a dot path ----------------------------------------
-  # `rtk find` and `rtk tree` silently omit hidden paths AND gitignored paths, and misreport
-  # their own total count as if it were complete. Measured in this repo: raw `find . -name
-  # '*.md'` = 41 hits, rtk = 24, header says "24F". There is no flag to include them.
-  # `tree` is excluded outright (negligible savings). `find` is NOT fully excluded because it
-  # is ~58% of all token savings; the pattern below only catches the case where the query
-  # itself names a dot path. IMPORTANT: that is the wrong axis for the real risk — the
-  # blindness depends on where the HITS are, not on how the query is spelled — so a plain
-  # `find . -name '*.py'` is still rewritten and still blind. Treat `rtk find` as unable to
-  # prove absence, always. See verification.md.
-  "^tree\\b",
-  "^find\\b.*[\\s/'\"]\\.[A-Za-z_]",
+  # ALLOWLIST, expressed as exclusions because rtk has no include_commands.
+  # These four patterns together match every command whose name is not exactly `cat`.
+  # Written this way rather than as a list of the 53 adapters rtk currently ships, so that any
+  # adapter a FUTURE rtk release adds is excluded automatically instead of silently opting in.
+  # NOTE these are single-quoted TOML *literal* strings. A basic "..." string rejects \s as an
+  # invalid escape, and an unparseable config silently restores ZERO exclusions — that exact
+  # mistake was made and caught while writing this file.
+  '^[^c]',       # anything not starting with c
+  '^c[^a]',      # curl, cd, chmod, cp, cargo's cousins, ...
+  '^ca[^t]',     # cargo, cabal, ...
+  '^cat[^\s]',   # catx, catalina, ... (bare `cat` and `cat <args>` survive)
 ]
 
 [filters]
-# `vendor` removed from the upstream default. NOTE: the original rationale for this edit was
-# wrong — `ignore_dirs` does NOT affect `rtk find` (node_modules/__pycache__/vendor are all
-# still listed by it). It affects `rtk tree` only, and `tree` is now excluded from rewriting
-# outright, so this setting is effectively dead for anything the hook mediates. Kept on its
-# own weaker merit: a direct `rtk tree` call should not hide real project code under vendor/.
+# Only affects `rtk tree`, which is no longer hook-mediated. Kept close to upstream defaults.
 ignore_dirs = [".git", "node_modules", "target", "__pycache__", ".venv"]
 ignore_files = ["*.lock", "*.min.js", "*.min.css"]
 
