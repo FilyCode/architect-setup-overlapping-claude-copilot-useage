@@ -31,6 +31,13 @@ code ran. Every failure below actually happened in this workspace.
   every value is correct — row order that changes between runs is not reproducible output.
 - A check that cannot fail, because it matches the wrong field. A docstring stating what a
   check does is not evidence the check works. Test it against a real case that should trip it.
+- A test that fails *on the fix* — the inverse of the bullet above, and it does fail, on the
+  correct repair, because it asserts the defect as the expected behaviour.
+  `test_plm_backend_revision_override` asserted that a 15-character non-SHA revision is
+  *accepted*, pinning the defeat of a version pin. When a fix turns an existing test red, ask
+  whether the test was asserting the bug before assuming the fix is wrong. Three instances
+  surfaced on 2026-08-27, one in a file no task owned — per-task review cannot find those, only
+  a full-suite run after the fix.
 - A named metric appears in a governance doc as evidence without three basic checks having been
   done: quote its defining formula from the code and state in one sentence what it physically
   measures; compute it on the control/negative arm too (if both arms saturate, the metric cannot
