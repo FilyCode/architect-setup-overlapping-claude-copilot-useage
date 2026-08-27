@@ -185,6 +185,36 @@ runs (before work starts, not after).
   is, where, and when it should be fixed (a follow-up task, a `DECISIONS.md` entry, or a
   known-issues note in the plan doc itself), so it doesn't evaporate as a chat-only mention.
 
+## Escalate to a research/review wave instead of continuing to guess
+
+Two triggers replace further ad hoc trial-and-error with a dispatched wave. Either is
+sufficient on its own — recognizing a problem as heavy up front is a valid trigger by
+itself, not just a fallback after burning several failed attempts:
+
+- **Known-heavy problem, before any attempt** — matches a pattern that's previously eaten a
+  lot of time/tokens (a recurring class of issue, something flagged in project history or
+  memory as hard, or an area you can already tell is architecturally uncertain). Trigger
+  this immediately, don't spend the 3 attempts first just to "earn" the escalation.
+- **`systematic-debugging`'s own 3+-failed-fixes gate** (Phase 4.5: "discuss with your human
+  partner before attempting more fixes"). In this workspace, that discussion is this wave,
+  not just a chat exchange.
+
+When triggered: stop attempting more fixes in-thread. Dispatch, scaled like the plan-review
+wave above (minimum ~2-3, more for a genuinely hard problem, concurrency cap applies):
+
+- a **research** pass (`research-scout` or a web-search-capable dispatch) for prior art /
+  known issues with this exact failure mode, library, or pattern;
+- a **review/audit** pass (`critic-reviewer`-shaped) that re-derives what's actually
+  happening from current real source — fresh eyes, not the accumulated hypothesis trail
+  already stuck in this conversation;
+- a **domain-role** reviewer if the problem is domain-shaped, same pattern as elsewhere in
+  this file.
+
+Output is a short written diagnosis + fix approach (root cause, evidence, plan) — not a
+fifth guess. Resume via `systematic-debugging` Phase 4 with that in hand, or `writing-plans`
+if the fix is big enough to warrant a real plan (which then gets its own plan-review wave
+per the section above).
+
 ## Model and effort tiering for any subagent dispatch
 
 Claude Code subagents default to `model: inherit` — same model as the parent session —
