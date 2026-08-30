@@ -60,6 +60,17 @@ code ran. Every failure below actually happened in this workspace.
   (taxonomy, detection method, window or distance scale, copy number, annotation quality,
   sampling) and stating which were matched and which were not. Fixing only the one axis you were
   told about just relocates the confound to the next one.
+- An isolation run credited with more than it executed. Isolating a diff to find *whose* failures
+  these are is valid **attribution** and invalid **clearance** — the two need different runs, and
+  the second always costs a full suite. On 2026-08-29 an isolation over the five *failing* files
+  correctly attributed 9 failures to one agent, and was then quoted as "the other agent's work is
+  clean"; that run never executed the other agent's own new test file, which held 2 of its 3 real
+  failures. Second half of the same rule: **a `git worktree` is not the main checkout.** Tests
+  keying on CWD, an env lock, or on-disk state fail there for reasons unrelated to the diff — the
+  same day, a worktree isolation reported 5 failures of which 2 reproduced on a clean worktree
+  with *no diff applied*. Run a clean-worktree baseline before believing any worktree failure, and
+  read the **skip count**, not only the FAILED lines: 23-vs-12 skipped was the only visible tell
+  that the environment differed.
 - A green mocked test over a code path that cannot reach its service at all. Mocked transport
   asserts what the code does with a response it was handed; it cannot observe that no socket
   ever opens. On 2026-08-29 an ID-mapping path had a full mocked suite passing while every real
