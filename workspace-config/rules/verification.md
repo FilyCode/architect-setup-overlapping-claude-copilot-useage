@@ -161,6 +161,28 @@ first written and believed complete:
   median call saved nothing. A headline percentage with no percentiles behind it is not evidence
   about the common case.
 
+**`grep` is a shell function here, and it silently skips gitignored paths.** Separate from rtk,
+and `RTK_DISABLED=1` does **not** bypass it — that prefix only disables rtk's hook. `type grep`
+shows a function re-dispatching to Claude Code's bundled ugrep with `--ignore-files`. Measured in
+EnzymeFinder on 2026-08-30: `grep -rIl 'noisy-OR' --include='*.md' .` returns **14** files,
+`command grep` with identical arguments returns **18**. The four dropped were gitignored —
+`graphify-out/` and `.superpowers/sdd/` (whose own `.gitignore` is `*`) — and one of them was a
+research report, so not a harmless omission.
+
+Scope it correctly rather than over-reacting: `src/` and `tests/` are tracked, so ordinary
+code-absence claims are unaffected. What breaks is any absence check that *should* include an
+ignored path — `.superpowers/` ledgers and briefs, `graphify-out/`, `results/` where ignored,
+`__pycache__`. **Use `command grep` for any "no matches anywhere" claim**, and say which you used.
+
+Two cautions learned the same day, in the same five minutes:
+
+- The earlier line in this file that "every other command runs raw, so grep/find/diff/git output
+  is trustworthy" is true *about rtk* and was being read as a blanket guarantee about grep. It is
+  not one. Review dispatches quoting that line should add: *use `command grep` for absence checks.*
+- Before blaming the wrapper, check your own flags. A 0-vs-1 discrepancy that looked like the
+  shell function turned out to be `-i` passed to one invocation and not the other. Compare with
+  identical arguments first; the wrapper is a real hazard and also a convenient scapegoat.
+
 **Before overwriting** a canonical-named output with a `--redo`-style regeneration, archive
 the previous version first. Do not rely on git as an implicit safety net for output
 directories that are mostly gitignored.
