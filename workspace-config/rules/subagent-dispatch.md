@@ -10,8 +10,16 @@ polled `qstat`/`qacct` across ~4 separate round-trips at ~230k tokens each.
 Do not dispatch a subagent whose task is, or includes as a multi-turn loop, "wait for
 job/agent X to finish, then report." Instead:
 
-- If a subagent's task genuinely needs to wait on something external as one internal
-  step, it must do so inside a single `Bash(run_in_background=true)` shell-level loop
+- **A subagent that submits an SGE job does not wait for it.** It submits, reports the job
+  id and what artifact it expects, and stops. The caller waits (one backgrounded loop, per
+  `scc.md`) and resumes the subagent with the result. Observed 2026-08-29: four subagents in
+  one session each ended their turn mid-wait anyway — one after 350k tokens and 171 tool
+  calls, another after 555k — and the caller had to check the job regardless. The
+  backgrounded-loop bullet below was written for exactly this case and did not hold, because
+  **a loop inside a subagent still ends when that subagent's turn ends.** Making the handoff
+  explicit costs one message; leaving it implicit costs a stalled agent *plus* the check.
+- If a *non-SGE* wait genuinely must happen inside a subagent as one internal step, it must
+  do so inside a single `Bash(run_in_background=true)` shell-level loop
   (see `scc.md`'s "Waiting on a job without burning tokens") — never repeated foreground
   status-check calls across turns.
 - If the wait is the *entire* reason for dispatch, don't dispatch at all — the caller
@@ -38,6 +46,29 @@ grep; not verifying costs a review round and a commit that has to be undone.
 The same applies in reverse: when a subagent challenges one of your claims, check the artifact
 before overruling it. On the same day a subagent correctly disputed a stale-exemption claim and
 the caller's doubt was the thing that was wrong.
+
+**Contradiction slot — every dispatch, not just reviews.** Reviewers get an
+unenumerated-objection slot (see the wave-end section below); implementers had no equivalent,
+and they are the ones who read a brief closely enough to catch it being wrong. End every
+implementer dispatch with: *"report anything in this brief that you found to be wrong."* On
+2026-08-29 that slot caught five false claims in one session before any reached the repo: a
+benchmark's CLI flags (the run *did* pass `--annotation-tools diamond`; the real mechanism was
+no-op degradation), an over-broad "cannot reach the service" claim that was true of only one of
+two code paths, an accession asserted to be RefSeq that was EMBL/GenBank, a "permanently
+dormant" contradiction that dissolved once commit dates were checked against manifest dates,
+and a corpus size understated by half. Each would otherwise have been written in verbatim. The
+verify-or-label rule above is the primary defence; this is the backstop for when it slips, and
+it costs one sentence.
+
+**Reviewers write findings down as they confirm them, not at the end.** A wave-end
+`critic-reviewer` on 2026-08-29 burned 162,646 tokens over 49 tool calls and returned a single
+sentence, because it was exploring five equally-weighted areas before composing one report, and
+hit its turn limit with everything still in its head. On the resume it was told to append each
+finding to a file the moment it was confirmed, to rank the areas, and to drop the bottom two if
+turns ran short — it then produced one Blocking and three lesser findings from the same budget.
+So: give reviewers a findings file, rank what you want checked, say explicitly what to drop, and
+prefer instructing them to *execute* a small script over reading more source. A short report
+with three confirmed findings beats an exhaustive one that never lands.
 
 **"The brief is wrong" is a first-class finding.** A retrospective on the MqnE_cofactor_finding
 project (2026-08-24) found reviewers repeatedly and correctly identifying that a plan or brief's

@@ -60,6 +60,16 @@ code ran. Every failure below actually happened in this workspace.
   (taxonomy, detection method, window or distance scale, copy number, annotation quality,
   sampling) and stating which were matched and which were not. Fixing only the one axis you were
   told about just relocates the confound to the next one.
+- A green mocked test over a code path that cannot reach its service at all. Mocked transport
+  asserts what the code does with a response it was handed; it cannot observe that no socket
+  ever opens. On 2026-08-29 an ID-mapping path had a full mocked suite passing while every real
+  call died in the TLS handshake — and behind that, once the handshake was fixed, every call
+  returned HTTP 400 for a second, independent reason. Two stacked defects, neither reachable by
+  any mock, in a path whose paging bug had been "fixed" with mocked tests the night before. For
+  an adapter that talks to an external service, evidence is **one live call showing the real
+  response**; the regression test then asserts the *construction* (that the session is built
+  with the right policy), because that is the part that silently regressed and the part a test
+  can actually hold.
 - A claim written into multiple locations gets its scope qualifier updated in only one of them.
   This is asymmetric in practice: a strengthening edit naturally recruits the author to hunt down
   every place the old, weaker claim lived, but an edit that *undercuts* an existing claim gets
