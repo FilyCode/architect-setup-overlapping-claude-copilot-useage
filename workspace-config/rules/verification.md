@@ -65,7 +65,7 @@ code ran. Every failure below actually happened in this workspace.
   ever opens. On 2026-08-29 an ID-mapping path had a full mocked suite passing while every real
   call died in the TLS handshake — and behind that, once the handshake was fixed, every call
   returned HTTP 400 for a second, independent reason. Two stacked defects, neither reachable by
-  any mock, in a path whose paging bug had been "fixed" with mocked tests the night before. For
+  any mock, in a path whose paging bug had been "fixed" with mocked tests 43 minutes earlier. For
   an adapter that talks to an external service, evidence is **one live call showing the real
   response**; the regression test then asserts the *construction* (that the session is built
   with the right policy), because that is the part that silently regressed and the part a test

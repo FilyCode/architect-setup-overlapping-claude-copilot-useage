@@ -19,9 +19,11 @@ job/agent X to finish, then report." Instead:
   **a loop inside a subagent still ends when that subagent's turn ends.** Making the handoff
   explicit costs one message; leaving it implicit costs a stalled agent *plus* the check.
 - If a *non-SGE* wait genuinely must happen inside a subagent as one internal step, it must
-  do so inside a single `Bash(run_in_background=true)` shell-level loop
-  (see `scc.md`'s "Waiting on a job without burning tokens") — never repeated foreground
-  status-check calls across turns.
+  do so inside a single `Bash(run_in_background=true)` shell-level loop — never repeated
+  foreground status-check calls across turns. Note that `scc.md`'s "Waiting on a job without
+  burning tokens" is **entirely SGE-specific** (`qstat`/`qacct`, `Eqw`/`hqw` states,
+  `h_rt`-derived deadlines); only its shape generalises — one backgrounded loop, a deadline,
+  and no repeated foreground polling. Do not follow its `qstat` mechanics for a non-SGE wait.
 - If the wait is the *entire* reason for dispatch, don't dispatch at all — the caller
   (main session or a fork) checks directly instead; it is near-free there since it is not
   reloading a subagent's accumulated history each time, and only dispatches the real
