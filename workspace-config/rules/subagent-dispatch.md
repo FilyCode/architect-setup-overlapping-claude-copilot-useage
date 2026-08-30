@@ -218,6 +218,59 @@ runs (before work starts, not after).
   is, where, and when it should be fixed (a follow-up task, a `DECISIONS.md` entry, or a
   known-issues note in the plan doc itself), so it doesn't evaporate as a chat-only mention.
 
+### The Calibration block — required before the critique wave
+
+Every architectural plan doc carries a **Calibration** section, written *before* the critique
+wave dispatches. It exists because of the SSN wave (2026-08): a validation harness was built
+around an expectation of what an SSN could do, ran for weeks, and could never clear its own
+anchor floor — because nobody had separated *what this class of method cannot do* from *what our
+implementation does badly*. A literature check afterwards showed both were present at once:
+~35% identity really is the field-wide ceiling for reliable annotation transfer (Zallot 2019),
+**and** our own sub-35% edge recall was 62.5% because of a DIAMOND sensitivity defect (MA-104).
+Conflating them let a fixable 37.5% edge loss hide behind a real citation.
+
+Four items, all four required:
+
+- **Vision context** — which layer or axis of the project's north-star this serves, and at what
+  scale. One layer is not the system. State what this plan is *not* responsible for, so a later
+  reviewer does not indict it for failing to do something it was never meant to do.
+- **Realistic target** — what this achieves when it works correctly. Not the aspiration.
+- **General limits vs our limits** — every constraint named as either field-wide *with a
+  citation* or ours to fix. **Anything unattributed defaults to OURS.** A field limit without a
+  citation is not a field limit; it is an untested excuse, and it is the specific move that cost
+  the SSN wave.
+- **Standard** — the bar is *at least* current tool and literature standard, better where we can.
+  Name the tool and the number being matched, not "state of the art".
+
+**Hard gate when ANY of these hold** — the critique wave rejects a plan whose Calibration block
+is missing, incomplete, or carries an unattributed limit, exactly as it would any Blocking
+finding:
+
+- introduces a new capability or layer (as opposed to extending one that already runs)
+- has 5 or more tasks
+- introduces an external tool, database, or data source
+- asserts any accuracy, coverage, recall, or performance expectation
+
+Otherwise soft: one honest paragraph, no gate. The trigger list is deliberately mechanical —
+"this scope is small and known" is a judgement that gets made most confidently when a wave is
+rushed, which is exactly when calibration errors happen.
+
+**Self fact-check before dispatching.** The caller verifies the Calibration block's own claims
+first: every number resolves to a measurement on disk, every field-limit claim to a citation
+that was actually read. This is the cheapest stage at which to catch a caller's error — the
+alternative is 3-10 agents inheriting it, which is the failure mode the whole
+"a dispatch's factual claims become code" section above exists to prevent. On 2026-08-29 ten
+caller claims were caught downstream by the contradiction slot; each would have been cheaper to
+catch here.
+
+**Unsettled questions become a research task, during plan-writing.** Whatever the Calibration
+block could not answer gets written into the project's research-questions file (for EnzymeFinder,
+`docs/RESEARCH_QUESTIONS.md`) as a numbered topic with specific answerable questions, stating
+*why it matters* and *what would change depending on the answer*. The human partner researches
+externally and feeds results back, so expectations are corrected **before Task 1** rather than by
+a wave discovering mid-flight that its premise was wrong. A question whose answer changes no
+decision does not belong there.
+
 ## Escalate to a research/review wave instead of continuing to guess
 
 Two triggers replace further ad hoc trial-and-error with a dispatched wave. Either is
