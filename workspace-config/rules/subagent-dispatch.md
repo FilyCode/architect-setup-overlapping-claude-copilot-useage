@@ -241,6 +241,21 @@ Four items, all four required:
   the SSN wave.
 - **Standard** — the bar is *at least* current tool and literature standard, better where we can.
   Name the tool and the number being matched, not "state of the art".
+- **Does the named standard already do this?** Check the tool you just named as the bar, and say
+  what it already delivers of what you are proposing to build. Added 2026-08-30 because its
+  absence was not hypothetical: a plan proposed partitioning an SSN by a property its own named
+  comparison tool already separated — EFI-EST's existing cluster assignment put 90.7% of the
+  target mode in one cluster — and neither the author nor the self-fact-check noticed, because
+  both were checking whether the *limits* were attributed correctly rather than whether the
+  *capability* was already delivered. Naming a standard and not reading its output is how a wave
+  gets spent rebuilding it.
+- **Any threshold or cutoff: universal, dynamic, or declared dataset-specific.** A number derived
+  from one dataset is a property of that dataset until shown otherwise. State which of the three
+  it is. Prefer deriving it per run (a peak-detection or distribution-based rule that re-computes
+  on the data in hand) over a constant, and where a constant is genuinely right, cite what makes
+  it general. A hardcoded cut fitted to one corpus silently becomes a wrong cut on the next one,
+  and nothing in the pipeline will say so — the same shape as a score whose meaning depends on
+  the run that produced it.
 
 **Hard gate when ANY of these hold** — the critique wave rejects a plan whose Calibration block
 is missing, incomplete, or carries an unattributed limit, exactly as it would any Blocking
