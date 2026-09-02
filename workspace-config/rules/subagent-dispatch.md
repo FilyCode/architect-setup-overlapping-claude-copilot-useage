@@ -49,6 +49,21 @@ The same applies in reverse: when a subagent challenges one of your claims, chec
 before overruling it. On the same day a subagent correctly disputed a stale-exemption claim and
 the caller's doubt was the thing that was wrong.
 
+**Every stratified or conditional figure carries its n, in the brief and in the finding.** A
+rate without a denominator propagates and cannot be checked by the agent receiving it. This
+failed **three times in one wave** on 2026-09-01 — twice *after* the same correction had already
+been made and committed. `0.0717` travelled through a plan, a task brief and a backlog entry
+before anyone established it was 16/223 with a 48-row comparator.
+
+**Prefer a short brief of verified claims to a long brief of relayed ones.** In that same wave,
+**eleven of twelve implementers found at least one factual error in the controller's brief**.
+The single agent that found none had the shortest brief: entirely verified against source
+beforehand, naming one specific prior error rather than restating a dozen measurements.
+Relaying a reviewer's number without checking it makes it the repo's number — the classes that
+failed most were figures without their n, line-number citations (which drift as a wave adds
+lines), and *mechanism* descriptions, where being right that something failed does not make you
+right about why.
+
 **Contradiction slot — every dispatch, not just reviews.** Reviewers get an
 unenumerated-objection slot (see the wave-end section below); implementers had no equivalent,
 and they are the ones who read a brief closely enough to catch it being wrong. End every
@@ -86,6 +101,18 @@ Never dispatch two implementers that touch the same file. When several tasks que
 shared file, say in each dispatch exactly which files it owns and which are off-limits because
 another agent holds them.
 
+**Every dispatch that may commit ends with: run `git show --stat` after each commit and
+confirm it touched only your files.** Prescribing the form is not enough. On 2026-09-01, with
+six-plus concurrent agents, **two shared-index collisions occurred in opposite directions** —
+one agent ran `git commit -m "..."` without the trailing `-- <paths>` and swept another's
+staged file; another's staged work was swept into a third agent's bare commit. Both agents had
+read the explicit-path rule; one understood it and got the **flag order** wrong. **Both were
+caught by the same thing: running `git show --stat` afterwards.** Nothing was lost either time.
+Include the recovery in the dispatch, because it is not obvious under pressure:
+`git reset --soft HEAD~1`, then `git reset -- <the other agent's files>`, then re-commit
+path-scoped. Also tell agents to stage untracked files individually by name — `git add <dir>/`
+sweeps a neighbour's new files just as effectively as a bare commit.
+
 An agent that waited while other commits landed is working from a stale read: tell it what
 changed underneath it and instruct it to re-read before editing. Also tell it which currently
 failing checks are *not* its own, or it will start repairing someone else's work.
@@ -121,6 +148,14 @@ unhedged," "unacknowledged") can still be a category error underneath, and sever
 misclassification of a real finding is how defects survive multiple review rounds undetected.
 Optional, cheap mechanical backstop: re-read the parked Minor list again at every wave's end, not
 only the wave it was filed in — Minors otherwise never get revisited.
+
+**A review dispatch issued while implementers are still running must name the files that are
+currently uncommitted-modified**, and tell the reviewer to check `git status` before filing any
+documentation-drift finding. On 2026-09-01 a cross-wave auditor reported that without that
+check it *"would have filed F5-scale findings against all three"* of `ARCHITECTURE.md`,
+`CAPABILITY_STATUS.md` and `KNOWN_LIMITATIONS.md` — files a concurrent agent had already
+corrected. A reviewer auditing a tree that is mid-edit files findings against text that is
+already right, and the controller then has to disprove its own reviewer.
 
 **Every review dispatch must state the `rtk` position.** A reviewer's job is mostly negative
 checks — "unmodified", "no stale reference", "no matches", "nothing swept in" — which is exactly
@@ -166,6 +201,15 @@ hand. Complementary to the native `/security-review` skill, which is diff-scoped
 full-project gate.
 
 ## Brainstorming: research-scout
+
+**Before dispatching any research task, `command grep` the gitignored workspace directories for
+prior work on the same question.** `.superpowers/` holds every previous wave's ledgers, briefs
+and reports, and this workspace's `grep` is a shell function that **skips gitignored paths** —
+so the controller's own prior-art search silently misses them. On 2026-09-01 a calibration
+literature review was dispatched that partly duplicated a **713-line, 48 KB review from three
+days earlier**; the agent found it immediately with `command grep`. `verification.md` already
+warns about this hazard for *reviewers' absence claims*; it binds the controller's own searches
+too.
 
 For a non-trivial design decision during `brainstorming`, dispatch `research-scout`
 first (see its own description for scope). Skip it for small/obvious decisions.

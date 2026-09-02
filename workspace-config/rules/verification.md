@@ -88,6 +88,48 @@ code ran. Every failure below actually happened in this workspace.
   unsupported. When a finding undercuts an existing claim, grep for that claim's other homes
   before considering the fix committed.
 
+- A three-state value collapsed back to two at a boundary its author did not own. This is
+  the single most repeated defect in this workspace: **five instances in one wave**
+  (2026-09-01), two of them in code written during that wave *to fix* the class, by agents
+  whose briefs quoted the convention. Unknown became `False` and manufactured a novelty flag;
+  became "index unavailable" with no flag; became **`unanimous`, the strongest state**; became
+  a prediction failure; became `[]`, identical to a genuine empty result. **A three-state
+  value must be typed, not conventional** — introduce it as a distinct type or explicit enum,
+  never a `bool | None` guarded by a comment, because `bool()`, `or False`, `.get(k, False)`
+  and any truthiness test erases the third state silently. **At introduction, enumerate every
+  consumer** with `command grep` across `src/`, tests, renderers and exporters, and list them
+  in the commit message: four of those five collapses were in a consumer the introducing
+  change never looked at.
+- A claim that a signal is live, or dark, argued from wiring rather than measured. **Firing is
+  not moving.** On 2026-09-01 a controller reported "no shipped score moves" from a code
+  comment, a reviewer corrected it to "the signal is live, so scores move", and the
+  measurement showed it was live *and algebraically incapable of changing any score* — it sat
+  in a `max`-folded group where its own upper bound could never beat a co-member. Three
+  parties reasoned about connectivity; none probed behaviour. The cheap probe is the value's
+  **own upper bound**: if the output does not move there, the signal cannot move it anywhere.
+- A boundary held constant while the thing producing it changed meaning, with no version stamp
+  on the output. **Stability of the scale is not stability of the meaning** — it is what makes
+  old and new artifacts incomparable *while looking comparable*. If a score's inputs, grouping
+  or semantics change, bump a version that travels with every artifact carrying it and refuse
+  to resume across a mismatch. "No boundary was touched" was offered as this workspace's
+  safety property on 2026-09-01 and was precisely the hazard.
+- A test made vacuous by a change that never edited it. `test_fusion_is_monotone_in_each_signal_value`
+  swept one signal 0.00→1.00 beside another; once a grouping change put both in the same
+  `max` fold, the sweep produced **exactly one distinct score across all 101 steps**, and a
+  constant satisfies `>= previous` unconditionally. **A change to how inputs combine
+  invalidates every test that probes one input in isolation** — after such a change, re-derive
+  what each affected test actually varies. A sensitivity or monotonicity test whose swept
+  variable no longer reaches the output stays green and says nothing.
+- **A capability claimed as "implemented" with no call path.** This workspace requires that a
+  *number* trace to a committed script and an output artifact; it did not require that a
+  *capability claim* trace to a call path, and on 2026-09-01 an AST import graph over all 196
+  modules found **53 modules / 14,704 lines — a third of the package, all but two with
+  dedicated tests — unreachable from any real run**, several of them documented as
+  "Implemented + unit-tested". Before writing "implemented" in any status document, name the
+  entry point, the config flag and the artifact it consumes. **"It has tests" is not
+  reachability.** Prefer generating the column: a ~60-line import-graph script produces it and
+  CI can fail when a claimed row and measured reachability disagree.
+
 **`rtk` is now an allowlist: only `cat` is filtered. Everything else runs raw.** rtk's
 PreToolUse hook used to rewrite `cmd` into `rtk cmd` for 53 command families. rtk subcommands
 parse their own flags, so a collision changed the *answer*, not just the formatting, always in
