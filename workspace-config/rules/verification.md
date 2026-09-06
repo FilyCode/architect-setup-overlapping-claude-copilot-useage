@@ -229,5 +229,42 @@ Two cautions learned the same day, in the same five minutes:
 the previous version first. Do not rely on git as an implicit safety net for output
 directories that are mostly gitignored.
 
+**A stage that filters its own input must report what it dropped.** An omission from a queue is
+invisible to every downstream counter, because counters count what *arrived*. On 2026-09-05 a
+structure stage held 69 UniProt accessions, was offered 10 after an upstream regex filtered the
+rest, and reported
+`gating_summary = {missing: 0, rejected_low_confidence: 0, resolved: 10, retry_exhausted: 0}`
+with `terminal_failures: []` — **a clean total-success report over a population silently reduced
+from 69 to 10**. The string the investigation expected to find (`"invalid_accession"`) appeared
+in **0 of 227** run artifacts, because the rejection happened one stage earlier and produced no
+error, no flag and no non-zero count anywhere. The defect lived three months. Same shape as "a
+gate that passes because it never exercises the path in use", one level earlier: **report the
+denominator you started with, not only the numerator you finished with.**
+
+**Use `command grep` to find candidates, and a parser to count them.** `command grep` is right
+for absence claims — the shell `grep` here silently skips gitignored paths — but a grep count
+quoted as an enumeration is a confidently wrong number. Measured 2026-09-05:
+`command grep -rlE "^\s*from .* import"` returned **102 test modules and 17 `src/` modules**;
+a scope-aware AST walk over the same question returned **78 and 10**, because `^\s*` also
+matches *function-local* imports, which were not exposed to the defect being counted. Grep finds
+the candidates; an AST walk counts them.
+
+**A three-state value is typed at introduction, not repaired at review.** The existing rule
+above is right and is being followed *after* the fact. One 2026-09-05 wave produced roughly
+eight fresh instances — `evidence_index`, `neighborhood_consensus`, `confidence_stage_status`,
+`clean_extrapolated` (twice, on two independent paths), `identity_margin` written as `NaN` and
+recovered by convention, `vote_breakdown` collapsed by `dict(getattr(..., {}) or {})`, and a
+resolution state — **several of them in code written during that wave to fix the class**. What
+is new is not the rule but the evidence that it must be enforced at *review* time: ask of every
+new value whether it can be unknown, and if it can, require the type to say so and the
+introducing commit to list every consumer.
+
+**A number in a comment is a claim and decays like one.** On 2026-09-05 a correct fix added
+`inspect.getsource` to a hashing function, taking it from **30.7 µs to 6.64 ms** — a 200x
+regression — while the comment beside it still read 30.7 µs. The fix was right; the comment
+became false the moment it landed, and nothing noticed for the rest of the day. When a change
+touches code whose cost or behaviour a nearby comment quantifies, **re-measure or delete the
+number.** A stale figure in a comment is indistinguishable from a current one.
+
 **Reporting.** State what was run and what it returned. If tests fail, say so with the
 output. If a step was skipped, say that. When something is verified, say it plainly.

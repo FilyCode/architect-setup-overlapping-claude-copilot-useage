@@ -33,6 +33,64 @@ job/agent X to finish, then report." Instead:
   completion, or (for `/loop` dynamic pacing) use `ScheduleWakeup` with a delay sized to
   the actual expected duration, never a short fixed interval "just in case."
 
+**An instruction is not a backstop — the caller must own every `qsub`.** On 2026-09-05 two
+agents stalled mid-wait at **176k and 285k tokens**, each having been told verbatim in its
+brief *"submit, report the job id, and STOP — a wait loop inside a subagent dies when your
+turn ends"*, with the same rule already written here and in `scc.md`. That is three written
+statements of the rule and two violations in one wave. The instruction is not the problem;
+relying on one is. An agent that cannot finish inside its turn does the locally reasonable
+thing, exactly as the comment-instead-of-task failure below predicts.
+
+So: **the dispatching side submits every job.** An agent that needs one writes the job spec
+(the script, the resources, the artifact it expects) into its report and stops; the caller
+submits, waits in one backgrounded loop, and resumes the agent with the result. Waiting then
+is not expressible rather than merely forbidden. Cost of the old way, measured: two stalled
+agents, two resume cycles, and one dirty tree that raced a suite run.
+
+## A follow-up note is a task, not a comment
+
+When an agent finds that the fix belongs in a file it does not own, that finding becomes a
+**dispatched task with declared ownership in the same wave**. It does not become a comment.
+
+The evidence is uncomfortable. In one wave `pipeline/stages.py` gained **94 lines: 81 comment,
+1 blank, 12 code** — and two of the twelve were `_confidence_config_snapshot = None` in
+branches differing only by the comment above them. The three-state distinction the task existed
+to create lived **in the prose and not in the program**. A 55-line comment stated the defect,
+named the fix, named the parameter to add, and cited the rule it violated; it was a better bug
+report than most bug reports, **and that is precisely why it survived four agents and a
+review** — a defect documented that thoroughly is nearly indistinguishable from a defect fixed.
+
+The reviewer's diagnosis, adopted here: one-file-per-agent ownership prevents index collisions
+and *systematically manufactures unowned seams*. The next agent reads the comment as context
+rather than as an open work item.
+
+**Corollary: a chain of N tasks over N files needs an N+1st whose only job is to `command grep`
+for who actually *calls* the new thing.** A four-task chain built a manifest field, wired two
+call sites, added a typed enum — and nobody passed the value. Its own test passed the argument
+directly and stayed green.
+
+## `git stash` is a third shared-index hazard
+
+Already recorded: a bare `git commit` sweeps another agent's **staged** files, and
+`git commit -- <paths>` sweeps their **unstaged** ones. **`git stash push -- <paths>` races
+too.** On 2026-09-05 a RED check's stash briefly captured a concurrent agent's uncommitted
+work; it was recovered with `git stash pop` and nothing was lost, but only because the
+collision was noticed.
+
+**For a RED check under concurrency, copy the pre-fix file with `git show HEAD:<path>` into
+scratch instead.** Reading a blob does not mutate shared state; stashing does.
+
+## Every relayed figure carries its column, not only its n
+
+The rule that a stratified figure carries its `n` is necessary and **not sufficient**. Two
+agents measured the same wire on the same corpus and reported **1,577 (10.79%)** and
+**1,459 (9.98%)** — both correct, on `top_hit_identity` and `identity_to_donor` respectively.
+Separately, two artifacts disagreed on 87 rows because one `fuse()` call silently omitted a
+signal, and each was quoted as "the b10 corpus".
+
+An `n` without the column it was measured on is how **one number acquires two
+independent-looking sources**. State the artifact, the column, and the arm.
+
 ## A dispatch's factual claims become code
 
 A subagent cannot tell which of the caller's assertions were verified. It will faithfully
