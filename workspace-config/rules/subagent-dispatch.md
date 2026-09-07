@@ -535,6 +535,11 @@ that gap: a lint failure that pointed at a cross-cutting output-format bug, and 
 question that belonged to no task. Add one seat, once, around the midpoint, whose only scope is what
 no task owns: the gates as a whole, the tree as a whole, and any file every task read and none owned.
 
+No dedicated integration-seat agent exists — same shape as the domain-role reviewer above: dispatch
+`critic-reviewer` (or a generic agent, if `critic-reviewer`'s own turn/model budget doesn't fit) with
+an explicit integration-scoped prompt naming exactly what no task owns, rather than its usual
+single-file brief.
+
 ## Three-state is a plan-time checklist item, not a review-time catch
 
 W14 ruled the same way five separate times (its R15, R19, R20, R21, R24), each on code written
@@ -546,7 +551,9 @@ from "no result".
 
 Ask it at plan time, once per new check: **what is this check's third state, and how does the check
 say it out loud?** The answer is nearly always "account for it explicitly and report the count", and
-nearly never "exclude it".
+nearly never "exclude it". Same lesson as `verification.md`'s "A three-state value is typed at
+introduction, not repaired at review", one stage earlier: that entry catches the collapse at review
+time; this one asks the question before the check is even written.
 
 ## A pragmatism seat is the lever for fewer rounds
 

@@ -257,7 +257,8 @@ recovered by convention, `vote_breakdown` collapsed by `dict(getattr(..., {}) or
 resolution state — **several of them in code written during that wave to fix the class**. What
 is new is not the rule but the evidence that it must be enforced at *review* time: ask of every
 new value whether it can be unknown, and if it can, require the type to say so and the
-introducing commit to list every consumer.
+introducing commit to list every consumer. `subagent-dispatch.md`'s "Three-state is a plan-time
+checklist item, not a review-time catch" asks the same question one stage earlier, at plan time.
 
 **A number in a comment is a claim and decays like one.** On 2026-09-05 a correct fix added
 `inspect.getsource` to a hashing function, taking it from **30.7 µs to 6.64 ms** — a 200x
