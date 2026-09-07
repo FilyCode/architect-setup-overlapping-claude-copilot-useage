@@ -576,8 +576,17 @@ requirement, because those two are prominent and this one sits mid-paragraph.
 So the failure was **retrieval, not discipline**, and the fix is mechanical. Every review dispatch
 carries all of these; composing one is a single lookup rather than several independent recalls:
 
-1. **A findings file path**, with the instruction to append each finding the moment it is confirmed.
-   If turns run out, that file is the deliverable.
+1. **A findings file path, created as the agent's FIRST action — before it investigates anything.**
+   Then appended to the moment each finding is confirmed. If turns run out, that file is the
+   deliverable.
+
+   **The "append as you go" instruction alone is not sufficient — measured twice on 2026-09-07.**
+   One reviewer was given no findings file and returned one sentence after 162,630 tokens. A second
+   *was* given the file path and the append-as-you-go instruction, and still returned nothing after
+   144,164 tokens and 45 tool calls, having never created it. A third, same instruction, wrote
+   incrementally and survived its limit intact. So the instruction works sometimes, and "sometimes"
+   is not a control. Requiring the file to exist **before** the investigation starts is what makes
+   the deliverable independent of whether the agent runs out of turns.
 2. **Ranked areas, and what to drop.** Say explicitly which areas to abandon if turns run short. A
    reviewer given five equal areas explores all five and lands none.
 3. **"Prefer executing a small script over reading more source."** A ten-line grep that answers the
