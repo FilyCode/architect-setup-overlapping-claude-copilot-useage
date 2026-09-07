@@ -17,6 +17,8 @@ Projects live under `projects/<name>/`. The active one is named in `PROJECT_STAT
 ## Before you finish
 
 - Never claim done, fixed, or passing without evidence — see `.claude/rules/verification.md`.
+- Dispatching any subagent — wave-end review, plan-critique wave, research/review
+  escalation, model/effort tiering: `.claude/rules/subagent-dispatch.md`.
 - Governance files (`ARCHITECTURE.md`, `DECISIONS.md`, `CLAUDE.md`,
   `PROJECT_STATE.md`) need explicit approval before you change them.
 - So does anything outward-facing: pushing, opening or closing GitHub issues, touching CI.

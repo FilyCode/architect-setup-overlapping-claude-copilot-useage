@@ -16,9 +16,11 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
 
 - `workspace-config/` — the workspace root's config, symlinked back to `/projectnb/liu-scc/philipp/`:
   - `CLAUDE.md`, `ARCHITECTURE.md`, `DECISIONS.md` → workspace root
-  - `rules/*.md` → `.claude/rules/` (3 always-on, 6 path-scoped)
+  - `rules/*.md` → `.claude/rules/` (9 files, all read on demand via prose references from
+    `CLAUDE.md` or other rules — no hook auto-injects any of them; a file only reaches a
+    session if something actually points to it, verified 2026-09-06)
   - `agents/*.md` → `.claude/agents/` (`critic-reviewer`, `alignment-officer`, `scc-monitor`,
-    `docs-sync`, `research-scout`, `security-specialist`)
+    `docs-sync`, `research-scout`, `security-specialist`, `pragmatism-officer`)
   - `rtk/config.toml` → `~/.config/rtk/config.toml`, and `rtk/rtk_selftest.sh` →
     `software/bin/rtk_selftest.sh`. Same symlink rule: a missing or unparseable rtk config
     silently restores "rewrite every Bash command" with no warning, so it is version-controlled

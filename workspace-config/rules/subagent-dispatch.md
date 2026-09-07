@@ -245,6 +245,14 @@ domain-role prompt and explicit `model`/`effort` per this file's tiering section
 same wave, not necessarily the same parallel batch, given the account's concurrency cap
 (`feedback_subagent_dispatch.md` memory: 2-3 concurrent, account-dependent).
 
+**Pragmatism-officer runs last, after findings exist.** Once critic-reviewer/alignment-officer/
+docs-sync/domain-role have filed, dispatch `pragmatism-officer` to triage the wave's own
+findings for proportionality — what actually needs fixing now versus what's real but low-impact
+and can be documented and deferred, and what's scope creep to reject outright. It has no
+authority over severity or correctness (see its own file); it runs on top of the Minor-triage
+content test above, not instead of it. Skip it when the wave produced zero findings — there is
+nothing to triage.
+
 ## Release/publication gate: security-specialist
 
 Before a project goes to production or publication (a public code release, a public
@@ -319,6 +327,11 @@ runs (before work starts, not after).
   If it doesn't fit this plan's scope or timing, don't fix it blind — document it: what it
   is, where, and when it should be fixed (a follow-up task, a `DECISIONS.md` entry, or a
   known-issues note in the plan doc itself), so it doesn't evaporate as a chat-only mention.
+- Once the plan-critique wave's findings are in, dispatch `pragmatism-officer` over them
+  before deciding what actually goes into the plan rewrite — same proportionality triage as
+  wave-end review, applied to plan-stage findings instead of a diff. A critique wave scaled
+  up to ~10 dispatches produces a lot of adversarial output; this is what keeps one bounded
+  issue from triggering five rounds of plan rewrites before Task 1 even starts.
 
 ### The Calibration block — required before the critique wave
 
@@ -417,6 +430,10 @@ Output is a short written diagnosis + fix approach (root cause, evidence, plan) 
 fifth guess. Resume via `systematic-debugging` Phase 4 with that in hand, or `writing-plans`
 if the fix is big enough to warrant a real plan (which then gets its own plan-review wave
 per the section above).
+
+Before committing to a fix approach, run the combined research/review/domain findings
+through `pragmatism-officer` — a problem heavy enough to earn a wave still deserves a fix
+sized to what's actually at stake, not the largest one the wave surfaced.
 
 ## Model and effort tiering for any subagent dispatch
 
