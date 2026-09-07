@@ -466,3 +466,94 @@ time, same limitation as any other prose rule in this workspace.
 A named agent under `.claude/agents/` already declares its own model/effort in its own
 front matter — that is the actual source of truth. Read the agent file rather than
 keeping a duplicate lookup table here.
+
+## Run the fast gates per task, not at wave end
+
+W14 (2026-09-06) ran the full suite once, at wave close. `ruff check src/` had been failing since
+the task that introduced the file — through **three review passes that all approved it**, including
+two that reproduced the implementer's evidence independently. The lint error was `F841`, twice: two
+variables computed and never used. It was not style. Those variables were the column names a
+`--ec-column` option was supposed to produce, and their being dead meant the option was a **complete
+no-op** and that a header-bearing input produced a **6-column header over 14-column data rows** —
+i.e. the wave's own delivery rule ("no existing parser broken") violated by the task that existed to
+demonstrate it. Nothing else in the wave found it.
+
+**So a task is not done until the repo's fast gates pass on it.** Put them in the task's definition
+of done and in the dispatch: the linter on changed paths, the task's own tests, and any cheap
+project-specific checker. Seconds per task; it would have converted a wave-close surprise into a
+first-round fix. Reserve the full suite (and `qsub`) for wave close, where it belongs.
+
+## A suite run needs a quiet tree, and the wave owns keeping it quiet
+
+Two independent contaminations hit W14's wave-close suite run, and both were the controlling
+session's fault:
+
+- **The job raced its own repository.** `#$ -cwd` runs against the LIVE tree, and a docs commit
+  landed mid-run. The suite's own provenance guard caught it (`RACED: HEAD moved during the run`)
+  — a guard worth having, and no substitute for not doing it.
+- **A reviewer's temporary test file was collected.** A review agent copied a test into `tests/` to
+  exercise it under the repo's `conftest.py`, and the suite collected it and counted its failures.
+  It cleaned up afterwards, so the tree was clean by the time anyone looked — and the run was
+  already wrong.
+
+Before submitting: assert no tracked modifications, no stray files under the test directory, and
+record HEAD. Then **make no commits and run no agents until it returns.** And tell every dispatched
+agent, reviewers included: **never create a file under `tests/`**, not even briefly.
+
+## Every dispatch carries the environment-invariants block
+
+W14 added each of these reactively, after the incident that motivated it. They belong in the
+template.
+
+- **Scratch goes in the session scratchpad, namespaced per agent.** A review agent wrote its
+  verification output into a pre-existing untracked `logs/` directory and then `rm -rf`'d the
+  directory during cleanup, destroying contents it had never read. Untracked, so git had no copy and
+  no snapshot existed. One line in a committed report cited a file in there as its evidence; that
+  evidence is gone permanently. The agent disclosed it, which is the only reason anyone knows.
+- **Never `rm -rf` inside the project tree.** Delete specific files you created, by name.
+- **Read output directories; never modify, move or delete them.** They are usually gitignored, so
+  nothing there is recoverable, and the shell `grep`/`find` wrappers cannot see them —
+  `command find` / `command grep` can.
+- **Name the repo's own test-environment traps**: autouse fixtures in `conftest.py` that override
+  what is deployed, and CI's real `-k`/`-m` filter expression. A W14 test was marked `slow` and
+  would still have run on **every PR**, because this repo's convention pairs that marker with an
+  env opt-in and the marker alone excludes nothing. The reviewer found it by running CI's actual
+  filter with `--collect-only` rather than reasoning about it.
+
+## Generate a task's brief at dispatch time, not up front
+
+W14 generated all eight briefs early, then reordered two waves for file-contention reasons. A brief
+then instructed its implementer to run a script that a not-yet-dispatched task was going to create.
+The implementer did the right thing — skipped it and said so — but a brief that references another
+task's output is invalidated by any resequencing, silently.
+
+## One integration seat, mid-wave
+
+Per-task reviews are path-scoped by necessity under concurrency, and path-scoped review is
+structurally incapable of seeing across tasks. Both W14 defects that survived to wave close lived in
+that gap: a lint failure that pointed at a cross-cutting output-format bug, and a ratchet drift
+question that belonged to no task. Add one seat, once, around the midpoint, whose only scope is what
+no task owns: the gates as a whole, the tree as a whole, and any file every task read and none owned.
+
+## Three-state is a plan-time checklist item, not a review-time catch
+
+W14 ruled the same way five separate times (its R15, R19, R20, R21, R24), each on code written
+**during that wave to fix that class**: a check that could not express "deliberately absent", where
+the proposed fix removed the thing from view instead of teaching the check to see it — a marker
+nobody writes, rows excluded rather than accounted for, a claim rewritten so the checker stops
+matching it, a phase whose archived status is never read, a command that cannot tell "not my input"
+from "no result".
+
+Ask it at plan time, once per new check: **what is this check's third state, and how does the check
+say it out loud?** The answer is nearly always "account for it explicitly and report the count", and
+nearly never "exclude it".
+
+## A pragmatism seat is the lever for fewer rounds
+
+W14 recorded 24 rulings across 17 fix rounds, and several expanded scope — at least one was fixed
+against the controller's own minor-triage test, on the argument that a follow-up note becomes a
+comment and evaporates. That argument is sound and it is also how a wave grows. `pragmatism-officer`
+exists for exactly this: it does not change severity or correctness verdicts, it separates what must
+be fixed now from what can be documented and deferred. Dispatch it once a wave's findings exist,
+before the fixes are commissioned — not after.
+

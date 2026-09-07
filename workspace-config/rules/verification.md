@@ -268,3 +268,58 @@ number.** A stale figure in a comment is indistinguishable from a current one.
 
 **Reporting.** State what was run and what it returned. If tests fail, say so with the
 output. If a step was skipped, say that. When something is verified, say it plainly.
+
+## A plan's own tests and fixtures are suspects, not specifications
+
+W14 (2026-09-06) shipped ~15 tests inside its plan document. **Four were defective**, and every
+implementer treated them as requirements because that is what a brief looks like:
+
+- one never exercised the state it existed to protect — the `UNMEASURED` branch of a three-state
+  value. Proven by collapsing that state and watching all four given tests stay green;
+- one asserted a branch that never executes (`if "ef_ec_confidence" in text:` where the column is
+  never emitted by design), so its assertion never ran;
+- one used a fixture that could not trip its own check;
+- two could not run in CI at all, because they silently depended on a machine-local reference map
+  that `tests/conftest.py` forces off.
+
+**So: tests arriving in a brief are drafts.** Every dispatch that hands an implementer test code
+says so, in one line: *"the tests in your brief are drafts — prove each can fail before trusting
+it, and report any that cannot."* In W14 that instruction was absent, and the defects were found
+by implementers who applied the make-it-fail rule anyway. Do not rely on that.
+
+**The convenient-fixture rule now has a worked instance, and it is embarrassing enough to keep.**
+This file already says a positive control built from a convenient fixture proves nothing. W14's
+plan contained a step whose *entire purpose* was to verify that appending columns does not break
+a downstream parser — and it missed, because the probe used an 11-column row while the plan's own
+fixture used 8 and the real artifact turned out to be **6**. Appending onto a short row put the new
+columns where the parser reads `full_sseq`/`qlen`/`slen`, and it **silently dropped every row**.
+The step written to prevent picking the easy fixture picked the easy fixture.
+
+**Corollary: for any format, parser or schema work, the first fixture is a real artifact,
+downsampled — never a hand-typed row.** A hand-typed row encodes what the author believes the
+format is. The real file is what the format is. Find one with `command find` (output directories
+are usually gitignored, so the shell `grep`/`find` wrappers will not see them).
+
+## Execute the plan's own claims before Task 1
+
+Every factual claim a plan makes about the codebase is either executed before dispatch or labelled
+`UNVERIFIED`. W14 shipped six that were not, and each reached an implementer verbatim:
+
+| Claimed | Actual |
+|---|---|
+| `idx.known(module)` validates a module name | `resolve()` is a **prefix walk**, so any dotted name under the package resolves — `enzymefinder.totally.made.up.module` returns `known=True, state=cli`. The docstring prescribes `name in idx.states` for document-supplied names |
+| `align --input/--output` | positional `FASTA` plus `--project-dir` |
+| `run_self_test` | the function is `selftest` |
+| `load_entries()` returns a list | returns a tuple, and takes a required `methods_dir` |
+| "122 rows" in `CAPABILITY_STATUS.md` | 112 capability rows; the scanner counted a legend table and a roadmap table as capabilities |
+| `M1:668` | the quote is at `M1-open-findings-inventory.md:676`, and no file named `M1.md` exists |
+
+All six were mechanically checkable in seconds. The cheap mechanism is a **plan preflight**: extract
+every symbol, path and figure the plan cites, assert each resolves, and run any code block the plan
+tells an implementer to copy. The alternative is what happened — the plan's code is first executed
+by the implementer of the task that copies it, by which time it is in the repo.
+
+**Watch for the asymmetry.** These rules are applied reliably *outward* — to dispatches, to
+reviewers, to gates someone else must pass — and unreliably to the author's own assertions. Every
+W14 rule violation by the controlling session was of the second kind.
+
