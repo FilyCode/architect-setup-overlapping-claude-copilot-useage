@@ -20,7 +20,8 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
     `CLAUDE.md` or other rules — no hook auto-injects any of them; a file only reaches a
     session if something actually points to it, verified 2026-09-06)
   - `agents/*.md` → `.claude/agents/` (`critic-reviewer`, `alignment-officer`, `scc-monitor`,
-    `docs-sync`, `research-scout`, `security-specialist`, `pragmatism-officer`)
+    `docs-sync`, `research-scout`, `security-specialist`, `pragmatism-officer`,
+    `figure-auditor`)
   - `rtk/config.toml` → `~/.config/rtk/config.toml`, and `rtk/rtk_selftest.sh` →
     `software/bin/rtk_selftest.sh`. Same symlink rule: a missing or unparseable rtk config
     silently restores "rewrite every Bash command" with no warning, so it is version-controlled
