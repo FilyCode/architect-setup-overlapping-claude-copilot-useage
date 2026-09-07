@@ -564,3 +564,37 @@ exists for exactly this: it does not change severity or correctness verdicts, it
 be fixed now from what can be documented and deferred. Dispatch it once a wave's findings exist,
 before the fixes are commissioned — not after.
 
+## The review-dispatch template — because recall is the failure, not discipline
+
+W14's wave-end reviewer hit its turn limit having written **nothing**: 162,630 tokens, 44 tool calls,
+one sentence returned. The rule that prevents this — *reviewers write findings down as they confirm
+them* — was already in this file, three paragraphs from the incident that motivated it (162,646
+tokens, 49 calls, one sentence). The controller had included the rtk position and the
+unenumerated-objection slot in **every** review dispatch that wave, and missed the findings-file
+requirement, because those two are prominent and this one sits mid-paragraph.
+
+So the failure was **retrieval, not discipline**, and the fix is mechanical. Every review dispatch
+carries all of these; composing one is a single lookup rather than several independent recalls:
+
+1. **A findings file path**, with the instruction to append each finding the moment it is confirmed.
+   If turns run out, that file is the deliverable.
+2. **Ranked areas, and what to drop.** Say explicitly which areas to abandon if turns run short. A
+   reviewer given five equal areas explores all five and lands none.
+3. **"Prefer executing a small script over reading more source."** A ten-line grep that answers the
+   question beats reading three files to reason about it.
+4. **The rtk position, verbatim**, plus `command grep` for absence claims.
+5. **Check exit codes outside a pipe** — `| tail` masks them, and it caught a reviewer in W14.
+6. **The environment-invariants block** (scratchpad path, no `rm -rf` in the tree, never create a
+   file under `tests/`, output directories are read-only).
+7. **Which files are concurrently modified**, and by whom, so drift findings are checked against
+   `git status` first.
+8. **The minor-triage content test**, stated as a question the reviewer must answer in writing.
+9. **The unenumerated-objection slot** — *"list the strongest objection to this work that I did not
+   ask you about."* In W14 this produced three of the best findings, including the one that closed a
+   hatch the controller would otherwise have shipped open.
+10. **What is already known and accepted**, so the reviewer does not re-derive settled ground.
+
+Same shape applies to implementer dispatches, whose non-negotiable line is the contradiction slot:
+*"report anything in this brief that you found to be wrong."* W14 caught **fourteen** brief errors
+that way, nearly all the controller's.
+
