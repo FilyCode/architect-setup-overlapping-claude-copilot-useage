@@ -245,8 +245,20 @@ domain-role prompt and explicit `model`/`effort` per this file's tiering section
 same wave, not necessarily the same parallel batch, given the account's concurrency cap
 (`feedback_subagent_dispatch.md` memory: 2-3 concurrent, account-dependent).
 
+**Inventory-auditor when a wave adds new capability.** Alongside critic-reviewer/
+alignment-officer/docs-sync/domain-role, dispatch `inventory-auditor` when the wave
+introduced new functions, modules or scripts — it catches duplication introduced within
+the wave itself (two tasks solving the same problem without knowing about each other) and
+capability the wave rebuilt instead of wiring to something that already existed. **It also
+closes its own loop**: if an inventory-auditor pass at plan-writing time recommended wiring
+in or extending something instead of building new, this dispatch checks whether the wave
+actually did that, rather than letting the recommendation evaporate the way a plan's own
+"deferred with reasons" table does when nobody re-checks it at close. Its findings feed
+into the same `pragmatism-officer` triage below. Skip it for pure bug-fix or doc-only
+waves that added no new capability and no prior inventory findings to close out.
+
 **Pragmatism-officer runs last, after findings exist.** Once critic-reviewer/alignment-officer/
-docs-sync/domain-role have filed, dispatch `pragmatism-officer` to triage the wave's own
+docs-sync/domain-role/inventory-auditor have filed, dispatch `pragmatism-officer` to triage the wave's own
 findings for proportionality — what actually needs fixing now versus what's real but low-impact
 and can be documented and deferred, and what's scope creep to reject outright. It has no
 authority over severity or correctness (see its own file); it runs on top of the Minor-triage
@@ -287,6 +299,26 @@ Make it a standing habit to resolve any external ID (PDB/accession/etc.) that a 
 repeatedly, rather than treating the repetition as an incidental curiosity; a project's own top
 structural-search hit turning out to be the query's own already-published structure is exactly the
 kind of premise error this catches cheaply.
+
+## Plan writing: inventory-auditor
+
+Before a plan's task list is locked in — during `writing-plans`, alongside or just before
+the Calibration block below — dispatch `inventory-auditor` against the plan draft (or,
+before one exists, the problem statement). It searches the codebase and project history for
+anything the plan proposes to build that already exists, exists-but-unwired, or was already
+tried and rejected. Motivated by a planning round (2026-09-11) that proposed four things
+that already existed — one already owner-approved as a decision, one built and marked
+`DONE, reach: yes` but never wired into the pipeline — and the checks that caught them were
+nine wave-end review seats rather than one dedicated inventory pass.
+
+Feed its findings into the plan before the critique wave runs, the same way the Calibration
+block's findings shape the plan before critique — a plan-critique wave should not have to
+independently rediscover that a task rebuilds something that already works, or that an
+"artifact this project has never had" is already committed under a different name.
+
+`inventory-auditor` is also available at wave end (see the wave-end review section above)
+for the retrospective direction: catching duplication a wave introduced, or capability it
+rebuilt instead of calling.
 
 ## Plan review before implementation
 
