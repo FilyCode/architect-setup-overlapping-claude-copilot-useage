@@ -69,7 +69,7 @@ for who actually *calls* the new thing.** A four-task chain built a manifest fie
 call sites, added a typed enum — and nobody passed the value. Its own test passed the argument
 directly and stayed green.
 
-## `git stash` is a third shared-index hazard
+## `git stash` is a third shared-index hazard — and `git --work-tree` is a fourth
 
 Already recorded: a bare `git commit` sweeps another agent's **staged** files, and
 `git commit -- <paths>` sweeps their **unstaged** ones. **`git stash push -- <paths>` races
@@ -79,6 +79,14 @@ collision was noticed.
 
 **For a RED check under concurrency, copy the pre-fix file with `git show HEAD:<path>` into
 scratch instead.** Reading a blob does not mutate shared state; stashing does.
+
+**`git --work-tree=<dir> checkout <commit> -- .` is the fourth, and it is the quietest.** It
+mutates the REAL index unless `GIT_DIR` is redirected too. On 2026-09-20 a review seat ran it to
+populate a scratch directory and staged a prior commit across all 12 of the task's files; the
+working tree on disk was untouched, it noticed via `git status`, ran `git reset`, and disclosed
+it rather than fixing it quietly. Nothing was lost because no commit happened in the window.
+**Read a past commit with `git show <commit>:<path>` or `git grep <commit> -- <pathspec>`** —
+both read the object store without touching index or worktree.
 
 ## Every relayed figure carries its column, not only its n
 
@@ -92,6 +100,33 @@ An `n` without the column it was measured on is how **one number acquires two
 independent-looking sources**. State the artifact, the column, and the arm.
 
 ## A dispatch's factual claims become code
+
+**A figure relayed from a SUBAGENT'S REPORT is UNVERIFIED, exactly like a figure from a plan.**
+This section's rule was being read as binding the controller's own assertions only. It is not.
+W2 (2026-09-21) produced **six wrong citations in one wave, every one the controller's, none
+self-caught**: three relayed from a subagent's report into a brief without re-derivation, two
+from the controller's own grep where a parser was needed, and one — the worst — a SHA
+attributed to the wrong action **and pre-labelled** *"if these are identical that is a
+copy-paste defect"*, which would have sent a reviewer to file a Critical against correct code.
+A relayed figure FEELS verified because somebody measured it. It is not, because the person
+putting it in front of an implementer did not.
+
+**A relayed figure carrying a DEFECT HYPOTHESIS is the highest-risk form.** Re-derive it before
+writing it, never after: the hypothesis is what makes it actionable, so a wrong one is acted on.
+
+**The stop rule, one sentence, and the only thing that caught an error before publication in
+that wave.** When a brief carries a figure the author has not re-derived with a parser, or that
+a prior report disputes, end that item with: *"if your measurement disagrees with mine, stop and
+report — do not reconcile toward mine."* The implementer that received it resolved every
+indirection across 71 shell scripts, found the controller's number inverted, and **wrote
+nothing**. The other five errors were all caught after the fact.
+
+**Mechanical backstop: `scripts/check_citations.py`** (EnzymeFinder) preflights a brief, plan or
+report — `path:line` citations (printing the cited line, because existence is not correctness),
+paths, arithmetic including prose decompositions, `owner/repo@sha` pins, and `--flag`
+attribution. It cannot verify a **count**; two of the six were counts, and that is what the stop
+rule is for. Validated in both directions: it catches a verbatim reconstruction of all six, and
+reports 3 findings across the 9 documents that wave produced.
 
 A subagent cannot tell which of the caller's assertions were verified. It will faithfully
 write a wrong count, file list or dependency claim into the repo and into prose. On
@@ -634,6 +669,12 @@ carries all of these; composing one is a single lookup rather than several indep
    ask you about."* In W14 this produced three of the best findings, including the one that closed a
    hatch the controller would otherwise have shipped open.
 10. **What is already known and accepted**, so the reviewer does not re-derive settled ground.
+11. **When the work under review is a guard, a gate or a check: verify it by REMOVING it and
+    confirming the test fails — not by reading it.** Twice in W2 this produced stronger evidence
+    than the implementer's own. One reviewer proved "no value was hand-typed" by regenerating
+    into a scratch copy and getting `rewrote 0 line(s)`; another proved a liveness guard was
+    load-bearing by stripping it and watching the test pass anyway. Reading a guard tells you it
+    exists; removing it tells you it works.
 
 Same shape applies to implementer dispatches, whose non-negotiable line is the contradiction slot:
 *"report anything in this brief that you found to be wrong."* W14 caught **fourteen** brief errors

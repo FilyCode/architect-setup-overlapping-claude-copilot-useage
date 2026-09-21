@@ -100,6 +100,32 @@ code ran. Every failure below actually happened in this workspace.
   consumer** with `command grep` across `src/`, tests, renderers and exporters, and list them
   in the commit message: four of those five collapses were in a consumer the introducing
   change never looked at.
+- **A check that compares a derived quantity between two populations read through the SAME code
+  path, with no liveness assertion.** Rename the field and BOTH sides go to zero; the comparison
+  then passes vacuously, forever, and nothing reddens. Three instances in one wave (2026-09-21),
+  including an implementer discovering its **own** synthetic tests were vacuous because a fixture
+  package name never resolved — caught only because one of them *passed on the unfixed code*. The
+  repair is one line: assert the quantity is non-zero on at least one side before comparing. Prove
+  it by removing the guard and watching the check pass anyway.
+- **Where a record carries both a generated field and a hand-written one, the hand-written one holds
+  ALL the decay risk and needs MORE verification, not less.** Stated best by the agent who missed it:
+  *"a `reach:` value is regenerated on every `--write` and cannot drift; a `no-impl` reason is prose
+  nothing re-checks."* It had been sizing verification effort by how **visible** a claim was rather
+  than how **load-bearing**. The same error produced its earlier miss — it verified a baseline's
+  *counts* were untouched (they were) and never read its *prose*, which the preceding commit had
+  just falsified.
+- **When you correct a false statement, check what was DECIDED on it.** A false premise that
+  supported a decision means the decision is now unjustified-as-written, and that belongs in the
+  record rather than buried under the correction. A CI comment asserted the job ran Python 3.13 and
+  used that to justify making a type-check ratchet report-only instead of gating; the job runs
+  3.11.13, the same version CI pins. Correcting the sentence exposed that the gating decision rests
+  on nothing — which is now a visible open question instead of a settled one.
+- **Four shape gates cannot detect decay.** A gate that validates a record's *shape* — row count,
+  enum membership, non-empty reason — can never go red when its *content* stops being true: a
+  parked item whose blocker was resolved, a superseded item whose named replacement was itself
+  deleted. At least one gate must **dereference a claim**. This objection reshaped a wave's largest
+  deliverable from four shape checks into five of which three dereference, and all three were then
+  watched failing against a mutated copy of the real artifact.
 - A claim that a signal is live, or dark, argued from wiring rather than measured. **Firing is
   not moving.** On 2026-09-01 a controller reported "no shipped score moves" from a code
   comment, a reviewer corrected it to "the signal is live, so scores move", and the
@@ -240,6 +266,15 @@ in **0 of 227** run artifacts, because the rejection happened one stage earlier 
 error, no flag and no non-zero count anywhere. The defect lived three months. Same shape as "a
 gate that passes because it never exercises the path in use", one level earlier: **report the
 denominator you started with, not only the numerator you finished with.**
+
+**This binds the CONTROLLER'S OWN counts, not only reviewers' absence claims.** W2 (2026-09-21)
+produced three wrong counts from one person in one wave, all the same error: counting state tokens
+anywhere in a markdown file rather than inside its table rows (twice — 57-vs-55 dispositions, then
+19-vs-18 rows), and pattern-matching venv paths rather than resolving `$PROJ`/`$REPO`/`PYTHON_BIN=`
+shell indirection (8-vs-29 scripts, which inverted the conclusion). Each reached a dispatch brief.
+Each was caught by the implementer who received it, not by the author. **If a count is going into a
+brief, parse the structure it lives in** — table rows, import statements, AST nodes — and say which
+you used.
 
 **Use `command grep` to find candidates, and a parser to count them.** `command grep` is right
 for absence claims — the shell `grep` here silently skips gitignored paths — but a grep count
