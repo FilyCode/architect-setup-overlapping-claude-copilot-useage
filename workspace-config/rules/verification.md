@@ -302,6 +302,8 @@ became false the moment it landed, and nothing noticed for the rest of the day. 
 touches code whose cost or behaviour a nearby comment quantifies, **re-measure or delete the
 number.** A stale figure in a comment is indistinguishable from a current one.
 
+- **A fix copied from a sibling module, without opening the sibling's CALLER.** The pattern transfers; the call site's shape may not. On 2026-09-23 a fallback that returned `[]` on four failure classes — indistinguishable from a genuine empty result — was correctly changed to raise, modelled on a sibling adapter that already raised. The precedent was real and correctly cited. But the sibling's call site is **single-item**, so raising there loses nothing, while the target's is a **batch loop with no handler**: one item's failure then discarded every other item's result. The conflation was removed and instantly recreated one level up, because the batch path could not express "this one failed, the rest are fine". **A change from returning a value to raising is a contract change** — `command grep` every consumer, exactly as this file already requires for a three-state value, and check whether the new failure can escape further than the old one could.
+
 **Reporting.** State what was run and what it returned. If tests fail, say so with the
 output. If a step was skipped, say that. When something is verified, say it plainly.
 
