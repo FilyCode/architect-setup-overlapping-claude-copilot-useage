@@ -309,6 +309,21 @@ number.** A stale figure in a comment is indistinguishable from a current one.
   Corollary, observed in the same wave: for a while the repo held **two tests asserting contradictory contracts for the same call** (sleep counts of 2 and 1 on identical adapter config), because the new test was added without reconciling the old one. When a blast-radius grep finds an existing assertion, the fix is not done until that assertion is either corrected *with a comment naming this finding* or deleted as superseded — leaving both is how a suite goes red at wave close instead of at the task.
   Second corollary: **an over-specified assertion is a latent blast-radius failure.** Two of the three casualties asserted an exact `sleep.call_count` where the contract they guarded was only *"still retries with backoff"*. Assert the contract, not the incidental number, or the next correct fix in that path turns the test red for no reason.
 
+- **A RED proof run from inside `tests/` can silently execute the CURRENT tree, not the blob.** The
+  standard recipe — `git show <commit>:<path>` into scratch, point `PYTHONPATH` at it, re-run the
+  test — is right, and on 2026-09-23 it reported **3 passed** against a pre-fix blob that was
+  provably broken. The project is an editable install with a `src/` layout, and the repo's own
+  `conftest.py` re-inserts `src/` ahead of `PYTHONPATH`, so pytest imported the fixed module while
+  a plain `python -c` in the same shell correctly resolved the scratch copy. That discrepancy is
+  the only reason it was caught. Copying the test file **outside the repo** and running it there
+  gave the real answer: `1 failed, 2 passed`, `assert [] == ['Q2']`.
+  **So: assert the module path inside the test run, not outside it.** One line —
+  `import m; print(m.__file__, hasattr(m, "<symbol the fix introduced>"))` executed *by pytest* —
+  distinguishes a real RED proof from a green one taken on the tree you were trying to exclude.
+  Same family as "a `git worktree` is not the main checkout" and "an isolation run credited with
+  more than it executed": the harness silently differed from the thing under test, and only a
+  direct check of what actually loaded could say so.
+
 **Reporting.** State what was run and what it returned. If tests fail, say so with the
 output. If a step was skipped, say that. When something is verified, say it plainly.
 
