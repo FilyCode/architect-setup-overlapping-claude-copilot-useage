@@ -324,6 +324,45 @@ number.** A stale figure in a comment is indistinguishable from a current one.
   more than it executed": the harness silently differed from the thing under test, and only a
   direct check of what actually loaded could say so.
 
+- **A document that CLAIMS to be generated, and is not, decays faster than one that admits it is
+  hand-written.** `FIXES.md` opened with *"Generated from `ROW_ASSIGNMENTS.tsv` and `git log`, not
+  hand-maintained."* No generator wrote it; the commands at the bottom were a manual recipe. Its
+  standing block then sat at `59 closed / 40 to fix / 208 rows` against a live `185 / 17` — and
+  **three separate readers walked past it**, because "generated" reads as "self-updating" and
+  switches off the instinct to check. The false claim was the mechanism, not a detail beside it.
+  So: a doc is generated only if a script writes it and something runs that script. Otherwise say
+  *"hand-maintained, and the numbers below are a snapshot"*, and where a genuinely generated
+  sibling exists, name it so the distinction is visible rather than assumed.
+
+- **A gate that knows the answer and does not print it is half a gate.** `report_ownership`
+  reported `UNASSIGNED 1` and did not say which row, because it listed offenders alphabetically
+  and capped the list at 40 — so the single actionable defect sat behind 116 `SEEDED` rows that
+  are the expected resting state, and never reached the screen. A human reviewer found what the
+  gate had already computed. **Order any offender listing by actionability, not alphabetically,
+  and break the truncation notice down by state** (`... and 77 more (77 SEEDED)`), so a reader can
+  tell whether the hidden remainder is benign. Prove it the usual way: re-introduce the defect and
+  confirm the id now prints.
+
+- **Making a no-op live is a behaviour change, and must not also move its default.** A parameter
+  stored on `self` and never read was correctly wired into the function that should have used it —
+  and shipped with its own default (`0.45`) rather than the constant that function already used
+  (`0.40`). Every input in `[0.40, 0.45)` silently changed category under **default** construction:
+  no flag, no changelog, identical field names and schema. No caller anywhere passed the parameter,
+  so the change reached the only production path and benefited nobody. **When you make a dead knob
+  live, default it to the value the code was already using**, and say in the commit that default
+  output is unchanged. If the two numbers genuinely should differ, that is a decision with a
+  citation, not a hygiene fix. Worse here: the number adopted was a *published threshold for a
+  different question* (a binary soluble/insoluble call, not a three-way tier cut), so the fix also
+  silently redefined what the output categories meant.
+
+- **A boundary test that does not probe the disputed interval cannot fail.** The suite had four
+  tier-boundary tests — 0.75, 0.50, 0.30, 0.60 — and **none in `[0.40, 0.45)`**, the only interval
+  where the old and new thresholds disagree. They all stayed green across a boundary move. This is
+  the convenient-fixture rule landing specifically on boundary tests, where it is least excusable:
+  a boundary test's entire job is the interval around the boundary, so **parametrise it on both
+  sides of every constant it names**, and when a constant changes, re-derive which tests can still
+  distinguish the old value from the new one.
+
 **Reporting.** State what was run and what it returned. If tests fail, say so with the
 output. If a step was skipped, say that. When something is verified, say it plainly.
 
