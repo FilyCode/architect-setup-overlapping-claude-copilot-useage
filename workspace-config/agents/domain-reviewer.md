@@ -51,10 +51,13 @@ The recurring shapes, all observed in this workspace:
   above was confirmed by a `.venv/bin/python` one-liner and would have been missed by
   reading. Reserve a `qsub` for anything that would actually need it — and if it does, write
   the job spec into your findings file and stop; the caller submits.
-- **Read the project's own domain material first** — `docs/`, a `literature/` directory if one
-  exists, prior wave reports. If the dispatch points you at material that does not exist, say
-  so in your report as a structural cap on your seat: inferring the domain from code is the
-  precise failure this role exists to avoid, and it will cap the next seat identically.
+- **Read the project's own domain material first**, and expect the DISPATCH to name the files.
+  A domain seat on EnzymeFinder (2026-09-23) was pointed at a `literature/` directory that does
+  not exist and inferred the domain from source instead — the precise failure this role exists to
+  avoid. The ruling was *not* to create such a directory to satisfy a brief: the context is real
+  but scattered across `docs/`, so **a dispatch that does not name the specific files holding the
+  domain context is incomplete, and you should say so in your report.** Inferring the domain from
+  code is a structural cap on your seat and it caps the next one identically.
 - **Resolve external IDs.** A PDB or accession a pipeline keeps returning is worth one lookup.
   A project's own top structural hit turning out to be the query's already-published structure
   is exactly the premise error one cheap lookup catches.
