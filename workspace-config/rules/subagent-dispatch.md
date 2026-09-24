@@ -275,8 +275,11 @@ biologist-role pass on a biology project) as a routine part of wave-end review, 
 convened only after an external panel or incident forces it. A correctness/completeness/drift
 review is structurally unable to produce a premise-level or domain-plausibility finding — only a
 domain-role pass can, and by the time a crisis convenes one, the defect has usually already shipped
-for a while. No dedicated domain-role agent exists yet — dispatch a generic agent with an explicit
-domain-role prompt and explicit `model`/`effort` per this file's tiering section. Fold it into the
+for a while. **`domain-reviewer` now exists** (`.claude/agents/domain-reviewer.md`, opus/45 turns),
+created 2026-09-23 after an ad hoc domain seat produced W2b-1's only Blocking finding — a hygiene
+fix that silently moved a shipped tier boundary — plus five Importants that five other seats
+missed. Name the professional role in the dispatch (computational enzymologist, structural
+biologist, cheminformatician); the agent file carries the rest. Fold it into the
 same wave, not necessarily the same parallel batch, given the account's concurrency cap
 (`feedback_subagent_dispatch.md` memory: 2-3 concurrent, account-dependent).
 
@@ -366,8 +369,8 @@ content test) — the difference is what it targets (the plan text, not a diff) 
 runs (before work starts, not after).
 
 - Reuse `critic-reviewer` (plan-shaped: feasibility, missing tasks, edge cases) and a
-  domain-role reviewer (same ad hoc dispatch as the wave-end section's domain-role
-  paragraph) — this is the same premise-checking discipline, just moved a stage earlier so
+  `domain-reviewer` (see the wave-end section's domain-role paragraph; name the role in
+  the dispatch) — this is the same premise-checking discipline, just moved a stage earlier so
   a bad premise is caught before it is copied into every task that inherits it.
 - Scale the number of dispatches to the plan's size and complexity: **minimum 3**
   (critic-reviewer + one domain-role reviewer + one issue-specific angle, chosen from what
