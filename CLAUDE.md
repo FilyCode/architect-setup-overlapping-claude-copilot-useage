@@ -19,9 +19,12 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
   - `rules/*.md` → `.claude/rules/` (9 files, all read on demand via prose references from
     `CLAUDE.md` or other rules — no hook auto-injects any of them; a file only reaches a
     session if something actually points to it, verified 2026-09-06)
-  - `agents/*.md` → `.claude/agents/` (`critic-reviewer`, `alignment-officer`, `scc-monitor`,
-    `docs-sync`, `research-scout`, `security-specialist`, `pragmatism-officer`,
-    `figure-auditor`, `inventory-auditor`)
+  - `agents/*.md` → `.claude/agents/` (10 files: `critic-reviewer`, `alignment-officer`,
+    `scc-monitor`, `docs-sync`, `research-scout`, `security-specialist`, `pragmatism-officer`,
+    `figure-auditor`, `inventory-auditor`, `domain-reviewer`). Verify with
+    `for f in .claude/agents/*.md` rather than trusting this list — it went stale once.
+    `domain-reviewer` was added 2026-09-23; the rules had required a domain-role seat since
+    August while stating no such agent existed, so every one was an ad hoc prompt.
   - `rtk/config.toml` → `~/.config/rtk/config.toml`, and `rtk/rtk_selftest.sh` →
     `software/bin/rtk_selftest.sh`. Same symlink rule: a missing or unparseable rtk config
     silently restores "rewrite every Bash command" with no warning, so it is version-controlled
