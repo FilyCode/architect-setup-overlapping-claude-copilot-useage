@@ -47,7 +47,10 @@ Rank them for the dispatch and say which you dropped if turns run short.
    any "X is absent in clade C" is believed, measure where the instrument sits **in C**:
    the margin between C's surviving calls and the cutoff, against the same margin elsewhere.
    A clade whose calls cluster on the gate is a clade where absences mean nothing.
-   Check the model's own headroom too: a cutoff whose TC equals its GA has none.
+   Check the instrument's own **discrimination band** too — for an HMM or CM that is
+   **`TC - NC`**, not `GA` vs `TC`. GA and TC are routinely equal and an equality there
+   means nothing; a band of a fraction of a bit means a model that cannot absorb any
+   phylogenetic distance.
 2. **Try to dissolve the confirming results, not just the surprising ones.** Effort gets
    allocated by surprise, so results that matched expectation are the least audited and
    the most likely to be quietly wrong. Take the wave's *best* result and attack it: match

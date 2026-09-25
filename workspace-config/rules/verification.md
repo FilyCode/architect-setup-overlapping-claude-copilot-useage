@@ -374,16 +374,25 @@ and diagnosed it fresh each time**, never recognising it as a class:
 - `TIGR00475` (SelB) sits a median **32.6 bits** over its trusted cutoff in Actinomycetota
   against **209** in Pseudomonadota, and Actinomycetota SelA+/SelB− is **46.7%** of the
   published orphan count;
-- `RF01852` (tRNA-Sec) declares **GA 47.00, TC 47.00, NC 46.90** — its lowest curated member
-  sits exactly ON the gate — and Campylobacterota's surviving calls cluster **3.2 bits** over
-  it against 31.0 for Pseudomonadota.
+- `RF01852` (tRNA-Sec) declares **TC 47.00 against NC 46.90** — a **0.1-bit** discrimination
+  band — and Campylobacterota's surviving calls cluster **3.2 bits** over the gate against
+  31.0 for Pseudomonadota.
 
 Each was read as biology before it was read as instrumentation. So:
 
 - **Before writing "X is absent in C", measure where the instrument sits in C.** Report the
   margin between C's surviving calls and the cutoff beside the same margin elsewhere. A clade
   whose calls pile onto the gate cannot support an absence claim, and the pile-up is itself
-  reportable. Check the model's declared headroom too — a `TC` equal to its `GA` has none.
+  reportable. Check the model's own declared **discrimination band** too — for an
+  HMM or CM that is **`TC - NC`**, the gap between its lowest-scoring curated member
+  and its highest-scoring known non-member. **It is NOT `GA` vs `TC`**: those are
+  routinely equal (23 of 23 models in the project that produced this rule), so an
+  equality there means nothing. Measured in that project: `RF01852` has a 0.1-bit
+  band (0.2% of TC) and did fail a whole phylum; `TIGR00475` has 13.25 bits, which
+  is unremarkable — and its apparent "floor" turned out to be a collection bug
+  instead. Recorded because the author of this rule wrote the `GA == TC` version
+  first, into a rule file and an agent, on a constant the same project had already
+  documented as universal.
 - **A general score depression is a mechanism, not a verdict.** Campylobacterota scores lower
   on *every* selenium model (SelA 0.88, SelD 0.81, SelB 0.65 of Pseudomonadota's median). That
   makes "the cutoff is failing this clade" plausible; it does not make it true. Test it against
