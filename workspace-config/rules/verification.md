@@ -431,6 +431,45 @@ plausible given what we know", and *plausible given what we know* is precisely t
 that buries a real result. Dispatch it at wave end alongside `domain-reviewer`, and before any
 result is written down as settled.
 
+**When a tool writes two reports, check whether they are FILTERED differently — the
+difference is usually invisible and always silent.** `hmmsearch --cut_tc` applies the
+model's SEQUENCE trusted cutoff to `--tblout` and its DOMAIN trusted cutoff to
+`--domtblout`. A pipeline that collected only `--domtblout` therefore dropped every protein
+whose full-sequence score cleared TC while no single domain did — and a multi-domain model on
+a divergent sequence fragments its alignment, so that is the *normal* case, not an edge one.
+The dropped file is written, exits `# [ok]`, and is empty. Nothing anywhere reports a
+discrepancy.
+
+Measured across 23,414 proteomes on 2026-09-25, and the shape of the damage is the tell:
+
+    TIGR00475 (SelB, 581 cols, ~4 domains)   4,611 -> 4,940   +329  (+7.1%)
+    TIGR00474 (SelA, 455 cols)               5,341 -> 5,348     +7
+    NF041186  (SenA, 382 cols)                 405 ->   408     +3
+    TIGR00476 (SelD, 311 cols, ~1 domain)    8,807 -> 8,807     +0
+
+Zero lost in the other direction, so the sequence-level set is a strict superset. One
+worked case: full sequence 268.3 against TC 242.25 passes, best single domain 216.1 fails,
+signal split 216.1 + 34.9 + 14.1. It cost a published headline 27% (an orphan count of 1,121
+that is really 816) and moved a project's core population by 3.
+
+Generalising, because the specific flag is not the point:
+
+- **Any tool with more than one output format may gate them differently.** Read the manual
+  for the format you are parsing, not for the tool. The same applies to summary-vs-detail
+  reports, `--long`/`--short` modes, and API "list" versus "get" endpoints that apply
+  different default filters.
+- **Prefer the report whose UNIT matches your question.** A membership question ("does this
+  genome have the gene?") is a sequence-level question; a coordinate question ("where does
+  the domain align?") is a domain-level one. The pipeline above needed both and collected one.
+- **When two reports should agree, compute the difference and store it**, with a third state
+  for "this run produced only one of them, so the gap is NOT MEASURABLE". A clean zero and an
+  unmeasurable gap are different, and collapsing them is the error this file names most often.
+- **The symptom to watch for is a phylum, class or subgroup that looks "marginal" on one
+  instrument.** That was read here as a biological signal (a model failing a clade) for a
+  whole investigation before anyone re-ran the search a different way. A subgroup pressed
+  against a threshold is *sometimes* real divergence and *sometimes* a collection artifact,
+  and the two are distinguished by re-running, not by reasoning.
+
 **Reporting.** State what was run and what it returned. If tests fail, say so with the
 output. If a step was skipped, say that. When something is verified, say it plainly.
 
