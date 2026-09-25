@@ -283,6 +283,26 @@ biologist, cheminformatician); the agent file carries the rest. Fold it into the
 same wave, not necessarily the same parallel batch, given the account's concurrency cap
 (`feedback_subagent_dispatch.md` memory: 2-3 concurrent, account-dependent).
 
+**Anomaly-hunter at wave end — the only seat whose job is to REOPEN things.** Alongside
+critic-reviewer/alignment-officer/docs-sync/domain-role, dispatch `anomaly-hunter`
+(`.claude/agents/anomaly-hunter.md`, opus/45 turns, added 2026-09-25). Every other seat is
+structurally biased toward closure: critic-reviewer closes on *"the code does what it says"*,
+domain-reviewer on *"this is plausible given what we know"* — and *plausible given what we know*
+is exactly the instrument that buries a surprising result, because a real discovery is by
+definition not plausible given what we know. This seat owns the opposite instinct.
+
+It was created after a session in which known biology was used three times to CLOSE an anomaly
+rather than open one, and the wave's own best result turned out to be a composition effect
+nobody attacked because it was the answer being hoped for. Its checks, in its own file: the
+instrument-floor check on every absence claim; attacking the CONFIRMING results rather than
+only the surprising ones; naming the third state; following the weird number nobody commented
+on; and verifying that a cited paper says what it is being used for on a matching population.
+The rule it enforces is in `verification.md` ("An absence is only as good as the instrument's
+headroom IN THAT STRATUM, and a textbook premise may not close an anomaly").
+
+Skip it for pure bug-fix or doc-only waves that produced no new measurement. Do NOT skip it
+because a wave's results look clean — that is the condition it exists for.
+
 **Inventory-auditor when a wave adds new capability.** Alongside critic-reviewer/
 alignment-officer/docs-sync/domain-role, dispatch `inventory-auditor` when the wave
 introduced new functions, modules or scripts — it catches duplication introduced within

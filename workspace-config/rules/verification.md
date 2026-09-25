@@ -363,6 +363,65 @@ number.** A stale figure in a comment is indistinguishable from a current one.
   sides of every constant it names**, and when a constant changes, re-derive which tests can still
   distinguish the old value from the new one.
 
+**An absence is only as good as the instrument's headroom IN THAT STRATUM, and a textbook
+premise may not close an anomaly.** These are one rule because they are one failure: the
+project measures "not detected", the literature says "must be present", and the gap gets
+resolved by assertion in whichever direction is convenient. SenC-SelD hit this **three times
+and diagnosed it fresh each time**, never recognising it as a class:
+
+- `selD` is itself a selenoprotein, so its in-frame UGA defeats gene calling — 66 of 73
+  genomes called SelD-negative carried a near-full-length unannotated *selD* in their DNA;
+- `TIGR00475` (SelB) sits a median **32.6 bits** over its trusted cutoff in Actinomycetota
+  against **209** in Pseudomonadota, and Actinomycetota SelA+/SelB− is **46.7%** of the
+  published orphan count;
+- `RF01852` (tRNA-Sec) declares **GA 47.00, TC 47.00, NC 46.90** — its lowest curated member
+  sits exactly ON the gate — and Campylobacterota's surviving calls cluster **3.2 bits** over
+  it against 31.0 for Pseudomonadota.
+
+Each was read as biology before it was read as instrumentation. So:
+
+- **Before writing "X is absent in C", measure where the instrument sits in C.** Report the
+  margin between C's surviving calls and the cutoff beside the same margin elsewhere. A clade
+  whose calls pile onto the gate cannot support an absence claim, and the pile-up is itself
+  reportable. Check the model's declared headroom too — a `TC` equal to its `GA` has none.
+- **A general score depression is a mechanism, not a verdict.** Campylobacterota scores lower
+  on *every* selenium model (SelA 0.88, SelD 0.81, SelB 0.65 of Pseudomonadota's median). That
+  makes "the cutoff is failing this clade" plausible; it does not make it true. Test it against
+  a **within-clade true-negative control** — same composition, pathway genuinely absent — and
+  be ready for the control to be noisy: in that probe the negative arm produced a hit in
+  **40/40** genomes and 4 of them cleared GA, so "a sub-threshold hit exists" proved nothing.
+  What discriminated was a *relational* measure the negatives could not fake (the Sec model
+  outscoring the generic tRNA model at the same locus: 16/16 in the test arm, **0/80** in
+  controls).
+- **When known biology says a thing must be present and the data says absent, write BOTH
+  branches down before choosing.** Branch A, the instrument is failing — then name how, measure
+  it, and the failure mode is a finding in its own right. Branch B, the premise does not hold
+  here — then you have found something. A write-up naming only branch A has not done the work.
+  The phrasing that marks the error is *"X must be true, therefore the measurement is wrong"*;
+  it is usually right, which is exactly why it is invisible when it is not.
+- **An instrument-driven absence and a real absence are different states and must be typed as
+  such** — the same three-state discipline as everywhere else in this file, applied to the
+  detector rather than to the value.
+
+**Attack the results that CONFIRMED what you expected, not only the surprising ones.** Effort
+is allocated by surprise, so confirming results are the least audited and the most likely to be
+quietly wrong. Measured on 2026-09-25: a wave's own headline negative — "not one of 3,866 fusion
+proteins carries Sec, and phylum does not explain it, P(0) = 1.3e-10" — **dissolved under finer
+matching**, going 22.80 expected at phylum → 14.21 at class → 3.09 at order (p = 0.045) → **0.25
+at family (p = 0.78)** → 0.00 at genus. The effect was where fusions *live*, not what fusions
+*are*. Nobody asked, because the result was the one being hoped for. Take the wave's best result
+and try to dissolve it: match at a finer stratum, swap the denominator, restrict instead of
+stratify. State the power loss honestly when you do — comparator coverage fell 887 → 284 across
+those ranks, so the fine strata lose power as well as confound, and "expected 0.00" is partly an
+absence of comparator rather than a demonstrated absence of effect.
+
+The seat that owns all of this is **`anomaly-hunter`** (`.claude/agents/anomaly-hunter.md`,
+opus/45 turns), added 2026-09-25. Every other review seat is structurally biased toward closure
+— `critic-reviewer` closes on "the code does what it says", `domain-reviewer` closes on "this is
+plausible given what we know", and *plausible given what we know* is precisely the instrument
+that buries a real result. Dispatch it at wave end alongside `domain-reviewer`, and before any
+result is written down as settled.
+
 **Reporting.** State what was run and what it returned. If tests fail, say so with the
 output. If a step was skipped, say that. When something is verified, say it plainly.
 
