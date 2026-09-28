@@ -383,16 +383,40 @@ Each was read as biology before it was read as instrumentation. So:
 - **Before writing "X is absent in C", measure where the instrument sits in C.** Report the
   margin between C's surviving calls and the cutoff beside the same margin elsewhere. A clade
   whose calls pile onto the gate cannot support an absence claim, and the pile-up is itself
-  reportable. Check the model's own declared **discrimination band** too — for an
-  HMM or CM that is **`TC - NC`**, the gap between its lowest-scoring curated member
-  and its highest-scoring known non-member. **It is NOT `GA` vs `TC`**: those are
-  routinely equal (23 of 23 models in the project that produced this rule), so an
-  equality there means nothing. Measured in that project: `RF01852` has a 0.1-bit
-  band (0.2% of TC) and did fail a whole phylum; `TIGR00475` has 13.25 bits, which
-  is unremarkable — and its apparent "floor" turned out to be a collection bug
-  instead. Recorded because the author of this rule wrote the `GA == TC` version
-  first, into a rule file and an agent, on a constant the same project had already
-  documented as universal.
+  reportable. **The measured margin IS the instrument check. Do not reach for the
+  model's declared cutoffs to corroborate it** — neither `GA` vs `TC` nor `TC - NC`
+  carries the meaning this rule twice claimed for them.
+
+  The history is worth keeping because the same error was made twice in a row, in
+  opposite directions, by an author each time convinced the previous version was the
+  careless one. Version 1 said to compare `GA` vs `TC`; those are equal by NCBIfam
+  convention (23 of 23 models in the originating project), so it could never fire.
+  Version 2 replaced it with `TC - NC` and cited `RF01852` (tRNA-Sec) declaring a
+  0.1-bit band as evidence of a model that "cannot absorb any phylogenetic distance".
+  **That is also wrong, and it is wrong for a reason that generalises: `TC - NC` is a
+  database curation convention, not a property of the model.** Pfam and Rfam set `TC`
+  at the lowest-scoring included member and `NC` at the highest-scoring excluded one,
+  both adjacent in a ranked hit list, so the band measures **how densely that list is
+  populated near the cutoff** — a function of family size and sampling. A large,
+  well-sampled family has a tiny band by construction.
+
+  Measured 2026-09-28, and the segregation is total. Across the full Pfam-A library,
+  **30,134 models: `TC - NC` is exactly 0.1 for 10,867 of them (36.1%), median 0.3,
+  68.3% at or under 1.0 bit.** A 0.1-bit band is the *mode* of Pfam, not an outlier.
+  In one project's own model set the split is perfect with no overlap: all 3 Pfam
+  models at 0.10, both Rfam CMs at 0.10, and all 22 TIGRFAM/NCBIfam models between
+  2.0 and 177.85. The decisive case sat unread in that project's own `data/cm/`:
+  **`RF00005`, generic tRNA — one of Rfam's largest and best-curated families —
+  declares GA 29.00 / TC 29.00 / NC 28.90, the identical 0.1-bit band as `RF01852`.**
+  A counterexample from the same corpus: `PF00266` declares the narrowest possible
+  band and its hits sit 230-260 bits above `GA` (252.4-282.2 vs 21.5, n=8).
+
+  So: a declared band may be compared only **within one source database**, and even
+  then it is weak. The instrument check that survives is the empirical one this rule
+  opens with — the margin between a stratum's surviving calls and the gate, beside
+  the same margin elsewhere. In the originating project that was Campylobacterota's
+  tRNA-Sec calls clustering **3.2 bits** over the gate against **31.0** for
+  Pseudomonadota, and that leg stands on its own.
 - **A general score depression is a mechanism, not a verdict.** Campylobacterota scores lower
   on *every* selenium model (SelA 0.88, SelD 0.81, SelB 0.65 of Pseudomonadota's median). That
   makes "the cutoff is failing this clade" plausible; it does not make it true. Test it against

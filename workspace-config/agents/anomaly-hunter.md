@@ -47,10 +47,15 @@ Rank them for the dispatch and say which you dropped if turns run short.
    any "X is absent in clade C" is believed, measure where the instrument sits **in C**:
    the margin between C's surviving calls and the cutoff, against the same margin elsewhere.
    A clade whose calls cluster on the gate is a clade where absences mean nothing.
-   Check the instrument's own **discrimination band** too — for an HMM or CM that is
-   **`TC - NC`**, not `GA` vs `TC`. GA and TC are routinely equal and an equality there
-   means nothing; a band of a fraction of a bit means a model that cannot absorb any
-   phylogenetic distance.
+   **Do not reach for the model's declared cutoffs to corroborate the margin.** An
+   earlier version of this file told you to read `TC - NC` as a discrimination band and
+   to treat a sub-bit band as a model that "cannot absorb any phylogenetic distance".
+   That is false: `TC - NC` is a database curation convention. Across all 30,134 Pfam-A
+   models it is exactly 0.1 for 36.1% of them (median 0.3), and `RF00005` — generic
+   tRNA, one of Rfam's best-curated families — declares the same 0.1-bit band as
+   `RF01852`. The measured margin in the stratum is the whole check; a declared band
+   adds nothing, and comparing one across source databases is meaningless. See
+   `verification.md` for the full measurement.
 2. **Try to dissolve the confirming results, not just the surprising ones.** Effort gets
    allocated by surprise, so results that matched expectation are the least audited and
    the most likely to be quietly wrong. Take the wave's *best* result and attack it: match
