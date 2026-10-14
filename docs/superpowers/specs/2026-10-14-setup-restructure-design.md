@@ -1,296 +1,369 @@
 # Workspace Claude setup restructure — design
 
-**Date:** 2026-10-14 · **Status:** DRAFT — pre critique wave · **Owner:** Philipp Trollmann
-**Scope:** `/projectnb/liu-scc/philipp` workspace config (this repo's `workspace-config/`,
-`.claude/skills/`, user `~/.claude/settings.json`, auto memory). Project repos are out of scope
-except where a workspace file points into them.
+**Date:** 2026-10-14 · **Status:** v2, revised after critique wave · **Owner:** Philipp Trollmann
+**Scope:** `/projectnb/liu-scc/philipp` workspace config: this repo's `workspace-config/` and
+`.claude/skills/`, `~/.claude/settings.json`, `~/.claude/CLAUDE.md`, auto memory. Project repos only
+where a workspace file points into them.
+**Reviews:** `docs/superpowers/reviews/2026-10-14-restructure/` — critic-reviewer, domain-reviewer
+(agent-harness / prompt-engineering role), anomaly-hunter, alignment-officer, inventory-auditor,
+pragmatism-officer. Finding IDs below are `seat:F#`.
 
-## 1. Intent (as agreed in session 2026-10-14)
+## 1. Intent
 
-- **Outcome:** the same safety and evidence discipline at a fraction of the token cost, with
-  rules Claude actually follows because they are no longer buried.
-- **Owner's words:** reduce token use majorly; shift most of the rules into skills; slim and
-  re-tune personas; slim documents; restructure how the setup is organised; aggressive budget,
-  but do not cut anything important just to hit a number.
-- **Decided:** aggressive always-loaded budget (moderate allowed where needed); review waves
-  become skills that a core rule says when to run; rtk hook and lore removed; incident
-  narratives move verbatim to `docs/history/`.
-- **Assumptions (mine, open to correction):** the lessons themselves are correct and stay; the
-  10 existing seats are kept unless the wave shows a merge is safe; the user's synced
-  account plugins are managed on the desktop side, so we only recommend changes there.
+- **Outcome:** keep the evidence discipline; cut what every session and every subagent pays for;
+  make the rules that matter actually fire.
+- **Owner's words:** reduce token use majorly; shift rules into skills; optimise personas; slim
+  documents; restructure the setup; aggressive budget, but do not cut anything important.
+- **Owner decisions already made:** aggressive budget (moderate allowed); review waves become
+  skills that a core line says when to run; rtk hook and lore removed; narratives move verbatim to
+  `docs/history/`.
+- **What this restructure can and cannot move (honest scope, anomaly:F3, domain close):**
+  - It cuts the static load on every call. Measured effect of a ~30k-token cut on every call:
+    **≈ −5.6 % of main-session cost, ≈ −20.5 % of subagent cost** (anomaly:F3, simulated over the
+    transcript corpus). Subagents are the larger arena, so this is worth doing.
+  - Most main-session cost (≈ 69 % of cost units) sits in calls above 500k context. That lever is
+    behaviour (clearing, compacting, handing long work to seats), not config. This spec adds one
+    core line and a measurement for it (§5.7) and leaves the rest to owner question Q1.
+  - Adherence is mostly a **mechanism** problem: of six "rule existed and was not followed"
+    incidents, one was burial in a long file; three were fixed by a mechanism (anomaly:F6). So:
+    slimming is for cost, hooks and structure are for adherence.
 
 ## 2. Measured baseline (2026-10-14)
 
-| Quantity | Value | How measured |
+Unit: **bytes** for files; tokens only where measured from transcript `usage`. The bytes→tokens ratio
+on this text is ≈ 3.0 bytes/token (regression, n = 755 subagents; one within-version check gave 2.44),
+not 4 (anomaly:F1).
+
+| Quantity | Value | Source |
 |---|---|---|
-| Main session, context at first call | 77.6k–100.0k tokens (8 sessions) | `usage` in `~/.claude/projects/-projectnb-liu-scc-philipp/*.jsonl` |
-| Subagent, context at first call | 49.6k–72.5k (8 subagents) | same, `*/subagents/*.jsonl` |
-| Our always-loaded text | ~122 KB ≈ 30k tokens | `wc -c`: subagent-dispatch.md 54.8K, verification.md 45.8K, MEMORY.md 14.1K, scc.md 5.4K, CLAUDE.md ×2 2.4K |
-| Long session total context | up to 1.83B tokens / 3,714 calls | same transcripts (mostly cache reads) |
-| Plugins always-on (CLI `claude plugin details`) | superpowers ~840, pr-review-toolkit ~2,035, diagram-design ~416, ponytail ~641 (off → 0 injected), hookify ~294 | CLI estimate |
-| Synced account plugins (skill descriptions only) | writing-skills ~1,050, bio-research ~710, writing-process ~450, humanize-kit ~370, humanizer ~90 | description chars / 4 |
+| Main session, first-call context | 77.6k–100.0k tokens (8 sessions); grew 78.5k → 100k in four weeks, ≈ 14k of that ours, most of the rest MCP connector attachments (deferred tools 5.4 → 16.1 KB, MCP instructions 2.2 → 6.2 KB) | transcripts; anomaly:F7 |
+| Our always-loaded text | ≈ 125 KB ≈ 41k tokens: subagent-dispatch.md 54.8 KB, verification.md 45.8 KB, MEMORY.md 14.1 KB, scc.md 5.4 KB, CLAUDE.md ×2 2.4 KB, plus agent descriptions (3.6 KB ours) | `wc -c`; instructions attachment |
+| Share of first-call context that is ours | ≈ 41 % main, ≈ 80 % of a named review seat | anomaly:F1 |
+| MEMORY.md in subagents | **yes — 757/757 subagent transcripts** carry it in the instructions attachment (docs say otherwise) | controller re-derivation; domain:F1, anomaly:F2 |
+| Subagent spend by type | general-purpose **81.2 % of subagent context tokens** (n = 411 of 757); critic-reviewer 7.9 %, domain-reviewer 3.8 %, others < 2.5 % each. Cost-unit share 79 % (anomaly:F4) — a different column | controller re-derivation |
+| General-purpose baseline not ours | ≈ 28k tokens (tool schemas, listings) vs 4.6k–7.0k for named seats | anomaly:F4 |
+| Sessions start where | only `-projectnb-liu-scc-philipp` exists under `~/.claude/projects/` → all sessions start at the workspace root | `ls` |
+| Where Claude runs | inside SGE job 8090063 on compute node `scc-yf3`, not a login node | critic:F6 |
+| Plugins always-on (CLI estimate) | superpowers ≈ 840 (+ 3.7 KB SessionStart injection), pr-review-toolkit ≈ 2,035, diagram-design ≈ 416, ponytail ≈ 641 (off → 0 bytes injected, verified), hookify ≈ 294; synced account plugins ≈ 2.7k in descriptions | `claude plugin details` |
 
-`subagent-dispatch.md` is 752 lines and `verification.md` 553; Anthropic's guidance is under
-200 lines per always-loaded file because longer files "consume more context and reduce
-adherence" (code.claude.com/docs/en/memory).
+## 3. Premises from current Claude guidance — corrected per model
 
-## 3. What current Claude guidance changes about our premises
+Each was checked against Anthropic's docs on 2026-10-14 (domain-reviewer re-checked all ten).
 
-These come from Anthropic's own docs, read 2026-10-14, and each one touches a rule we hold:
+1. **Verification instructions are model-dependent (domain:F2, Blocking, fixed here).** Opus 5.x
+   verifies unprompted; generic "verify / double-check" instructions over-verify there. Sonnet 5.5
+   and Haiku 5.5 skip checks at low effort and Anthropic adds a verification paragraph for them.
+   Three classes:
+   - **Specific** — a strong model without this workspace could not have written it (`qacct
+     exit_status 0` is not success; shell `grep` skips gitignored paths; `--cut_tc` gates tblout and
+     domtblout differently). Keep everywhere.
+   - **Method** — how to verify ("a gate counts only after you have seen it fail"; RED-proof module
+     path). Models do not do this by default. Keep everywhere.
+   - **Generic** — "verify before claiming done". Drop on Opus seats; keep one line plus the
+     keep-working paragraph on Sonnet/Haiku seats.
+2. **Emphasis:** no "CRITICAL/MUST"; at most one IMPORTANT line in core, added only after an eval shows
+   that rule skipped.
+3. **Explain why in one clause;** keep worked cases of ≤ 3 lines — numbers are what let a rule override
+   the model's prior (domain:F6).
+4. **Positive form,** except safety prohibitions.
+5. **Delegation:** Opus 5 delegates readily; independent review at a boundary stays (code.claude.com
+   best-practices "adversarial review step"); self-verification by subagent does not.
+6. **Reviewers:** report everything, triage in a separate pass (platform Opus 5 page). Code
+   best-practices says to tell reviewers to flag only correctness gaps; report-all plus
+   pragmatism-officer satisfies both (domain:F10).
+7. **Effort is per model:** Opus 5.5 at medium ≈ Opus 5 at high; Sonnet/Haiku seats at low skip
+   checks → minimum medium (domain:F5).
+8. **Agent frontmatter facts (docs + critic:F2/F3, unverified items marked):**
+   - `omitClaudeMd: true` drops CLAUDE.md files and unscoped project rules; path rules still load on
+     file touch. **Unverified: whether it drops the MEMORY.md attachment** → Phase 0 probe.
+   - `skills:` preload injects the full body; a skill with `disable-model-invocation: true` **cannot**
+     be preloaded (docs, verbatim) and is skipped silently. **Unverified: preload when `tools:` omits
+     `Skill`** → Phase 0 probe.
+   - Agent and skill discovery walks from the start directory up to the repository root; the workspace
+     root is not a repo. Today all sessions start at the root, so root config loads. New skills go in
+     the workspace `.claude/skills/` as now; a session started inside `projects/<name>` is a Phase 0
+     probe (inv:F2, DECISION-010).
+9. **Skills:** only name + description load at startup; every model-invocable description costs every
+   turn. After compaction only the first 5,000 tokens of each invoked skill are re-attached (25k
+   shared) → put rules first, examples after, worked cases in `reference/` (domain:F4).
+10. **`CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`** refuses the over-limit spawn with a do-not-retry message;
+    it does not queue (critic:F4, domain:F3).
 
-1. **Over-verification.** Opus 5 "verifies its own work without being told to"; generic
-   instructions such as "include a final verification step" or "use a subagent to verify"
-   cause over-verification and should be removed (prompting-claude-opus-5). Self-correction
-   prompts ("double-check", "re-verify") likewise add cost without improving results.
-   → Keep our **specific** failure knowledge (which artifact, which instrument, which third
-   state). Drop **generic** "verify before claiming" duplication: today it exists in
-   CLAUDE.md, `verification.md`, superpowers `verification-before-completion`, and the Stop
-   hook — four layers.
-2. **Emphasis.** Current models overtrigger on aggressive language; "CRITICAL: You MUST" should
-   become "Use X when…". If many lines are emphasised, none stands out (best-practices).
-3. **Explain why, briefly.** Context or motivation behind an instruction improves targeting —
-   one clause, not an incident report.
-4. **Positive phrasing.** "Tell Claude what to do instead of what not to do."
-5. **Subagents.** Opus 5 delegates readily; "do not use subagents to verify or double-check
-   your own work". Independent review at a boundary is still endorsed (best-practices:
-   adversarial review step). Deterministic caps exist:
-   `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`, `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`.
-6. **Reviewers.** Telling a reviewer "only report high severity" makes it report less; ask for
-   everything and filter in a separate pass — this is exactly our pragmatism-officer pattern,
-   so it stays.
-7. **Effort.** `low`/`medium` are strong on Opus 5; use them liberally per seat.
-8. **Agent frontmatter.** `omitClaudeMd: true` starts a subagent without CLAUDE.md files (path
-   rules still load on matching files); `skills:` preloads full skill text; `isolation:
-   worktree` gives an agent its own checkout; `effort`, `maxTurns`, `background` exist.
-9. **Skills.** Only name + description load at startup; SKILL.md body under 500 lines;
-   references one level deep; scripts are executed, not read; descriptions third person,
-   what + when; no time-sensitive text in the body.
-10. **Auto memory.** First 200 lines or 25 KB of `MEMORY.md` load in the main session only, not
-    in subagents (forks excepted).
+## 4. Approach
 
-## 4. Approaches considered
+**B — core invariants always on; knowledge moves to skills; seats preload what they need; mechanisms
+carry adherence.** A (trim in place) is too small; C (adopt an external stack) loses domain lessons.
 
-| | Approach | Token win | Risk | Verdict |
-|---|---|---|---|---|
-| A | Trim prose in place, keep structure | ~8–10k | low | too small; keeps adherence problem |
-| **B** | **Core invariants always on; knowledge as skills; seats preload only what they need** | **~22–25k main, ~20–25k per seat** | **medium: a lesson may not load when needed** | **recommended** |
-| C | Adopt an external stack (pstack / ponytail-led) and drop custom rules | large | high: loses domain lessons no public stack has | rejected |
+**MOVE is separate from REWRITE (pragmatism §6).**
+- **Rewrite** only what is always loaded: `core.md`, root `CLAUDE.md`, `~/.claude/CLAUDE.md`, the
+  memory index, seat bodies. That is where the tokens are.
+- **Move skill bodies verbatim** (light headings, split to fit the 5k-token compaction window).
+  Skill bodies load rarely; rewriting them saves little and risks meaning — this workspace's rule text
+  has carried errors twice after confident rewrites (TC–NC).
+- Any rewrite of a lesson is read old-beside-new by a review seat before commit.
 
-B's risk is controlled by §9 (traceability + behavioural evals).
+## 5. Design
 
-## 5. Target architecture
+### 5.1 Layers and budget
 
-### 5.1 Layers
-
-| Layer | Loads when | Budget | Contents |
+| Layer | Loads | Ceiling (bytes) | Contents |
 |---|---|---|---|
-| L0 `~/.claude/CLAUDE.md` | every session, every non-omitting subagent | ≤ 15 lines | English only; home quota; nothing else |
-| L1 root `CLAUDE.md` | same | ≤ 45 lines | environment, governance gate, where things live, which skill to load when |
-| L1 `rules/core.md` (no `paths`) | same | ≤ 150 lines | the invariants (§5.2) |
-| L2 path-scoped rules | on matching files | as today | bileaciddb, enzymefinder, codebase-navigation, python, r, shell — unchanged |
-| L3 skills | on description match or explicit call; or preloaded into a seat | ≤ 500-line body each | §5.3 |
-| L4 `docs/history/` | never auto | unlimited | verbatim incident narratives, linked as "why" |
-| Memory index | main session only | ≤ 60 one-line entries | pointers; no duplicates of rules |
+| `~/.claude/CLAUDE.md` | every session + non-omitting subagents | 1 KB | English only; home quota |
+| root `CLAUDE.md` | same | 3 KB | environment, governance gate, where things live |
+| `rules/core.md` (no `paths`) | same | 9 KB | §5.2 |
+| path-scoped rules | on matching files | unchanged | bileaciddb, enzymefinder, codebase-navigation, python, r, shell |
+| MEMORY.md index | main **and every subagent** (measured) | 5 KB, ≤ 50 one-line entries | pointers only |
+| skill descriptions (ours) | every turn | 0.5 KB each | what + when + boundary clause |
+| skill bodies | on invoke / preload | ≤ 15 KB each, rules first | §5.3 |
+| `docs/history/` | never auto | — | verbatim narratives + `rule-index.md` (old title → new home) |
 
-Target for L0+L1+memory index: **≤ 32 KB (~8k tokens)**, stretch ~24 KB (~6k). The number is a
-ceiling enforced by a script (§5.6), not a goal to cut toward.
+Ceiling for our always-loaded text ≈ **20 KB (≈ 6.5k tokens)**, down from ≈ 125 KB. One budget
+definition, enforced by `context_budget.py` (attribution of our files) and judged by
+`measure_context.py` (gate of record: first-call context from transcript attachments, which also sees
+connectors, deferred tools and plugin injections our files cannot) — critic:F12, anomaly:F7.
 
-### 5.2 `core.md` — what stays always on
+### 5.2 `core.md` — always on
 
-Selection test per line: *would Claude make a costly mistake in an ordinary session if this
-line were absent, and is it not already default behaviour?* Draft contents:
+Selection test: *would an ordinary session make a costly mistake without this line, and is it not
+default model behaviour?* Draft:
 
-1. **Evidence:** an artifact on disk, not an exit code or a narrative, is evidence; check mtime
+1. **Evidence:** an artifact on disk is evidence; an exit code or a narrative is not. Check its mtime
    against the change. A gate counts only after you have seen it fail.
-2. **Three-state values:** unknown is its own state — typed, never `bool | None`; list every
-   consumer when introducing one.
-3. **Absence claims:** use `command grep` (shell `grep` skips gitignored paths); use a parser,
-   not grep, to count. An absence is only as good as the instrument's headroom in that stratum.
-4. **Figures:** every relayed number carries its n, its column and its artifact; a number from
-   a plan or a subagent report is unverified until re-derived.
-5. **SCC:** never run pytest or anything >15 s on the login node — use `qsub`. The caller owns
-   every `qsub` and waits in one backgrounded loop; verify the output artifact. Details: skill
+2. **Third state:** unknown is its own typed state, never `bool | None`; list every consumer when you
+   introduce one.
+3. **Absence and counts:** `command grep` for absence (shell `grep` skips gitignored paths); a parser,
+   not grep, for counts; an absence is only as good as the instrument's headroom in that stratum.
+4. **Figures:** a relayed number carries its n, its column and its artifact; numbers from plans or
+   subagent reports are unverified until re-derived.
+5. **SGE:** never run pytest or long work outside an SGE job (`$JOB_ID` unset). The caller owns every
+   `qsub`; wait in one backgrounded loop with a deadline; verify the output artifact. Details:
    `running-sge-jobs`.
-6. **Git in shared trees:** commit with explicit paths, then `git show --stat`; read past
-   commits with `git show <c>:<path>`, never stash or `--work-tree` checkout in a shared tree.
-   Concurrent implementers run in `isolation: worktree`.
-7. **Scratch and outputs:** scratch in the session scratchpad, namespaced per agent; never
-   `rm -rf` in a project tree; output directories are read-only to reviewers; never create
-   files under `tests/` outside your own task.
-8. **Process gates (when, not how):** before Task 1 of an architectural plan → `/plan-critique`;
-   at wave end → `/wave-review`; any dispatch → build the brief with `dispatch-brief`.
-9. **Scope:** deliver what was asked; a follow-up that belongs in a file you do not own becomes
-   a dispatched task, not a comment.
-10. **Governance:** `ARCHITECTURE.md`, `DECISIONS.md`, `CLAUDE.md`, `PROJECT_STATE.md`, pushes,
-    issues and CI need explicit approval.
+6. **Shared git trees:** commit with explicit paths, then `git show --stat`; read past commits with
+   `git show <c>:<path>`; no `git stash` or `--work-tree` checkout in a shared tree. Recovery recipe:
+   `dispatch-brief`. (Worktree isolation is **not** adopted — critic:F1.)
+7. **Scratch and outputs:** scratch in the session scratchpad, namespaced per agent; delete only files
+   you created, by name; output directories are read-only to reviewers; never create files under
+   `tests/` outside your task; no `--write` tool or `cp` onto tracked files in a shared tree.
+8. **When to load which process** (one line each): dispatching an implementer or review seat →
+   `dispatch-brief`; before Task 1 of an architectural plan → `plan-critique`; wave end → `wave-review`;
+   third failed fix or a known-heavy problem → escalation section of `plan-critique`; release or
+   publication → security-specialist; new project or reframing → one external premise check, and
+   `command grep` `.superpowers/` for prior work before any research dispatch; self-verification is
+   not independent review.
+9. **Scope:** deliver what was asked; change only what the task needs and match the surrounding style;
+   report unrelated dead code instead of deleting it; a fix that belongs in a file you do not own
+   becomes a dispatched task, not a comment. (Karpathy "surgical changes" folded here — §5.9.)
+10. **Context hygiene:** clear between unrelated tasks; compact deliberately with an instruction; hand
+    long investigations to a seat rather than reading them into the main session.
+11. **Governance:** `ARCHITECTURE.md`, `DECISIONS.md`, `CLAUDE.md`, `PROJECT_STATE.md`, pushes, issues
+    and CI need explicit approval.
 
-Everything else in today's two big files moves to a skill or to history (traceability §9.1).
+### 5.3 Skills (workspace `.claude/skills/`, symlinked from this repo as today)
 
-### 5.3 Skills (new, in `.claude/skills/`, symlinked as today)
+All seven are model-invocable (no `disable-model-invocation`) so core can trigger them and seats can
+preload them. Descriptions open with the situation, list trigger phrases, end with a boundary clause
+naming the sibling (domain:F6/F7).
 
-| Skill | Invoked by | Preloaded into | Source sections |
+| Skill | Trigger | Preloaded into | Content (moved verbatim unless noted) |
 |---|---|---|---|
-| `dispatch-brief` | any dispatch | — | dispatch claims (verify/UNVERIFIED, stop rule, contradiction slot, lossy-summary line), file ownership + commit recovery, env-invariants block, caller owns qsub, brief at dispatch time, model/effort table |
-| `wave-review` | core rule at wave end; `/wave-review` | — | wave-end roster and when each seat runs, review-dispatch template (findings file first, ranked areas, HEAD-moves check, minor-triage test, objection slot, remove-the-guard), integration seat, pragmatism last, quiet tree for suite runs |
-| `plan-critique` | core rule before Task 1; `/plan-critique` | — | plan review wave sizing, Calibration block + hard-gate triggers, plan preflight (execute plan claims), tests-in-brief-are-drafts, three-state at plan time, research questions file, escalation wave |
-| `verification-patterns` | description match | critic-reviewer, lean-critic, alignment-officer | the "shapes" catalogue, grouped: stale artifacts · gates that cannot fail · tests and fixtures · counting · fixes and blast radius · claims that decay · generated docs |
-| `scientific-evidence` | description match | domain-reviewer, anomaly-hunter, figure-auditor | instrument headroom, textbook premise may not close an anomaly, both branches, attack confirming results, composition effects, two-report filtering, metric triple-check, positive controls; bio worked examples in `reference/` |
-| `running-sge-jobs` | description match (qsub, SGE, job) | scc-monitor | scc.md body: defaults, wait loop (listing form, 3 absences, deadline), log reading, storage |
-| `completion-check` | description match; `/completion-check` | critic-reviewer | stub scan, reachability (import graph), `vulture`, `mutmut` on changed modules, `diff-cover`, silent-failure checklist; ships `scripts/` that run, not read |
+| `dispatch-brief` | dispatching an implementer or review seat (not every Task) | implementer | **delta over superpowers SDD templates** (inv:F5): verify-or-UNVERIFIED, stop rule, contradiction slot, lossy-summary line, file ownership + commit recovery, env-invariants block, caller owns qsub (submit = job spec in report), brief at dispatch time, model/effort table **per model**, **the review-dispatch template** (findings file first, ranked areas, HEAD start/end, minor-triage test, objection slot, remove-the-guard) so ad hoc reviews keep it (critic:F8) |
+| `wave-review` | wave end; `/wave-review` | — | roster by wave type, seat-count line (lean-critic not default; anomaly-hunter skipped on bug-fix-only waves), batching under the concurrency cap ("refused = re-dispatch; close lists ran / not-ran per seat"), integration seat, pragmatism last, quiet tree for suite runs, "no negative control" close line, clean-worktree baseline |
+| `plan-critique` | before Task 1; `/plan-critique` | — | wave sizing, Calibration block + hard-gate triggers, plan preflight = **wire `projects/EnzymeFinder/scripts/check_citations.py`** (inv), tests-in-brief-are-drafts, three-state at plan time, research-questions file, plan-writing inventory dispatch, escalation wave |
+| `verification-patterns` | description match | critic-reviewer, lean-critic, **implementer** (critic:F9) | the shapes catalogue incl. positive-control corollary and the three general lessons from the rtk section (match command as invoked; convenient fixture proves nothing; check the aggregate's distribution) — critic:F10 |
+| `scientific-evidence` | description match | domain-reviewer, anomaly-hunter, figure-auditor | instrument headroom, both branches, attack confirming results, composition effects, two-report filtering, metric triple-check; bio worked cases in `reference/` |
+| `running-sge-jobs` | qsub, SGE, job | scc-monitor | scc.md body; **fix the listing-form wait loop (no deadline, never exits on `Eqw`)** (domain:F6) |
+| `completion-check` | `/completion-check`; "is this finished / does it run" | critic-reviewer, implementer | stub scan (`pass`, `NotImplementedError`, `TODO`, `except: return []/None`, `shortcut:`), `ruff` unused-code rules, **generalised `audit_reachability.py` from EnzymeFinder** (not vulture — rejected in EF W10 because test references count as use; inv:F3), **run the changed entry point on a real downsampled fixture** (align:F3), silent-failure checklist (from pr-review-toolkit). `mutmut`/`diff-cover` deferred (D3) |
 
-Retired: `rtk` skill (with the hook). Kept unchanged: `caveman`, `ccusage`, `council`, `storm`,
-`workspace-audit` (gains the budget check), `thermo-nuclear-code-quality-review` (vendored,
-verbatim).
+Unchanged: `caveman`, `ccusage`, `council`, `storm`. `workspace-audit` gains the budget check, the
+upstream-drift check for vendored skills, and drops its superseded "40 lines" prose budget (inv:F5).
+`thermo-nuclear-code-quality-review` (vendored 2026-10-14) **drops `disable-model-invocation`** in a
+local frontmatter override so it can be preloaded (critic:F2) — the only edit to the vendored file,
+recorded in its `SOURCE.md`. `rtk` skill retired.
 
-### 5.4 Seats (agents)
+### 5.4 Seats
 
-All review seats get `omitClaudeMd: true`, explicit `effort`, and a preloaded skill set, plus
-a short "environment" block in the agent body (venv path, scratchpad, read-only outputs, no
-files under `tests/`, `command grep`, report a job spec instead of submitting). Projected
-saving ~20–25k tokens per seat.
+Every seat: `omitClaudeMd: true` (subject to Phase 0), explicit `effort`, preloads per §5.3, and an
+env block: venv path, scratchpad, read-only outputs, no files under `tests/`, `command grep`, report a
+job spec instead of submitting, no `--write`/`cp` onto tracked files, `git show <c>:<path>`, HEAD and
+status at start and end (domain:F8). Sonnet/Haiku seats carry the keep-working-until-done paragraph and
+one generic verification line (domain:F2/F5).
 
-| Seat | Model / effort (proposed) | Preloads | Change |
-|---|---|---|---|
-| critic-reviewer | opus / medium | verification-patterns, completion-check | points at skills instead of `rules/verification.md` |
-| domain-reviewer | opus / high | scientific-evidence | — |
-| anomaly-hunter | opus / high | scientific-evidence | — |
-| alignment-officer | sonnet / medium | verification-patterns | — |
-| docs-sync | sonnet / low | — | needs governance file paths in body |
-| inventory-auditor | sonnet / medium | — | gains the ponytail "ladder" at plan stage (need? exists? stdlib? native? installed dep?) |
-| pragmatism-officer | sonnet / medium | — | — |
-| figure-auditor | opus / medium | scientific-evidence | — |
-| security-specialist | opus / high | — | — |
-| research-scout | sonnet / low (from haiku) | — | haiku too weak for synthesis — to be checked by the wave |
-| scc-monitor | haiku / low | running-sge-jobs | — |
-| **lean-critic (new)** | sonnet / medium | thermo-nuclear-code-quality-review, verification-patterns | wave-end debloat seat on the diff; reports line delta and deletion candidates; may call `/ponytail-review`; never cuts trust-boundary validation, data-loss handling or the evidence rules |
+| Seat | Model / effort | Change |
+|---|---|---|
+| **implementer (new, named)** | sonnet / medium (opus / medium for cross-cutting) | replaces general-purpose for SDD tasks: `tools:` allowlist, preloads `dispatch-brief`, `verification-patterns`, `completion-check`. Largest measured lever (anomaly:F4) |
+| critic-reviewer | opus / medium | item 7 (simplicity) kept but shortened; item 5 (docs-sync reminder) moves to `wave-review`; pointers to skills |
+| domain-reviewer | opus / high | — |
+| anomaly-hunter | opus / high | remove the verbatim rtk block |
+| alignment-officer | sonnet / medium | boundary vs docs-sync: *scope delivered vs promised*; no `verification-patterns` preload (align:F4) |
+| docs-sync | sonnet / medium | boundary: *governance docs vs reality*; |
+| inventory-auditor | sonnet / medium | stays "does it already exist?" only (align:F2) |
+| pragmatism-officer | sonnet / medium | **gains the ponytail ladder at plan stage** (need it? exists? stdlib? native? installed dep? one line?) — it already owns proportionality |
+| lean-critic (new) | sonnet / medium | **on demand**, not in the default roster until yield data exist; preloads thermo-nuclear + verification-patterns; `tools` include `Skill` so it can run `/ponytail-review`; guard: never cuts trust-boundary validation, data-loss handling or evidence rules — the guard is why it exists beside code-simplifier/ponytail-audit (inv:F7) |
+| figure-auditor | opus / medium | — |
+| security-specialist | opus / high | — |
+| research-scout | sonnet / medium (from haiku/low) | add Anthropic's search line |
+| scc-monitor | haiku / medium | preload `running-sge-jobs`; fix pointer |
 
-Per-task review: the default per task is the **fast gates** (lint on changed paths, the task's
-own tests, `completion-check` stub scan), not extra agents. superpowers'
-`subagent-driven-development` per-task reviewer pair stays available but is not mandated on top
-of wave-end seats.
+Persona merges are decided from a **seat-yield tabulation** over the last 3–5 waves (unique,
+acted-on findings per seat), not now (anomaly:F5, align:F4).
 
 ### 5.5 Hooks and settings
 
-- Remove the rtk `PreToolUse` hook (binary stays for manual `rtk gain`); remove rtk lore
-  everywhere.
-- Keep the deterministic Stop hook.
-- Add `env`: `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=3` — replaces the memory prose cap.
-- Convert mechanical prose rules into hooks (hookify or plain `PreToolUse` scripts), each
-  removing its text from core: block `git stash` and `git --work-tree … checkout` in project
-  repos; block `rm -rf` under `/projectnb/liu-scc/philipp/projects`; block `pytest` when
-  `hostname` is a login node; warn on `git commit` without `--` paths.
-- Prune the allowlists to recurring patterns (drop one-offs, dead `rtk *`, `git stash *`).
-- Ponytail installed with `defaultMode: off` (verified: 0 bytes injected when off, 3,266 when
-  `full`).
+Constraints on every hook (critic:F6/F7, inv:F9, domain:F8): command-type only; a tokenising parser,
+not a regex over the raw string; versioned under `workspace-config/hooks/` and symlinked like
+`large-change-check.py`; demonstrated blocking its target, passing near-misses, **firing inside a
+subagent**, and replayed over the real transcript corpus (DECISION-024 method). Warn first; block only:
+- `git stash push|save|pop` and `git --work-tree … checkout` in project repos (not `git stash list`;
+  match `git -C <dir> stash` too);
+- `pytest` / `python -m pytest` when `$JOB_ID` is unset (not `qsub … pytest`);
+- `rm -rf`/`rm -fr`/`\rm` with `-r` under `projects/` (warn only on `find -delete`).
+The "warn on commit without `--`" hook is dropped: it nudges toward the second sweep hazard.
 
-### 5.6 Budget enforcement and measurement
+Settings: remove the rtk `PreToolUse` hook (supersedes DECISION-025; retire `rtk_selftest.sh`); add
+`env.CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` at the smaller account's cap (2) as a backstop; prune
+allowlists to recurring patterns; keep the Stop hook; ponytail stays `defaultMode: off`.
 
-- `scripts/context_budget.py`: sums the bytes of everything that loads at startup (CLAUDE.md
-  chain, unscoped rules, first 200 lines of MEMORY.md, enabled skill descriptions) and fails
-  above the ceiling. Run by `workspace-audit` and before any commit that touches the config.
-  This is the structural fix for "every incident adds a paragraph and none are removed".
-- `scripts/measure_context.py`: first-call context per session and per agent type from
-  transcripts — the before/after metric.
+### 5.6 Documents and governance
 
-### 5.7 Writing standard for every loaded file
+- `docs/history/` + `rule-index.md` mapping every old item title to its new home — the answer for the
+  100+ historical citations (D1). Live pointers are updated: 4 agent files, `rules/{python,shell}.md`,
+  root `CLAUDE.md`, `projects/EnzymeFinder/.claude/CLAUDE.md`, EF `running-quality-gates` skill,
+  `projects/EanB_homologue_search/CLAUDE.md`, this repo's `CLAUDE.md` (also: rules *do* auto-load;
+  11 agents not 10).
+- `DECISION-026` (restructure, supersedes DECISION-025) and `ARCHITECTURE.md` update — approval needed.
+  `DECISIONS.md`/`ARCHITECTURE.md` are not auto-loaded; no slimming needed for tokens (align).
+- Memory: index to ≤ 50 one-line entries; delete entries duplicating rules; fix
+  `feedback_subagent_dispatch` (completion notifications exist; its blocking `qstat -j` loop contradicts
+  "caller owns qsub" — critic:F5).
+- Root `PROJECT_STATE.md`: stale since 2026-06-10 — owner Q4.
+- Vendored skill exception and parked plugins: as recorded in v1 (thermo-nuclear has no Claude
+  marketplace of its own; the three parked plugins need reinstall + disable by the owner — the
+  classifier blocked it in session).
+- Workspace root clutter listed for the owner; delete only on approval.
 
-- One rule per bullet, imperative, present tense; optionally "— because <one clause>".
-- No dates, incident IDs, token counts or war stories in loaded text; link
-  `docs/history/<file>.md` instead.
-- No CAPS or "CRITICAL/MUST"; bold only the key term, at most one per section.
-- Positive form ("do X"), except safety prohibitions.
-- One glossary of terms used consistently: *seat, wave, brief, artifact, gate, third state*.
-- Skills: third-person description with what + when; body ≤ 500 lines; references one level
-  deep; scripts executed, not read.
-- Grammatical but terse English. Caveman compression is not used in instructions: precision
-  beats the last 20 % of tokens.
+### 5.7 Measurement
 
-### 5.8 Documents and governance
+- `measure_context.py` (gate of record): first-call context and per-call context distribution by
+  session and agent type from transcript `usage` + `attachment` sizes; reuses the hook's transcript
+  reader (inv). Reports the share of calls above 500k and what tools they ran.
+- `context_budget.py`: bytes of our always-loaded files and skill descriptions vs §5.1 ceilings; also
+  flags skill bodies over 15 KB.
 
-- `docs/history/` with an index; each moved narrative keeps its original text.
-- New `DECISION-026` (restructure) and an `ARCHITECTURE.md` update — approval required.
-- Root `PROJECT_STATE.md` (last updated 2026-06-10) is stale but is still the pointer root
-  `CLAUDE.md` uses. Proposal: CLAUDE.md points to each project's own state files instead;
-  workspace `PROJECT_STATE.md` is archived. **Open — owner decides.**
-- Memory: compress the index; delete entries that duplicate rules; fix
-  `feedback_subagent_dispatch` (background completion notifications do exist).
-- This repo's own `CLAUDE.md` says rules are "read on demand via prose references — no hook
-  auto-injects any of them (verified 2026-09-06)". That is false for unscoped rules: this
-  session's system context contains `scc.md`, `subagent-dispatch.md` and `verification.md`
-  verbatim, matching the docs ("Every session"). Correct it in the same change.
-- Vendored skills: `learnings.md` forbids hand-copying a skill that has an upstream
-  marketplace. `thermo-nuclear-code-quality-review` is the justified exception — its upstream
-  (`cursor/plugins`, MIT) ships it as a Cursor plugin only; the repo's Claude marketplace lists
-  only `origin-apps`, and the sole Claude route (pstack-claude) brings a routing hook that
-  competes with superpowers. `SOURCE.md` pins the SHA; `workspace-audit` gains an upstream-drift
-  check.
-- Parked plugins: `parked-extensions.md` records `example-skills`, `research-skills` and
-  `planning-with-files` as *disabled, not uninstalled*, for instant re-enable. They were
-  uninstalled in this session by mistake (zero token gain; disabled plugins cost nothing).
-  Restore = reinstall + disable; the auto-mode classifier blocked doing it from the session, so
-  the owner runs it.
-- `pr-review-toolkit` costs ~2,035 tokens every session (six agent descriptions with long
-  examples). Open: keep the plugin, or fold `silent-failure-hunter`'s checklist into
-  `completion-check` and disable it.
-- Workspace root clutter (`14F 14D:`, `.tmp_*`, `scratch_*`, `.bak`): list for owner, delete
-  only on approval.
+### 5.8 Writing standard for rewritten (always-loaded) text
 
-### 5.9 Writing and document skills (recommendations only; synced from the account)
+- One rule per bullet, imperative, present tense, "— because <one clause>" where it helps.
+- Narratives go to history; a worked case of ≤ 3 lines may stay, in `<example>` tags.
+- No CAPS; at most one IMPORTANT in core, only after an eval shows that rule skipped.
+- Positive form except safety prohibitions; one glossary (*seat, wave, brief, artifact, gate, third
+  state*).
+- Grammatical, terse English; caveman compression is not used for instructions.
+- Demonstrated by domain-reviewer on three real sections: 6,978 → 2,856 bytes (−59 %) with one clause
+  of precision at risk, kept.
 
-- Papers: `science-writing-edit` (owner's own) first; `humanizer` (blader-based) as the de-AI
-  checklist pass. Both preserve claims and numbers.
-- `humanize-kit` targets AI-detector evasion and adds a SessionStart hook; not suited to
-  academic submissions — recommend disabling.
-- `writing-skills`: 17 styles, ~1k tokens of descriptions every session; keep plain-language,
-  orwells-rules, google-dev-docs; disable the character voices.
-- `bio-research`: its PubMed/bioRxiv MCPs duplicate connectors already present; keep only if
-  nf-core / scvi skills get used.
+### 5.9 Dispositions for the owner's other asks
+
+- **Karpathy guidelines:** not installed as a file (overlaps core, superpowers and ponytail; competes
+  with the budget). "Surgical changes" and "report dead code, don't delete" folded into core item 9;
+  "state assumptions / ask when ambiguous" is already harness behaviour.
+- **Ponytail persona:** plan stage → pragmatism-officer ladder; code stage → lean-critic on demand,
+  which may call `/ponytail-review`; `/ponytail-audit` available ad hoc.
+- **pstack:** not installed (routing hook competes with superpowers); thermo-nuclear vendored.
+- **Codex loop:** out of scope (no subscription).
+- **code-modernization:** out of scope — built for legacy-estate rewrites with proof of behavioural
+  equivalence; our repos are active Python, not legacy; `/modernize-assess` can be run ad hoc on
+  EnzymeFinder once if wanted.
+- **Humanizers / document skills (account-synced, owner manages on desktop):** papers use the owner's
+  `science-writing-edit` first, `humanizer` as a de-AI checklist pass, then a numbers-and-citations diff
+  against the original. Disable `humanize-kit` (detector evasion conflicts with journal AI-use
+  disclosure policies; adds a SessionStart hook). `writing-skills`: keep plain-language,
+  orwells-rules, google-dev-docs; disable the character voices (~1k tokens of descriptions).
+  `bio-research`: keep only if nf-core / scvi skills get used.
 
 ## 6. Calibration
 
-- **Vision context:** this layer serves every project's sessions on this workspace; it is the
-  harness, not the science. It is not responsible for project-level correctness, only for
-  making the right lesson available at the right moment at least cost.
-- **Realistic target:** main first-call context −20k tokens or more; review seats −20k or more;
-  zero lessons lost (traceability); unchanged behaviour on the eval scenarios.
-- **General limits vs ours:** skill discovery depends on description matching — a general
-  limit documented by Anthropic (skills best-practices: "Claude uses it to choose the right
-  Skill from potentially 100+"). Everything else — budget overrun, duplicated layers, stale
-  memory — is ours.
-- **Standard:** Anthropic's guidance (CLAUDE.md < 200 lines/file; SKILL.md < 500 lines;
-  progressive disclosure; no aggressive emphasis). Match it; beat it by enforcing the budget
-  with a script, which the guidance does not provide.
-- **Does the standard already do this?** `/doctor prompt-audit` proposes cuts to CLAUDE.md,
-  rules, skills and agents — run it as an input to Task 1, not a replacement for the design.
-  `claude-md-management` overlaps the same audit.
-- **Thresholds:** 32 KB ceiling = declared workspace-specific (derived from the 200-line
-  guidance × the two files we must keep, plus memory index); revisit after measurement.
+- **Vision context:** the harness layer for every project here. Not responsible for project
+  correctness; responsible for making the right lesson available at the right moment at least cost.
+- **Realistic target:** our always-loaded text ≈ 125 KB → ≈ 20 KB; ≈ −5 % main-session cost and
+  ≈ −20 % subagent cost from that cut, more for general-purpose work moved to the implementer seat;
+  eval behaviour no worse (§7).
+- **General vs our limits:** skill selection by description is a documented general limit
+  (platform skills best-practices). Stochastic behaviour limits what k = 5 evals can show — general.
+  Budget overrun, duplicated layers, stale memory, missing mechanisms — ours.
+- **Standard:** Anthropic: CLAUDE.md files < 200 lines, SKILL.md < 500 lines, progressive disclosure,
+  no aggressive emphasis. We beat it by enforcing the ceiling with a script and measuring in
+  transcripts.
+- **Does the standard already do this?** `/doctor prompt-audit` (in 2.1.299) proposes cuts — run it as
+  input in Phase 2. `claude-md-management` is not installed.
+- **Thresholds:** byte ceilings are declared workspace-specific, from the 200-line guidance and our
+  measured line length; revisit after one week of `measure_context.py`.
 
-## 7. Risks
+## 7. Acceptance
+
+1. **Traceability:** unit = every heading, bold-lead and top-level bullet of the three old files (186
+   by alignment-officer's extractor). A script asserts each maps to exactly one destination (core line,
+   skill section, hook, history, or "deleted: default behaviour" with reason) and renders
+   `docs/history/rule-index.md`.
+2. **Behavioural evals:** 8–10 scenarios — the six incident-derived cases from anomaly:F6 plus two
+   negatives (an ordinary edit must not load `wave-review`; claiming done on a small fix loads ≤ 1
+   skill) and one "6 seats in, 6 reports out". k ≥ 5 runs per arm; "before" arm captured in Phase 0 on
+   the untouched config, same account. Pass: after ≥ before − 1 per scenario. Runner is a job spec the
+   caller submits.
+3. **Budget:** `context_budget.py` passes; `measure_context.py` after one week shows the reduction on
+   real sessions, per agent type.
+4. **Hooks:** each meets every §5.5 constraint.
+5. **Rewrites:** every rewritten lesson read old-beside-new by a seat.
+
+## 8. Phasing
+
+- **Phase 0 — probes, no config change:** throwaway `omitClaudeMd` agent (MEMORY.md attachment? rules?
+  preload without `Skill` in tools?); a PreToolUse hook firing inside a subagent; one `count_tokens`
+  call; connectors on/off first-call diff (double-send hypothesis, anomaly); a session started in an EF
+  directory; what the > 500k calls were doing; capture the "before" eval arm; seat-yield tabulation.
+- **Phase 1 — low-risk wins, no lesson relocated:** memory compress + fixes; rtk hook removal +
+  DECISION-026; env var; allowlists; seat frontmatter (effort, model, env block, boundary sentences);
+  named implementer; the two scripts; hooks warn-first; false statements in CLAUDE.md files.
+- **Phase 2 — rule migration:** traceability script first; history move; skills (verbatim); `core.md`
+  and CLAUDE.md rewrite; live pointers; evals; old files retired only after the evals pass.
+- **Phase 3:** lean-critic, completion-check tooling, thermo override, writing-skill recommendations,
+  owner Q3.
+
+## 9. Risks
 
 | Risk | Mitigation |
 |---|---|
-| A lesson exists in a skill but does not load when needed | core keeps the "when" lines; evals (§9.2) test each moved lesson's trigger |
-| `omitClaudeMd` seats lose project context they used to get implicitly | env block in each agent; dispatch passes project paths; path rules still load on file touch |
-| Description-matched skills overtrigger (Opus 5 is proactive) | narrow descriptions; process skills invoked by core "when" lines |
-| Worktree isolation breaks CWD-dependent tests | keep the clean-worktree baseline line in `wave-review` |
-| Rewriting loses precise wording that carried meaning | verbatim history kept; traceability table cites the old line range per destination |
-| Hooks block legitimate use | warn first, block only for stash / rm -rf / login-node pytest; each hook tested both ways |
+| A moved lesson does not load when needed | core "when" lines (item 8); preloads; evals incl. negatives; Phase 0 load-path probes |
+| Rewrite changes a lesson's meaning | move verbatim; rewrite only always-loaded text; old-beside-new review |
+| `omitClaudeMd` seats lose context they need | env block; dispatch passes project paths; path rules load on touch; Phase 0 probe before adoption |
+| Skills overtrigger / collide with superpowers | narrow descriptions with boundary clauses; negative evals; D6 |
+| Concurrency cap silently drops seats | batching line + ran/not-ran close |
+| Hooks block legitimate work | §5.5 constraints, warn-first, corpus replay |
 
-## 8. Out of scope
+## 10. Known issues and deferred (triaged 2026-10-14, pragmatism-officer)
 
-Project repos' own CLAUDE.md files (lazy-loaded, 1–13 KB each); a Codex review loop (no
-subscription); pstack install (conflicts with superpowers routing); code-modernization usage.
+- **D1 Historical citations** (100+ files cite the old rule files): records of what was true; not
+  rewritten. `docs/history/rule-index.md` maps titles to new homes. Revisit only if a script parses
+  them.
+- **D2 EnzymeFinder project skills overlap** (`submitting-scc-jobs` vs `running-sge-jobs`;
+  `running-quality-gates` vs `wave-review`): project scope; add to EF backlog; revisit if one wins
+  wrongly in an EF session.
+- **D3 `mutmut` and `diff-cover`:** not installed, CPU-heavy, no measured yield, new external tools
+  trigger the Calibration hard gate. Revisit after Phase 3's stub scan / reachability / smoke run have
+  served one real wave.
+- **D4 Slimming the three largest seat bodies** (security-specialist 8.2 KB, anomaly-hunter 7.0 KB,
+  domain-reviewer 5.7 KB): load only on dispatch; ≈ 2–3k tokens each. Revisit with yield data.
+- **D5 Context-size nudge hook:** the lever is real (≈ 69 % of main cost above 500k context) but its
+  design depends on what those calls do — Phase 0 measures it; owner Q1.
+- **D6 superpowers `verification-before-completion`** overlaps at "done": plugin-owned; decide from the
+  "≤ 1 skill on small-fix done" eval after Phase 2.
 
-## 9. Acceptance
+## 11. Owner questions
 
-1. **Traceability:** every heading/bold-lead section of the old `subagent-dispatch.md`,
-   `verification.md`, `scc.md` (114 headings/bold-lead items by heuristic — 63 / 42 / 9 — plus the plain bullets of the verification "shapes" list; the mapping script defines the exact unit) maps to exactly one destination (core line,
-   skill section, hook, history, or "deleted: default behaviour" with reason). A script checks
-   that the mapping covers every section.
-2. **Behavioural evals:** 8 scenario prompts run headless before and after (e.g. dispatch an
-   implementer; claim a gene is absent in a clade; submit a pytest run; review a diff that
-   swallows an exception; close a wave). Each has a grep-able expected behaviour.
-3. **Budget:** `context_budget.py` passes at ≤ 32 KB; `measure_context.py` shows the main and
-   seat reductions on real sessions after one week.
-4. **Hooks:** each new hook demonstrated blocking its target and passing a near-miss.
+- **Q1 Metric and scope:** (A) static baseline only; (B) A + named implementer + seat count per wave +
+  context-hygiene line and measurement — **recommended, and what this spec now does**; (C) B + a
+  context-size nudge hook now. And: is the meter you care about the usage limit or cost?
+- **Q2 Global `effortLevel: high`** on Opus 5.5: keep / medium / per project. Recommended: trial medium,
+  judged on the eval set.
+- **Q3 pr-review-toolkit** (≈ 2k tokens every session): decide at end of Phase 3 once
+  `completion-check` carries the silent-failure checklist.
+- **Q4 Root `PROJECT_STATE.md`:** archive and point CLAUDE.md to project state files — recommended.
+- **Q5 (only if Phase 0 shows double-sent connector deltas):** disable unused claude.ai connectors.
