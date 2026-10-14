@@ -1,0 +1,752 @@
+# Subagent dispatch: review gate and model/effort tiering
+
+## Never dispatch "wait and report" as a subagent's task
+
+A dispatched subagent's context is expensive to reload — every "still waiting, check
+again" round-trip re-pays its full accumulated history. A real incident burned 1M+ tokens
+this way: an implementer subagent was told to wait for an SGE job and report back, and
+polled `qstat`/`qacct` across ~4 separate round-trips at ~230k tokens each.
+
+Do not dispatch a subagent whose task is, or includes as a multi-turn loop, "wait for
+job/agent X to finish, then report." Instead:
+
+- **A subagent that submits an SGE job does not wait for it.** It submits, reports the job
+  id and what artifact it expects, and stops. The caller waits (one backgrounded loop, per
+  `scc.md`) and resumes the subagent with the result. Observed 2026-08-29: four subagents in
+  one session each ended their turn mid-wait anyway — one after 350k tokens and 171 tool
+  calls, another after 555k — and the caller had to check the job regardless. The
+  backgrounded-loop bullet below was written for exactly this case and did not hold, because
+  **a loop inside a subagent still ends when that subagent's turn ends.** Making the handoff
+  explicit costs one message; leaving it implicit costs a stalled agent *plus* the check.
+- If a *non-SGE* wait genuinely must happen inside a subagent as one internal step, it must
+  do so inside a single `Bash(run_in_background=true)` shell-level loop — never repeated
+  foreground status-check calls across turns. Note that `scc.md`'s "Waiting on a job without
+  burning tokens" is **entirely SGE-specific** (`qstat`/`qacct`, `Eqw`/`hqw` states,
+  `h_rt`-derived deadlines); only its shape generalises — one backgrounded loop, a deadline,
+  and no repeated foreground polling. Do not follow its `qstat` mechanics for a non-SGE wait.
+- If the wait is the *entire* reason for dispatch, don't dispatch at all — the caller
+  (main session or a fork) checks directly instead; it is near-free there since it is not
+  reloading a subagent's accumulated history each time, and only dispatches the real
+  downstream-processing subagent once the artifact exists.
+- The same applies to waiting on another dispatched subagent/fork: never re-message or
+  nudge it on a timer to ask if it is done — either it delivers a task notification on
+  completion, or (for `/loop` dynamic pacing) use `ScheduleWakeup` with a delay sized to
+  the actual expected duration, never a short fixed interval "just in case."
+
+**An instruction is not a backstop — the caller must own every `qsub`.** On 2026-09-05 two
+agents stalled mid-wait at **176k and 285k tokens**, each having been told verbatim in its
+brief *"submit, report the job id, and STOP — a wait loop inside a subagent dies when your
+turn ends"*, with the same rule already written here and in `scc.md`. That is three written
+statements of the rule and two violations in one wave. The instruction is not the problem;
+relying on one is. An agent that cannot finish inside its turn does the locally reasonable
+thing, exactly as the comment-instead-of-task failure below predicts.
+
+So: **the dispatching side submits every job.** An agent that needs one writes the job spec
+(the script, the resources, the artifact it expects) into its report and stops; the caller
+submits, waits in one backgrounded loop, and resumes the agent with the result. Waiting then
+is not expressible rather than merely forbidden. Cost of the old way, measured: two stalled
+agents, two resume cycles, and one dirty tree that raced a suite run.
+
+## A follow-up note is a task, not a comment
+
+When an agent finds that the fix belongs in a file it does not own, that finding becomes a
+**dispatched task with declared ownership in the same wave**. It does not become a comment.
+
+The evidence is uncomfortable. In one wave `pipeline/stages.py` gained **94 lines: 81 comment,
+1 blank, 12 code** — and two of the twelve were `_confidence_config_snapshot = None` in
+branches differing only by the comment above them. The three-state distinction the task existed
+to create lived **in the prose and not in the program**. A 55-line comment stated the defect,
+named the fix, named the parameter to add, and cited the rule it violated; it was a better bug
+report than most bug reports, **and that is precisely why it survived four agents and a
+review** — a defect documented that thoroughly is nearly indistinguishable from a defect fixed.
+
+The reviewer's diagnosis, adopted here: one-file-per-agent ownership prevents index collisions
+and *systematically manufactures unowned seams*. The next agent reads the comment as context
+rather than as an open work item.
+
+**Corollary: a chain of N tasks over N files needs an N+1st whose only job is to `command grep`
+for who actually *calls* the new thing.** A four-task chain built a manifest field, wired two
+call sites, added a typed enum — and nobody passed the value. Its own test passed the argument
+directly and stayed green.
+
+## `git stash` is a third shared-index hazard — and `git --work-tree` is a fourth
+
+Already recorded: a bare `git commit` sweeps another agent's **staged** files, and
+`git commit -- <paths>` sweeps their **unstaged** ones. **`git stash push -- <paths>` races
+too.** On 2026-09-05 a RED check's stash briefly captured a concurrent agent's uncommitted
+work; it was recovered with `git stash pop` and nothing was lost, but only because the
+collision was noticed.
+
+**For a RED check under concurrency, copy the pre-fix file with `git show HEAD:<path>` into
+scratch instead.** Reading a blob does not mutate shared state; stashing does.
+
+**`git --work-tree=<dir> checkout <commit> -- .` is the fourth, and it is the quietest.** It
+mutates the REAL index unless `GIT_DIR` is redirected too. On 2026-09-20 a review seat ran it to
+populate a scratch directory and staged a prior commit across all 12 of the task's files; the
+working tree on disk was untouched, it noticed via `git status`, ran `git reset`, and disclosed
+it rather than fixing it quietly. Nothing was lost because no commit happened in the window.
+**Read a past commit with `git show <commit>:<path>` or `git grep <commit> -- <pathspec>`** —
+both read the object store without touching index or worktree.
+
+## Every relayed figure carries its column, not only its n
+
+The rule that a stratified figure carries its `n` is necessary and **not sufficient**. Two
+agents measured the same wire on the same corpus and reported **1,577 (10.79%)** and
+**1,459 (9.98%)** — both correct, on `top_hit_identity` and `identity_to_donor` respectively.
+Separately, two artifacts disagreed on 87 rows because one `fuse()` call silently omitted a
+signal, and each was quoted as "the b10 corpus".
+
+An `n` without the column it was measured on is how **one number acquires two
+independent-looking sources**. State the artifact, the column, and the arm.
+
+## A dispatch's factual claims become code
+
+**A figure relayed from a SUBAGENT'S REPORT is UNVERIFIED, exactly like a figure from a plan.**
+This section's rule was being read as binding the controller's own assertions only. It is not.
+W2 (2026-09-21) produced **six wrong citations in one wave, every one the controller's, none
+self-caught**: three relayed from a subagent's report into a brief without re-derivation, two
+from the controller's own grep where a parser was needed, and one — the worst — a SHA
+attributed to the wrong action **and pre-labelled** *"if these are identical that is a
+copy-paste defect"*, which would have sent a reviewer to file a Critical against correct code.
+A relayed figure FEELS verified because somebody measured it. It is not, because the person
+putting it in front of an implementer did not.
+
+**A relayed figure carrying a DEFECT HYPOTHESIS is the highest-risk form.** Re-derive it before
+writing it, never after: the hypothesis is what makes it actionable, so a wrong one is acted on.
+
+**The stop rule, one sentence, and the only thing that caught an error before publication in
+that wave.** When a brief carries a figure the author has not re-derived with a parser, or that
+a prior report disputes, end that item with: *"if your measurement disagrees with mine, stop and
+report — do not reconcile toward mine."* The implementer that received it resolved every
+indirection across 71 shell scripts, found the controller's number inverted, and **wrote
+nothing**. The other five errors were all caught after the fact.
+
+**Mechanical backstop: `scripts/check_citations.py`** (EnzymeFinder) preflights a brief, plan or
+report — `path:line` citations (printing the cited line, because existence is not correctness),
+paths, arithmetic including prose decompositions, `owner/repo@sha` pins, and `--flag`
+attribution. It cannot verify a **count**; two of the six were counts, and that is what the stop
+rule is for. Validated in both directions: it catches a verbatim reconstruction of all six, and
+reports 3 findings across the 9 documents that wave produced.
+
+A subagent cannot tell which of the caller's assertions were verified. It will faithfully
+write a wrong count, file list or dependency claim into the repo and into prose. On
+2026-08-24 three of the caller's unchecked claims reached commits this way; one ("stage 7c
+depends only on stage 1 and stage 7a") became the final review's only Critical finding.
+
+Every factual claim in a dispatch is either verified before sending, or explicitly labelled
+`UNVERIFIED — check this before relying on it`. The high-risk classes are counts ("hardcoded
+in five files"), enumerations of sites to change, and dependency claims. Verifying costs one
+grep; not verifying costs a review round and a commit that has to be undone.
+
+The same applies in reverse: when a subagent challenges one of your claims, check the artifact
+before overruling it. On the same day a subagent correctly disputed a stale-exemption claim and
+the caller's doubt was the thing that was wrong.
+
+**Every stratified or conditional figure carries its n, in the brief and in the finding.** A
+rate without a denominator propagates and cannot be checked by the agent receiving it. This
+failed **three times in one wave** on 2026-09-01 — twice *after* the same correction had already
+been made and committed. `0.0717` travelled through a plan, a task brief and a backlog entry
+before anyone established it was 16/223 with a 48-row comparator.
+
+**Prefer a short brief of verified claims to a long brief of relayed ones.** In that same wave,
+**eleven of twelve implementers found at least one factual error in the controller's brief**.
+The single agent that found none had the shortest brief: entirely verified against source
+beforehand, naming one specific prior error rather than restating a dozen measurements.
+Relaying a reviewer's number without checking it makes it the repo's number — the classes that
+failed most were figures without their n, line-number citations (which drift as a wave adds
+lines), and *mechanism* descriptions, where being right that something failed does not make you
+right about why.
+
+**Contradiction slot — every dispatch, not just reviews.** Reviewers get an
+unenumerated-objection slot (see the wave-end section below); implementers had no equivalent,
+and they are the ones who read a brief closely enough to catch it being wrong. End every
+implementer dispatch with: *"report anything in this brief that you found to be wrong."* On
+2026-08-29 that slot caught five false claims in one session before any reached the repo: a
+benchmark's CLI flags (the run *did* pass `--annotation-tools diamond`; the real mechanism was
+no-op degradation), an over-broad "cannot reach the service" claim that was true of only one of
+two code paths, an accession asserted to be RefSeq that was EMBL/GenBank, a "permanently
+dormant" contradiction that dissolved once commit dates were checked against manifest dates,
+and a corpus size understated by half. Each would otherwise have been written in verbatim. The
+verify-or-label rule above is the primary defence; this is the backstop for when it slips, and
+it costs one sentence.
+
+**Reviewers write findings down as they confirm them, not at the end.** A wave-end
+`critic-reviewer` on 2026-08-29 burned 162,646 tokens over 49 tool calls and returned a single
+sentence, because it was exploring five equally-weighted areas before composing one report, and
+hit its turn limit with everything still in its head. On the resume it was told to append each
+finding to a file the moment it was confirmed, to rank the areas, and to drop the bottom two if
+turns ran short — it then produced one Blocking and three lesser findings from the same budget.
+So: give reviewers a findings file, rank what you want checked, say explicitly what to drop, and
+prefer instructing them to *execute* a small script over reading more source. A short report
+with three confirmed findings beats an exhaustive one that never lands.
+
+**"The brief is wrong" is a first-class finding.** A retrospective on the MqnE_cofactor_finding
+project (2026-08-24) found reviewers repeatedly and correctly identifying that a plan or brief's
+*premise* — not the implementation — was wrong, then filing it as "plan-quality issue, not this
+task's fault" and stopping there with no escalation, because the fix is upstream prose rather
+than a code change. When a reviewer flags that the brief itself is wrong, escalate it at the
+severity its content would warrant if it were an implementation bug, and route it back to
+whoever owns the plan — don't let the out-of-scope label itself close it out.
+
+## Concurrent dispatches need declared file ownership
+
+Never dispatch two implementers that touch the same file. When several tasks queue behind one
+shared file, say in each dispatch exactly which files it owns and which are off-limits because
+another agent holds them.
+
+**Every dispatch that may commit ends with: run `git show --stat` after each commit and
+confirm it touched only your files.** Prescribing the form is not enough. On 2026-09-01, with
+six-plus concurrent agents, **two shared-index collisions occurred in opposite directions** —
+one agent ran `git commit -m "..."` without the trailing `-- <paths>` and swept another's
+staged file; another's staged work was swept into a third agent's bare commit. Both agents had
+read the explicit-path rule; one understood it and got the **flag order** wrong. **Both were
+caught by the same thing: running `git show --stat` afterwards.** Nothing was lost either time.
+Include the recovery in the dispatch, because it is not obvious under pressure:
+`git reset --soft HEAD~1`, then `git reset -- <the other agent's files>`, then re-commit
+path-scoped. Also tell agents to stage untracked files individually by name — `git add <dir>/`
+sweeps a neighbour's new files just as effectively as a bare commit.
+
+An agent that waited while other commits landed is working from a stale read: tell it what
+changed underneath it and instruct it to re-read before editing. Also tell it which currently
+failing checks are *not* its own, or it will start repairing someone else's work.
+
+## Wave-end review (additive — the generic reviewer stays available)
+
+At the end of a wave, before finishing a branch, or after a big task (or several
+smaller ones have accumulated): dispatch `critic-reviewer` (correctness/quality/tests/
+efficiency/simplicity), and, when a plan or phase doc exists to check against,
+`alignment-officer` (completeness/scope conformance) and `docs-sync` (governance-doc
+drift). Run these in parallel — none depends on another's output. This does not replace
+superpowers' `requesting-code-review` for smaller, ad hoc checks; that stays available.
+
+**Self-verification is not independent review.** Don't skip dispatching a reviewer for a task
+just because it "looks like" a governance-doc correction rather than novel computation. The same
+MqnE retrospective above found this reasoning used to close a whole task group without any
+independent review — and every one of that project's biggest missed findings lived in the
+doc-framing layer, not the computation layer, i.e. exactly the layer that rationale skipped.
+
+`critic-reviewer`'s own Output section (item 5) backs this up: on an APPROVED verdict from
+a wave-end-shaped review, it closes with a one-line reminder to consider dispatching
+docs-sync now, since it already knows its own verdict — no separate mechanism needed to
+reconstruct that. Ignore the reminder when docs-sync already ran that wave, or the review
+was one of the smaller ad hoc `requesting-code-review` checks this section explicitly
+keeps separate from wave-end review — a docs-sync suggestion doesn't apply there. (An
+earlier `SubagentStop`-hook version of this nudge was built, tested, and reverted the same
+day — see DECISION-024 for what it got wrong and how that was verified.)
+
+**Minor-triage content test.** Before filing a review finding as Minor, answer in writing: *if
+this finding is correct, does any currently-stated conclusion change?* If yes, it is not a Minor,
+no matter how small the suggested edit looks — a finding phrased as a wording complaint ("stated
+unhedged," "unacknowledged") can still be a category error underneath, and severity
+misclassification of a real finding is how defects survive multiple review rounds undetected.
+Optional, cheap mechanical backstop: re-read the parked Minor list again at every wave's end, not
+only the wave it was filed in — Minors otherwise never get revisited.
+
+**A review dispatch issued while implementers are still running must name the files that are
+currently uncommitted-modified**, and tell the reviewer to check `git status` before filing any
+documentation-drift finding. On 2026-09-01 a cross-wave auditor reported that without that
+check it *"would have filed F5-scale findings against all three"* of `ARCHITECTURE.md`,
+`CAPABILITY_STATUS.md` and `KNOWN_LIMITATIONS.md` — files a concurrent agent had already
+corrected. A reviewer auditing a tree that is mid-edit files findings against text that is
+already right, and the controller then has to disprove its own reviewer.
+
+**Every review dispatch must state the `rtk` position.** A reviewer's job is mostly negative
+checks — "unmodified", "no stale reference", "no matches", "nothing swept in" — which is exactly
+the class rtk used to corrupt. Since 2026-08-25 rtk filters **only `cat`**, so this is now a
+short line rather than a hazard list. Include verbatim: *"`rtk` filters only `cat` (to
+`rtk read`); every other command runs raw, so grep/find/diff/git output is trustworthy. Two
+exceptions: `head -N`/`tail -N` are still rewritten and under-deliver — use `head -n N` — and no
+exit code from an rtk-wrapped command is evidence. If anything looks structurally odd, re-run it
+with an `RTK_DISABLED=1` prefix; a pipeline is not a bypass."* Detail in `verification.md`.
+
+Worth remembering why this line exists at all: when rtk did filter everything, one review round
+found four independent holes in a six-entry exclusion list, including two escape hatches this
+file had documented backwards.
+
+**Unenumerated-objection slot.** Every review dispatch — wave-end or ad hoc — ends with: *"list
+the strongest objection to this work that I did not ask you about."* Reviewers already do this
+occasionally unprompted; the slot converts it into routine rather than luck. This targets the
+enumeration specifically, not tone: adding adversarial-sounding language to a dispatch is cheap and
+harmless, but there is no evidence tone changes what a reviewer actually finds — enumeration does.
+
+**Domain-role reviewer at wave end, not only after a crisis.** Alongside critic-reviewer/
+alignment-officer/docs-sync, include a reviewer in the target domain's professional role (e.g. a
+biologist-role pass on a biology project) as a routine part of wave-end review, not something
+convened only after an external panel or incident forces it. A correctness/completeness/drift
+review is structurally unable to produce a premise-level or domain-plausibility finding — only a
+domain-role pass can, and by the time a crisis convenes one, the defect has usually already shipped
+for a while. **`domain-reviewer` now exists** (`.claude/agents/domain-reviewer.md`, opus/45 turns),
+created 2026-09-23 after an ad hoc domain seat produced W2b-1's only Blocking finding — a hygiene
+fix that silently moved a shipped tier boundary — plus five Importants that five other seats
+missed. Name the professional role in the dispatch (computational enzymologist, structural
+biologist, cheminformatician); the agent file carries the rest. Fold it into the
+same wave, not necessarily the same parallel batch, given the account's concurrency cap
+(`feedback_subagent_dispatch.md` memory: 2-3 concurrent, account-dependent).
+
+**Anomaly-hunter at wave end — the only seat whose job is to REOPEN things.** Alongside
+critic-reviewer/alignment-officer/docs-sync/domain-role, dispatch `anomaly-hunter`
+(`.claude/agents/anomaly-hunter.md`, opus/45 turns, added 2026-09-25). Every other seat is
+structurally biased toward closure: critic-reviewer closes on *"the code does what it says"*,
+domain-reviewer on *"this is plausible given what we know"* — and *plausible given what we know*
+is exactly the instrument that buries a surprising result, because a real discovery is by
+definition not plausible given what we know. This seat owns the opposite instinct.
+
+It was created after a session in which known biology was used three times to CLOSE an anomaly
+rather than open one, and the wave's own best result turned out to be a composition effect
+nobody attacked because it was the answer being hoped for. Its checks, in its own file: the
+instrument-floor check on every absence claim; attacking the CONFIRMING results rather than
+only the surprising ones; naming the third state; following the weird number nobody commented
+on; and verifying that a cited paper says what it is being used for on a matching population.
+The rule it enforces is in `verification.md` ("An absence is only as good as the instrument's
+headroom IN THAT STRATUM, and a textbook premise may not close an anomaly").
+
+Skip it for pure bug-fix or doc-only waves that produced no new measurement. Do NOT skip it
+because a wave's results look clean — that is the condition it exists for.
+
+**Inventory-auditor when a wave adds new capability.** Alongside critic-reviewer/
+alignment-officer/docs-sync/domain-role, dispatch `inventory-auditor` when the wave
+introduced new functions, modules or scripts — it catches duplication introduced within
+the wave itself (two tasks solving the same problem without knowing about each other) and
+capability the wave rebuilt instead of wiring to something that already existed. **It also
+closes its own loop**: if an inventory-auditor pass at plan-writing time recommended wiring
+in or extending something instead of building new, this dispatch checks whether the wave
+actually did that, rather than letting the recommendation evaporate the way a plan's own
+"deferred with reasons" table does when nobody re-checks it at close. Its findings feed
+into the same `pragmatism-officer` triage below. Skip it for pure bug-fix or doc-only
+waves that added no new capability and no prior inventory findings to close out.
+
+**Pragmatism-officer runs last, after findings exist.** Once critic-reviewer/alignment-officer/
+docs-sync/domain-role/inventory-auditor have filed, dispatch `pragmatism-officer` to triage the wave's own
+findings for proportionality — what actually needs fixing now versus what's real but low-impact
+and can be documented and deferred, and what's scope creep to reject outright. It has no
+authority over severity or correctness (see its own file); it runs on top of the Minor-triage
+content test above, not instead of it. Skip it when the wave produced zero findings — there is
+nothing to triage.
+
+## Release/publication gate: security-specialist
+
+Before a project goes to production or publication (a public code release, a public
+API/DB launch, a paper submission with a code/data release) — not every wave, and not
+routine development: dispatch `security-specialist`. Its own file carries the full
+checklist and surface detection; don't duplicate that here. Applies even to pure-batch
+projects with no web surface — "publication" for those means a paper + public code
+release, and the universal checks (secrets, licence, CI pinning) still apply. Check
+what CI already automates first (e.g. EnzymeFinder already runs `bandit`,
+`detect-private-key`, `gitleaks`, CodeQL) rather than having the agent re-derive it by
+hand. Complementary to the native `/security-review` skill, which is diff-scoped, not a
+full-project gate.
+
+## Brainstorming: research-scout
+
+**Before dispatching any research task, `command grep` the gitignored workspace directories for
+prior work on the same question.** `.superpowers/` holds every previous wave's ledgers, briefs
+and reports, and this workspace's `grep` is a shell function that **skips gitignored paths** —
+so the controller's own prior-art search silently misses them. On 2026-09-01 a calibration
+literature review was dispatched that partly duplicated a **713-line, 48 KB review from three
+days earlier**; the agent found it immediately with `command grep`. `verification.md` already
+warns about this hazard for *reviewers' absence claims*; it binds the controller's own searches
+too.
+
+For a non-trivial design decision during `brainstorming`, dispatch `research-scout`
+first (see its own description for scope). Skip it for small/obvious decisions.
+
+**One external premise check at project start, and at any reframing.** Before building an
+analysis pipeline around an assumed premise about the target itself, do one PDB/PubMed (or
+domain-equivalent database) lookup directly on the target — not just on the surrounding method.
+Make it a standing habit to resolve any external ID (PDB/accession/etc.) that a pipeline returns
+repeatedly, rather than treating the repetition as an incidental curiosity; a project's own top
+structural-search hit turning out to be the query's own already-published structure is exactly the
+kind of premise error this catches cheaply.
+
+## Plan writing: inventory-auditor
+
+Before a plan's task list is locked in — during `writing-plans`, alongside or just before
+the Calibration block below — dispatch `inventory-auditor` against the plan draft (or,
+before one exists, the problem statement). It searches the codebase and project history for
+anything the plan proposes to build that already exists, exists-but-unwired, or was already
+tried and rejected. Motivated by a planning round (2026-09-11) that proposed four things
+that already existed — one already owner-approved as a decision, one built and marked
+`DONE, reach: yes` but never wired into the pipeline — and the checks that caught them were
+nine wave-end review seats rather than one dedicated inventory pass.
+
+Feed its findings into the plan before the critique wave runs, the same way the Calibration
+block's findings shape the plan before critique — a plan-critique wave should not have to
+independently rediscover that a task rebuilds something that already works, or that an
+"artifact this project has never had" is already committed under a different name.
+
+`inventory-auditor` is also available at wave end (see the wave-end review section above)
+for the retrospective direction: catching duplication a wave introduced, or capability it
+rebuilt instead of calling.
+
+## Plan review before implementation
+
+After `writing-plans` produces a plan doc (architectural path only — bounded-path short
+in-chat designs skip this, the dispatch cost isn't justified) and its own self-review, but
+before `executing-plans`/`subagent-driven-development` starts Task 1: dispatch a
+**plan-critique wave** against the plan and its spec. Same mechanics as wave-end review
+above (parallel, rtk position stated verbatim, unenumerated-objection slot, minor-triage
+content test) — the difference is what it targets (the plan text, not a diff) and when it
+runs (before work starts, not after).
+
+- Reuse `critic-reviewer` (plan-shaped: feasibility, missing tasks, edge cases) and a
+  `domain-reviewer` (see the wave-end section's domain-role paragraph; name the role in
+  the dispatch) — this is the same premise-checking discipline, just moved a stage earlier so
+  a bad premise is caught before it is copied into every task that inherits it.
+- Scale the number of dispatches to the plan's size and complexity: **minimum 3**
+  (critic-reviewer + one domain-role reviewer + one issue-specific angle, chosen from what
+  the plan actually touches — security, data-integrity, concurrency, etc.), up to **~10**
+  for a large or high-stakes plan — one per major task-cluster or distinct risk axis
+  (correctness, domain plausibility, security, performance, data-integrity, concurrency,
+  external-API/rate-limit behavior, backward-compat, test-coverage gaps, premise/instrument
+  choice). Pick the count from the plan's actual content, not a fixed default. The
+  account's concurrency cap still applies (2-3 concurrent, `feedback_subagent_dispatch.md`)
+  — a 10-agent wave runs in batches, not literally at once.
+- Tell each dispatch to verify cheap claims empirically, not just read the plan — grep that
+  a referenced function/signature actually exists, run a two-line script against real data
+  if the plan asserts a library or format behavior. This is what catches "a plan's own
+  example code carries the bug" (`verification.md`) before it propagates into every task
+  that copies it.
+- Blocking/Important findings against the plan get fixed in the plan doc directly, before
+  Task 1 starts — "the brief is wrong" is a first-class finding here too (see above),
+  applied one stage earlier than a wave-end review would catch it.
+- A reviewer may surface an unrelated pre-existing codebase defect while checking the plan.
+  Report it, then judge case by case whether fixing it fits this plan — file overlap with a
+  plan task is not an automatic block; a fix that belongs in the same file a task already
+  touches can be folded into that task directly (still declare ownership per "Concurrent
+  dispatches need declared file ownership" above so the fix and the task edit don't race).
+  If it doesn't fit this plan's scope or timing, don't fix it blind — document it: what it
+  is, where, and when it should be fixed (a follow-up task, a `DECISIONS.md` entry, or a
+  known-issues note in the plan doc itself), so it doesn't evaporate as a chat-only mention.
+- Once the plan-critique wave's findings are in, dispatch `pragmatism-officer` over them
+  before deciding what actually goes into the plan rewrite — same proportionality triage as
+  wave-end review, applied to plan-stage findings instead of a diff. A critique wave scaled
+  up to ~10 dispatches produces a lot of adversarial output; this is what keeps one bounded
+  issue from triggering five rounds of plan rewrites before Task 1 even starts.
+
+### The Calibration block — required before the critique wave
+
+Every architectural plan doc carries a **Calibration** section, written *before* the critique
+wave dispatches. It exists because of the SSN wave (2026-08): a validation harness was built
+around an expectation of what an SSN could do, ran for weeks, and could never clear its own
+anchor floor — because nobody had separated *what this class of method cannot do* from *what our
+implementation does badly*. A literature check afterwards showed both were present at once:
+~35% identity really is the field-wide ceiling for reliable annotation transfer (Zallot 2019),
+**and** our own sub-35% edge recall was 62.5% because of a DIAMOND sensitivity defect (MA-104).
+Conflating them let a fixable 37.5% edge loss hide behind a real citation.
+
+Four items, all four required:
+
+- **Vision context** — which layer or axis of the project's north-star this serves, and at what
+  scale. One layer is not the system. State what this plan is *not* responsible for, so a later
+  reviewer does not indict it for failing to do something it was never meant to do.
+- **Realistic target** — what this achieves when it works correctly. Not the aspiration.
+- **General limits vs our limits** — every constraint named as either field-wide *with a
+  citation* or ours to fix. **Anything unattributed defaults to OURS.** A field limit without a
+  citation is not a field limit; it is an untested excuse, and it is the specific move that cost
+  the SSN wave.
+- **Standard** — the bar is *at least* current tool and literature standard, better where we can.
+  Name the tool and the number being matched, not "state of the art".
+- **Does the named standard already do this?** Check the tool you just named as the bar, and say
+  what it already delivers of what you are proposing to build. Added 2026-08-30 because its
+  absence was not hypothetical: a plan proposed partitioning an SSN by a property its own named
+  comparison tool already separated — EFI-EST's existing cluster assignment put 90.7% of the
+  target mode in one cluster — and neither the author nor the self-fact-check noticed, because
+  both were checking whether the *limits* were attributed correctly rather than whether the
+  *capability* was already delivered. Naming a standard and not reading its output is how a wave
+  gets spent rebuilding it.
+- **Any threshold or cutoff: universal, dynamic, or declared dataset-specific.** A number derived
+  from one dataset is a property of that dataset until shown otherwise. State which of the three
+  it is. Prefer deriving it per run (a peak-detection or distribution-based rule that re-computes
+  on the data in hand) over a constant, and where a constant is genuinely right, cite what makes
+  it general. A hardcoded cut fitted to one corpus silently becomes a wrong cut on the next one,
+  and nothing in the pipeline will say so — the same shape as a score whose meaning depends on
+  the run that produced it.
+
+**Hard gate when ANY of these hold** — the critique wave rejects a plan whose Calibration block
+is missing, incomplete, or carries an unattributed limit, exactly as it would any Blocking
+finding:
+
+- introduces a new capability or layer (as opposed to extending one that already runs)
+- has 5 or more tasks
+- introduces an external tool, database, or data source
+- asserts any accuracy, coverage, recall, or performance expectation
+
+Otherwise soft: one honest paragraph, no gate. The trigger list is deliberately mechanical —
+"this scope is small and known" is a judgement that gets made most confidently when a wave is
+rushed, which is exactly when calibration errors happen.
+
+**Self fact-check before dispatching.** The caller verifies the Calibration block's own claims
+first: every number resolves to a measurement on disk, every field-limit claim to a citation
+that was actually read. This is the cheapest stage at which to catch a caller's error — the
+alternative is 3-10 agents inheriting it, which is the failure mode the whole
+"a dispatch's factual claims become code" section above exists to prevent. On 2026-08-29 ten
+caller claims were caught downstream by the contradiction slot; each would have been cheaper to
+catch here.
+
+**Unsettled questions become a research task, during plan-writing.** Whatever the Calibration
+block could not answer gets written into the project's research-questions file (for EnzymeFinder,
+`docs/RESEARCH_QUESTIONS.md`) as a numbered topic with specific answerable questions, stating
+*why it matters* and *what would change depending on the answer*. The human partner researches
+externally and feeds results back, so expectations are corrected **before Task 1** rather than by
+a wave discovering mid-flight that its premise was wrong. A question whose answer changes no
+decision does not belong there.
+
+## Escalate to a research/review wave instead of continuing to guess
+
+Two triggers replace further ad hoc trial-and-error with a dispatched wave. Either is
+sufficient on its own — recognizing a problem as heavy up front is a valid trigger by
+itself, not just a fallback after burning several failed attempts:
+
+- **Known-heavy problem, before any attempt** — matches a pattern that's previously eaten a
+  lot of time/tokens (a recurring class of issue, something flagged in project history or
+  memory as hard, or an area you can already tell is architecturally uncertain). Trigger
+  this immediately, don't spend the 3 attempts first just to "earn" the escalation.
+- **`systematic-debugging`'s own 3+-failed-fixes gate** (Phase 4.5: "discuss with your human
+  partner before attempting more fixes"). In this workspace, that discussion is this wave,
+  not just a chat exchange.
+
+When triggered: stop attempting more fixes in-thread. Dispatch, scaled like the plan-review
+wave above (minimum ~2-3, more for a genuinely hard problem, concurrency cap applies):
+
+- a **research** pass (`research-scout` or a web-search-capable dispatch) for prior art /
+  known issues with this exact failure mode, library, or pattern;
+- a **review/audit** pass (`critic-reviewer`-shaped) that re-derives what's actually
+  happening from current real source — fresh eyes, not the accumulated hypothesis trail
+  already stuck in this conversation;
+- a **domain-role** reviewer if the problem is domain-shaped, same pattern as elsewhere in
+  this file.
+
+Output is a short written diagnosis + fix approach (root cause, evidence, plan) — not a
+fifth guess. Resume via `systematic-debugging` Phase 4 with that in hand, or `writing-plans`
+if the fix is big enough to warrant a real plan (which then gets its own plan-review wave
+per the section above).
+
+Before committing to a fix approach, run the combined research/review/domain findings
+through `pragmatism-officer` — a problem heavy enough to earn a wave still deserves a fix
+sized to what's actually at stake, not the largest one the wave surfaced.
+
+## Model and effort tiering for any subagent dispatch
+
+Claude Code subagents default to `model: inherit` — same model as the parent session —
+unless the dispatch explicitly sets otherwise. A named agent under `.claude/agents/`
+already carries its own tier in its front matter; a generic dispatch (superpowers'
+`general-purpose` workers, `subagent-driven-development` task slices, ad hoc `Agent`
+calls) does not, and silently inherits whatever the parent session is running — this is
+a real, documented gap in how superpowers itself works (its skills are procedural
+markdown with no programmatic model/effort control; the host session decides). Set the
+`model` and `effort` parameters explicitly on every dispatch using this mapping, rather
+than leaving them on inherit by default:
+
+| Task shape | Model | Effort |
+|---|---|---|
+| Small check, lint-shaped question, single-file mechanical fix | haiku | low |
+| Ordinary coding task, single-module change | sonnet | low-medium |
+| Coding task with real design tradeoffs | sonnet | high |
+| Large rewrite, cross-cutting architecture, highest-stakes review | opus | medium-high |
+
+This is a judgment call per task, not a lookup table to apply blindly — a "small" task
+touching a security-sensitive path still warrants a higher tier. When genuinely unsure,
+round up rather than down; the cost of under-reviewing a real risk is higher than one
+overpriced haiku call.
+
+This is guidance, not enforcement — there is no hook-level mechanism to force model
+selection on a subagent dispatch, so this depends on it actually being applied each
+time, same limitation as any other prose rule in this workspace.
+
+A named agent under `.claude/agents/` already declares its own model/effort in its own
+front matter — that is the actual source of truth. Read the agent file rather than
+keeping a duplicate lookup table here.
+
+## Run the fast gates per task, not at wave end
+
+W14 (2026-09-06) ran the full suite once, at wave close. `ruff check src/` had been failing since
+the task that introduced the file — through **three review passes that all approved it**, including
+two that reproduced the implementer's evidence independently. The lint error was `F841`, twice: two
+variables computed and never used. It was not style. Those variables were the column names a
+`--ec-column` option was supposed to produce, and their being dead meant the option was a **complete
+no-op** and that a header-bearing input produced a **6-column header over 14-column data rows** —
+i.e. the wave's own delivery rule ("no existing parser broken") violated by the task that existed to
+demonstrate it. Nothing else in the wave found it.
+
+**So a task is not done until the repo's fast gates pass on it.** Put them in the task's definition
+of done and in the dispatch: the linter on changed paths, the task's own tests, and any cheap
+project-specific checker. Seconds per task; it would have converted a wave-close surprise into a
+first-round fix. Reserve the full suite (and `qsub`) for wave close, where it belongs.
+
+## A suite run needs a quiet tree, and the wave owns keeping it quiet
+
+Two independent contaminations hit W14's wave-close suite run, and both were the controlling
+session's fault:
+
+- **The job raced its own repository.** `#$ -cwd` runs against the LIVE tree, and a docs commit
+  landed mid-run. The suite's own provenance guard caught it (`RACED: HEAD moved during the run`)
+  — a guard worth having, and no substitute for not doing it.
+- **A reviewer's temporary test file was collected.** A review agent copied a test into `tests/` to
+  exercise it under the repo's `conftest.py`, and the suite collected it and counted its failures.
+  It cleaned up afterwards, so the tree was clean by the time anyone looked — and the run was
+  already wrong.
+
+Before submitting: assert no tracked modifications, no stray files under the test directory, and
+record HEAD. Then **make no commits and run no agents until it returns.** And tell every dispatched
+agent, reviewers included: **never create a file under `tests/`**, not even briefly.
+
+## Every dispatch carries the environment-invariants block
+
+W14 added each of these reactively, after the incident that motivated it. They belong in the
+template.
+
+- **Scratch goes in the session scratchpad, namespaced per agent.** A review agent wrote its
+  verification output into a pre-existing untracked `logs/` directory and then `rm -rf`'d the
+  directory during cleanup, destroying contents it had never read. Untracked, so git had no copy and
+  no snapshot existed. One line in a committed report cited a file in there as its evidence; that
+  evidence is gone permanently. The agent disclosed it, which is the only reason anyone knows.
+- **Never `rm -rf` inside the project tree.** Delete specific files you created, by name.
+- **Read output directories; never modify, move or delete them.** They are usually gitignored, so
+  nothing there is recoverable, and the shell `grep`/`find` wrappers cannot see them —
+  `command find` / `command grep` can.
+- **Name the repo's own test-environment traps**: autouse fixtures in `conftest.py` that override
+  what is deployed, and CI's real `-k`/`-m` filter expression. A W14 test was marked `slow` and
+  would still have run on **every PR**, because this repo's convention pairs that marker with an
+  env opt-in and the marker alone excludes nothing. The reviewer found it by running CI's actual
+  filter with `--collect-only` rather than reasoning about it.
+
+## Generate a task's brief at dispatch time, not up front
+
+W14 generated all eight briefs early, then reordered two waves for file-contention reasons. A brief
+then instructed its implementer to run a script that a not-yet-dispatched task was going to create.
+The implementer did the right thing — skipped it and said so — but a brief that references another
+task's output is invalidated by any resequencing, silently.
+
+## One integration seat, mid-wave
+
+Per-task reviews are path-scoped by necessity under concurrency, and path-scoped review is
+structurally incapable of seeing across tasks. Both W14 defects that survived to wave close lived in
+that gap: a lint failure that pointed at a cross-cutting output-format bug, and a ratchet drift
+question that belonged to no task. Add one seat, once, around the midpoint, whose only scope is what
+no task owns: the gates as a whole, the tree as a whole, and any file every task read and none owned.
+
+No dedicated integration-seat agent exists — same shape as the domain-role reviewer above: dispatch
+`critic-reviewer` (or a generic agent, if `critic-reviewer`'s own turn/model budget doesn't fit) with
+an explicit integration-scoped prompt naming exactly what no task owns, rather than its usual
+single-file brief.
+
+## Three-state is a plan-time checklist item, not a review-time catch
+
+W14 ruled the same way five separate times (its R15, R19, R20, R21, R24), each on code written
+**during that wave to fix that class**: a check that could not express "deliberately absent", where
+the proposed fix removed the thing from view instead of teaching the check to see it — a marker
+nobody writes, rows excluded rather than accounted for, a claim rewritten so the checker stops
+matching it, a phase whose archived status is never read, a command that cannot tell "not my input"
+from "no result".
+
+Ask it at plan time, once per new check: **what is this check's third state, and how does the check
+say it out loud?** The answer is nearly always "account for it explicitly and report the count", and
+nearly never "exclude it". Same lesson as `verification.md`'s "A three-state value is typed at
+introduction, not repaired at review", one stage earlier: that entry catches the collapse at review
+time; this one asks the question before the check is even written.
+
+## A pragmatism seat is the lever for fewer rounds
+
+W14 recorded 24 rulings across 17 fix rounds, and several expanded scope — at least one was fixed
+against the controller's own minor-triage test, on the argument that a follow-up note becomes a
+comment and evaporates. That argument is sound and it is also how a wave grows. `pragmatism-officer`
+exists for exactly this: it does not change severity or correctness verdicts, it separates what must
+be fixed now from what can be documented and deferred. Dispatch it once a wave's findings exist,
+before the fixes are commissioned — not after.
+
+## The review-dispatch template — because recall is the failure, not discipline
+
+W14's wave-end reviewer hit its turn limit having written **nothing**: 162,630 tokens, 44 tool calls,
+one sentence returned. The rule that prevents this — *reviewers write findings down as they confirm
+them* — was already in this file, three paragraphs from the incident that motivated it (162,646
+tokens, 49 calls, one sentence). The controller had included the rtk position and the
+unenumerated-objection slot in **every** review dispatch that wave, and missed the findings-file
+requirement, because those two are prominent and this one sits mid-paragraph.
+
+So the failure was **retrieval, not discipline**, and the fix is mechanical. Every review dispatch
+carries all of these; composing one is a single lookup rather than several independent recalls:
+
+1. **A findings file path, created as the agent's FIRST action — before it investigates anything.**
+   Then appended to the moment each finding is confirmed. If turns run out, that file is the
+   deliverable.
+
+   **The "append as you go" instruction alone is not sufficient — measured twice on 2026-09-07.**
+   One reviewer was given no findings file and returned one sentence after 162,630 tokens. A second
+   *was* given the file path and the append-as-you-go instruction, and still returned nothing after
+   144,164 tokens and 45 tool calls, having never created it. A third, same instruction, wrote
+   incrementally and survived its limit intact. So the instruction works sometimes, and "sometimes"
+   is not a control. Requiring the file to exist **before** the investigation starts is what makes
+   the deliverable independent of whether the agent runs out of turns.
+2. **Ranked areas, and what to drop.** Say explicitly which areas to abandon if turns run short. A
+   reviewer given five equal areas explores all five and lands none.
+3. **"Prefer executing a small script over reading more source."** A ten-line grep that answers the
+   question beats reading three files to reason about it.
+4. **The rtk position, verbatim**, plus `command grep` for absence claims.
+5. **Check exit codes outside a pipe** — `| tail` masks them, and it caught a reviewer in W14.
+6. **The environment-invariants block** (scratchpad path, no `rm -rf` in the tree, never create a
+   file under `tests/`, output directories are read-only).
+7. **Which files are concurrently modified**, and by whom, so drift findings are checked against
+   `git status` first.
+8. **The minor-triage content test**, stated as a question the reviewer must answer in writing.
+9. **The unenumerated-objection slot** — *"list the strongest objection to this work that I did not
+   ask you about."* In W14 this produced three of the best findings, including the one that closed a
+   hatch the controller would otherwise have shipped open.
+10. **What is already known and accepted**, so the reviewer does not re-derive settled ground.
+11. **When the work under review is a guard, a gate or a check: verify it by REMOVING it and
+    confirming the test fails — not by reading it.** Twice in W2 this produced stronger evidence
+    than the implementer's own. One reviewer proved "no value was hand-typed" by regenerating
+    into a scratch copy and getting `rewrote 0 line(s)`; another proved a liveness guard was
+    load-bearing by stripping it and watching the test pass anyway. Reading a guard tells you it
+    exists; removing it tells you it works.
+
+Same shape applies to implementer dispatches, whose non-negotiable line is the contradiction slot:
+*"report anything in this brief that you found to be wrong."* W14 caught **fourteen** brief errors
+that way, nearly all the controller's.
+
+**Thirteenth: NEVER tell a reviewer the tree is clean. Tell it to check, at both ends.** A W2b-1
+review dispatch (2026-09-23) carried the line *"the working tree is clean and HEAD is frozen at
+`56993903`; no files are concurrently modified."* It was true when written and false within
+minutes — the controller kept committing review fixes while six seats ran. The domain seat
+objected that this is **the single paragraph most likely to manufacture a wrong finding, because
+it tells a reviewer not to look**, and it is right: a reviewer that believes the tree is frozen
+files drift findings against text already corrected. Replace it with the opposite instruction:
+*"HEAD moves during this review. Run `git log -1` and `git status --porcelain` at the START and at
+the END of your work and say whether they moved."* Two of that wave's best corrections came from
+one seat doing this unprompted, and a second seat caught a figure that had shifted under it
+mid-review. No rule required it; now one does.
+
+**Fourteenth: a findings file must be created BEFORE investigation, and the evidence is now
+three-for-three.** Already stated above as item 1, and W2b-1 supplied the cleanest demonstration
+yet: seat 1 hit its 40-turn limit having delivered **no report at all** — and its findings file
+held 125 lines with three confirmed findings, two of them against commits made within the hour,
+one of which (CI red at committed HEAD) was Blocking. Nothing was lost. Prior instances lost
+162,630 and 144,164 tokens respectively to the same turn limit, one having been told to append as
+it went and never creating the file. **State it as the agent's literal first action, before it
+reads the brief**, not as advice inside the brief — an agent that reads the brief first has
+already started investigating.
+
+**Fifteenth: `cp` after a `--write` is a fifth shared-worktree hazard.** The four recorded ones are
+a bare `git commit`, `git commit -- <paths>`, `git stash push -- <paths>` and
+`git --work-tree=<dir> checkout`. Add: a reviewer that runs a **generator** in `--write` mode to
+inspect a diff, then restores the file by hand. In W2b-1 a seat did exactly this, disclosed it
+unprompted, and its `cp` silently reverted a newer version the controller had written minutes
+earlier — caught only because a gate went red for a reason that made no sense. Nothing was lost
+because the artifact was generated. Two fixes, both cheap: **give every generator a `--stdout`
+mode and say so in `--help`** (that one already printed to stdout with no flags — it simply was
+not discoverable), and **tell reviewers that any tool with a `--write` flag is off-limits in a
+shared worktree; render to your scratch directory and diff there.**
+
+**Sixteenth, and it is structural rather than procedural: a review wave has no negative control,
+and cannot supply one.** Every seat in a wave-end review asks some version of *"does the code do
+what it says?"* — correctness, scope, inventory, drift, even domain plausibility. **None asks
+"does the system do its job?"** W2b-1's domain seat raised this unprompted and it is the sharpest
+objection the wave produced: three of its six findings were in **dark modules whose scientific
+claims had been wrong for months precisely because nothing ever ran them against data**. Worse,
+the appearance is actively misleading — six adversarial seats and a green suite read as validation
+to anyone later quoting the status docs. So: when a wave's evidence standard is entirely
+self-consistency (`live: path.py:LINE now reads X`), **say so explicitly in the wave's close**, and
+carry a standing row for one held-out evaluation with a stated denominator and a trivial baseline.
+A review wave that cannot be embarrassed by data has not been tested by data.
+
+**Twelfth item, and it belongs with the contradiction slot: say that your own summary is lossy, and point at the source.** A brief compresses each row's evidence into a line or a table cell. That compression drops exactly the load-bearing clause you did not know was load-bearing. In W2b-1 (2026-09-23) an implementer refused two rows **correctly**, and both refusals were only possible because it read the full per-row record instead of the controller's table: one row's fix site was a different file entirely, and another was blocked on a separate open finding — neither fact survived the compression. The line costs nothing: *"the table above is a compression of <source>; read the full row there before trusting it, and report any place the compression is wrong."* The same wave's headline count had already moved twice for the same reason — a per-group summary quoted as a per-row enumeration — so this is one failure mode wearing two hats, at two altitudes.
+
