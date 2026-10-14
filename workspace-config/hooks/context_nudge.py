@@ -45,7 +45,8 @@ def message(ctx, prompt, state, threshold):
             parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires near 400k. Tell the user in one "
                          f"line: at the next task boundary, `/compact <what to keep>` (or `/clear` before an "
                          f"unrelated task); hand long investigations to a seat.")
-    if HEAVY.search(prompt or "") and not state.get("effort_hint"):
+    words = " ".join(t for t in (prompt or "").split() if "/" not in t)  # paths name things, not tasks
+    if HEAVY.search(words) and not state.get("effort_hint"):
         state["effort_hint"] = True
         parts.append("This looks like heavy planning or brainstorming. The default effort is medium; tell the user "
                      "once that `/effort high` (or `ultrathink` in the prompt) gives deeper reasoning for it.")

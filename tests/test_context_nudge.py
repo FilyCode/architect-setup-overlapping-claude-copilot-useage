@@ -57,3 +57,11 @@ def test_state_is_per_session(tmp_path, monkeypatch, capsys):
             {"prompt": "brainstorm a name", "session_id": sid, "transcript_path": "/nonexistent"})))
         cn.main()
         assert "/effort high" in capsys.readouterr().out, sid
+
+
+def test_effort_hint_ignores_paths():
+    # The config repo is named architect-setup-...; every prompt citing a path in it fired the hint.
+    p = "findings: /projectnb/liu-scc/philipp/architect-setup-overlapping-claude-copilot-useage/docs/x.md"
+    assert cn.message(10_000, p, {}, cn.DEFAULT_THRESHOLD)[0] is None
+    assert cn.message(10_000, "see `docs/superpowers/specs/2026-10-14-x-design.md`", {}, cn.DEFAULT_THRESHOLD)[0] is None
+    assert cn.message(10_000, "let's architect the import graph", {}, cn.DEFAULT_THRESHOLD)[0] is not None
