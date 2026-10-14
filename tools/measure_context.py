@@ -94,8 +94,18 @@ def summarize(paths) -> dict[str, dict]:
     return dict(groups)
 
 
-def collect(tx: Path, since: str | None):
+def _headless(main: Path) -> bool:
+    """True for a `claude -p` session (entrypoint sdk-cli): evals and probes, not real work."""
+    if not main.is_file():
+        return False
+    return next((e.get("entrypoint") for e in _entries(main) if e.get("entrypoint")), "") == "sdk-cli"
+
+
+def collect(tx: Path, since: str | None, include_headless: bool = False):
     paths = sorted(tx.glob("*.jsonl")) + sorted(tx.glob("*/subagents/*.jsonl"))
+    if not include_headless:
+        drop = {p.stem for p in tx.glob("*.jsonl") if _headless(p)}
+        paths = [p for p in paths if (p.parent.parent.name if p.parent.name == "subagents" else p.stem) not in drop]
     if since:
         keep = []
         for p in paths:
@@ -111,8 +121,9 @@ def main(argv=None):
     ap.add_argument("--tx", default=str(Path.home() / ".claude/projects/-projectnb-liu-scc-philipp"))
     ap.add_argument("--since")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--include-headless", action="store_true", help="keep `claude -p` sessions (evals, probes)")
     a = ap.parse_args(argv)
-    rows = summarize(collect(Path(a.tx), a.since))
+    rows = summarize(collect(Path(a.tx), a.since, a.include_headless))
     if a.json:
         print(json.dumps(rows, indent=1))
         return 0

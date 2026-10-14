@@ -30,3 +30,19 @@ def test_missing_sidecar_and_no_usage(tmp_path):
     assert mc.call_contexts(p) == []
     rows = mc.summarize([p])
     assert rows["unknown"]["no_usage"] == 1
+
+
+def test_headless_sessions_excluded_by_default(tmp_path):
+    # Evals and probes run as `claude -p` (entrypoint sdk-cli) and swamp the pool (doctor note #1).
+    def main_tx(sid, ep):
+        (tmp_path / f"{sid}.jsonl").write_text(json.dumps(
+            {"type": "user", "entrypoint": ep, "timestamp": "2026-10-14T10:00:00Z", "message": {"role": "user", "content": "x"}}) + "\n")
+    main_tx("aaa", "cli")
+    main_tx("bbb", "sdk-cli")
+    (tmp_path / "bbb" / "subagents").mkdir(parents=True)
+    (tmp_path / "bbb" / "subagents" / "agent-x.jsonl").write_text("")
+    (tmp_path / "aaa" / "subagents").mkdir(parents=True)
+    (tmp_path / "aaa" / "subagents" / "agent-y.jsonl").write_text("")
+    names = {p.name for p in mc.collect(tmp_path, None)}
+    assert names == {"aaa.jsonl", "agent-y.jsonl"}
+    assert len(mc.collect(tmp_path, None, include_headless=True)) == 4
