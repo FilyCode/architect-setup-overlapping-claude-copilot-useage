@@ -1,5 +1,9 @@
 # verification-patterns — reference part 3
 
+Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
+`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
+and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
 <!-- from verification.md:346 -->
 - **Making a no-op live is a behaviour change, and must not also move its default.** A parameter

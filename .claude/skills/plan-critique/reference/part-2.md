@@ -1,5 +1,9 @@
 # plan-critique — reference part 2
 
+Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
+`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
+and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
 <!-- from subagent-dispatch.md:516 -->
 - a **domain-role** reviewer if the problem is domain-shaped, same pattern as elsewhere in

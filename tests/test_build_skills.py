@@ -39,3 +39,15 @@ def test_skill_md_within_ceiling_and_references_listed(tmp_path):
         assert len(skill.encode()) <= 15_360 + 4_096, name  # header allowance
         for ref in (tmp_path / name / "reference").glob("*.md") if (tmp_path / name / "reference").exists() else []:
             assert f"reference/{ref.name}" in skill, (name, ref.name)
+
+
+def test_moved_text_says_where_old_file_names_went(tmp_path):
+    # The verbatim bodies cite subagent-dispatch.md / verification.md / scc.md, which are retired.
+    bs.build_all(HIST, MAP, ROOT / "skill-headers", tmp_path)
+    for name in bs.SKILLS:
+        for f in [tmp_path / name / "SKILL.md"] + sorted((tmp_path / name).glob("reference/*.md")):
+            text = f.read_text()
+            note = text.split(bs.MARK, 1)[0]
+            for old, skill in (("subagent-dispatch.md", "dispatch-brief"), ("verification.md", "verification-patterns"),
+                               ("scc.md", "running-sge-jobs")):
+                assert old in note and skill in note, (f, old)

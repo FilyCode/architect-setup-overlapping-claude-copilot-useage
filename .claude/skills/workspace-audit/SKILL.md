@@ -21,7 +21,8 @@ Explicit invocation only. This runs at most monthly; it is not a per-session che
 **1. Instruction drift.** Read the workspace `CLAUDE.md`, `.claude/rules/*.md`, and
 `~/.claude/CLAUDE.md`. For each instruction ask: would Claude do this anyway? Is it fixing
 a weakness that no longer exists? Does it contradict anything else? Cut what fails all
-three. Target: root `CLAUDE.md` under ~40 lines, each rule file under ~40.
+three. Then run `tools/context_budget.py`; it fails above the byte ceilings in the
+2026-10-14 restructure spec (§5.1), and only `core.md` may be an unscoped rule.
 
 Run `/context` to see what actually loaded, and `/doctor`, which proposes CLAUDE.md trims
 independently.
@@ -29,6 +30,8 @@ independently.
 **2. Skills and plugins.** A skill or plugin untouched for 30+ days is a prune candidate.
 Every enabled plugin costs listing space in every session whether or not it is used, so
 check before adding one.
+For a vendored skill (one with a `SOURCE.md`), compare the pinned upstream commit with
+upstream HEAD (`git ls-remote <url> HEAD`) and note the drift.
 
 Usage is measurable, not a guess — `~/.claude.json` carries `skillUsage` and `pluginUsage`
 (lifetime counts since install) and `numStartups` for scale. A plugin with 0 uses across

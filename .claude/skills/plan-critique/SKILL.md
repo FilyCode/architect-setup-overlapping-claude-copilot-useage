@@ -18,6 +18,10 @@ The rules below are the original workspace text, moved verbatim.
 
 - See [reference/part-2.md](reference/part-2.md) — a **domain-role** reviewer if the problem is domain-shaped, ; Three-state is a plan-time checklist item, not a review-time; during that wave to fix that class**: a check that could not
 
+Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
+`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
+and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
 <!-- from subagent-dispatch.md:339 -->
 ## Brainstorming: research-scout

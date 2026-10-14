@@ -16,6 +16,10 @@ The rules below are the original workspace text, moved verbatim.
 - See [reference/part-2.md](reference/part-2.md) — A test made vacuous by a change that never edited it. `test_; **A capability claimed as "implemented" with no call path.**; **Match the command as invoked, not as idealised.** `^git lo; **A positive control built from a convenient fixture proves ; **Check the aggregate's distribution before optimising for i; The earlier line in this file that "every other command runs; Before blaming the wrapper, 
 - See [reference/part-3.md](reference/part-3.md) — **Making a no-op live is a behaviour change, and must not al; **A boundary test that does not probe the disputed interval ; Reporting.** State what was run and what it returned. If tes; A plan's own tests and fixtures are suspects, not specificat; one never exercised the state it existed to protect — the `U; one asserted a branch that never executes (`if "ef_ec_confid; one used a fixture that coul
 
+Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
+`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
+and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
 <!-- from verification.md:7 -->
 **The shapes this takes**

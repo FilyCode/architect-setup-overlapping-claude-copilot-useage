@@ -27,6 +27,10 @@ each exists. The index of where every old rule went is
 - See [reference/part-2.md](reference/part-2.md) — "The brief is wrong" is a first-class finding.** A retrospec; Concurrent dispatches need declared file ownership; Model and effort tiering for any subagent dispatch; Every dispatch carries the environment-invariants block; **Name the repo's own test-environment traps**: autouse fixt; Generate a task's brief at dispatch time, not up front; The review-dispatch template — because recall is the failur
 - See [reference/part-3.md](reference/part-3.md) — Fifteenth: `cp` after a `--write` is a fifth shared-worktree; Twelfth item, and it belongs with the contradiction slot: sa
 
+Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
+`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
+and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
 <!-- from subagent-dispatch.md:3 -->
 ## Never dispatch "wait and report" as a subagent's task

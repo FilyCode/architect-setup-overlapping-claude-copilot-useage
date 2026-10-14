@@ -18,6 +18,10 @@ so in the close and keep a standing row for one held-out evaluation.
 
 The rules below are the original workspace text, moved verbatim.
 
+Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
+`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
+and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
 <!-- from subagent-dispatch.md:213 -->
 ## Wave-end review (additive — the generic reviewer stays available)

@@ -17,6 +17,9 @@ import rule_map as rm  # noqa: E402
 SKILLS = ("dispatch-brief", "wave-review", "plan-critique", "verification-patterns",
           "scientific-evidence", "running-sge-jobs")
 PART = 12_000
+OLD_NAMES = ("Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills\n"
+             "`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`\n"
+             "and `scientific-evidence`; `scc.md` is `running-sge-jobs`.\n\n")
 MARK = "<!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->\n"
 PROV = "<!-- from "
 
@@ -73,10 +76,10 @@ def build(name: str, hist: Path, tsv: Path, headers: Path, out: Path) -> None:
             titles = "; ".join(s.title[:60] for s in part if s.title)[:400]
             header += f"- See [reference/part-{n}.md](reference/part-{n}.md) — {titles}\n"
             (d / "reference" / f"part-{n}.md").write_text(
-                f"# {name} — reference part {n}\n\n{MARK}{_render(part)}")
+                f"# {name} — reference part {n}\n\n{OLD_NAMES}{MARK}{_render(part)}")
     else:
         (d / "reference").rmdir()
-    (d / "SKILL.md").write_text(f"{header}\n{MARK}{_render(parts[0] if parts else [])}")
+    (d / "SKILL.md").write_text(f"{header}\n{OLD_NAMES}{MARK}{_render(parts[0] if parts else [])}")
 
 
 def build_all(hist: Path, tsv: Path, headers: Path, out: Path) -> None:

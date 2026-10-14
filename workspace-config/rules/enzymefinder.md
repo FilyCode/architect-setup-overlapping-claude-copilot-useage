@@ -40,8 +40,8 @@ qsub -v PYTEST_LASTFAILED=1 scripts/scc-submissions/run_pytest_qsub.sh       # -
 
 Never embed `-k` inside `PYTEST_ARGS` — shell word-splitting breaks it. Use `PYTEST_FILTER`.
 Results land in `logs/pytest_qsub.$JOB_ID.out`. Track with a single backgrounded wait
-loop, not repeated `qstat -j <JOB_ID>` checks — see `scc.md`'s "Waiting on a job without
-burning tokens".
+loop, not repeated `qstat -j <JOB_ID>` checks — see the `running-sge-jobs` skill's "Waiting on a job
+without burning tokens".
 
 ## Comparison data for end-to-end runs
 Use real results from the other projects as baselines rather than synthetic fixtures:

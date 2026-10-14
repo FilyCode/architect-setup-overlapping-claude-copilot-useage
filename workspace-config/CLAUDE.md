@@ -22,11 +22,6 @@ changing anything in it.
 `scientific-evidence`, `running-sge-jobs`, `completion-check`. History and the old rule
 text: `architect-setup-overlapping-claude-copilot-useage/docs/history/`.
 
-## Until the skills land (removed in Task 15)
-
-- Evidence before claiming done: `.claude/rules/verification.md`.
-- Any subagent dispatch or review wave: `.claude/rules/subagent-dispatch.md`.
-
 ## Approval needed
 
 Governance files (`ARCHITECTURE.md`, `DECISIONS.md`, any `CLAUDE.md`, `PROJECT_STATE.md`),

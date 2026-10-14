@@ -18,7 +18,7 @@ failure) are assumed — this file covers only what differs here.
   **The round-trip lands in the SAME task that adds the field — or the punt is made safe.**
   Observed five times (MA-45, MA-46, MA-101, MA-114, and again 2026-08-29). The MA-101 case is
   the instructive one, and it cuts both ways: the punt was explicit, documented in an inline
-  comment, and correct under `subagent-dispatch.md`'s "Concurrent dispatches need declared file
+  comment, and correct under the `dispatch-brief` skill's "Concurrent dispatches need declared file
   ownership" — and the gap was then caught about two hours later, in the same session, by the
   round-trip discipline above, before anything shipped in a bad state. So this is **not** a
   licence to override file ownership. If the serializer lives in a file another task owns,
@@ -30,4 +30,4 @@ failure) are assumed — this file covers only what differs here.
   What the missing field actually cost: `bridge_max_coverage` defaulted to NaN on reload, and
   an unguarded `>= 0.8` against NaN is `False`, so a bridge classified `domain_mediated` came
   back `weak` after any checkpoint reload — a wrong answer, not a crash.
-- Never run the test suite on the login node. See `.claude/rules/scc.md`.
+- Never run the test suite on the login node. See the `running-sge-jobs` skill.
