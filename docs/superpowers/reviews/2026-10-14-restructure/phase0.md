@@ -78,3 +78,7 @@ matter. Threshold stays as declared.
 ## P7 — seat-yield tabulation
 
 Dispatched to a read-only background agent; results in `phase0-p7-seat-yield.md`.
+
+**P7 result** (`phase0-p7-seat-yield.md`): only Bile_acid_database left parseable seat findings (3 waves, 49 files
+after md5 dedup); "acted-on" is pragmatism-officer's triage verdict, so circular. Highest Blocking shares: domain
+15/65, anomaly 5/18, critic 8/67. Too thin to merge or drop any seat: roster unchanged, lean-critic on demand.
