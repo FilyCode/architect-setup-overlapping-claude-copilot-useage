@@ -2,3 +2,4 @@
 AGENTS.override.md
 CLAUDE.local.md
 evals/runs/
+__pycache__/
