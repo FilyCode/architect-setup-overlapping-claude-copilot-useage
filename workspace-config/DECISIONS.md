@@ -732,9 +732,9 @@ skills (`dispatch-brief`, `wave-review`, `plan-critique`, `verification-patterns
 `omitClaudeMd: true` (first call 4,772 tokens vs ≈ 50k, Phase 0 P1) and preload only their
 skills. New seats `implementer` and `lean-critic`. Mechanisms: `bash_guard.py` (PreToolUse:
 git stash, `--work-tree` checkout, recursive delete under `projects/`, pytest outside an SGE
-job), `context_nudge.py` (UserPromptSubmit: context ≥ 400k and an effort hint for heavy
-planning), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=2`, `CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000` (deterministic
-compaction; added after a best-practice sweep, `reviews/2026-10-14-restructure/best-practice-sweep.md`),
+job), `context_nudge.py` (UserPromptSubmit: context ≥ 500k and an effort hint for heavy
+planning), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=2`, `CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000` (backstop at ≈ 80 % of the 1M window; the
+nudge fires from 50 %, owner band 50–80 % so compaction lands at a task boundary; added after a best-practice sweep, `reviews/2026-10-14-restructure/best-practice-sweep.md`),
 `effortLevel: medium`. The rtk
 `PreToolUse` hook is removed; the binary stays for `rtk gain`.
 

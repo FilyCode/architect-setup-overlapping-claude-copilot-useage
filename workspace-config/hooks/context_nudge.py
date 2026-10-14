@@ -2,9 +2,9 @@
 """UserPromptSubmit hook: nudge when context is large; hint effort for heavy planning.
 
 Threshold is declared workspace-specific (2026-10-14 corpus: calls above 500k carry
-~69% of main-session cost) and overridable with CLAUDE_NUDGE_TOKENS. It sits below the
-auto-compaction window (CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000) so compaction can happen
-at a task boundary rather than wherever the threshold lands. Fires once per 100k band. Any error exits 0 silently.
+~69% of main-session cost) and overridable with CLAUDE_NUDGE_TOKENS. Owner band
+2026-10-14: nudge at 50 % of the 1M window, auto-compaction backstop at 80 %
+(CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000), so compaction lands at a task boundary. Fires once per 100k band. Any error exits 0 silently.
 """
 import json
 import os
@@ -12,7 +12,7 @@ import re
 import sys
 from pathlib import Path
 
-DEFAULT_THRESHOLD = 250_000
+DEFAULT_THRESHOLD = 500_000
 
 TAIL = 2_000_000
 BAND = 100_000
@@ -42,7 +42,7 @@ def message(ctx, prompt, state, threshold):
         band = ctx // BAND
         if band > state.get("band", -1):
             state["band"] = band
-            parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires near 400k. Tell the user in one "
+            parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires near 800k. Tell the user in one "
                          f"line: at the next task boundary, `/compact <what to keep>` (or `/clear` before an "
                          f"unrelated task); hand long investigations to a seat.")
     words = " ".join(t for t in (prompt or "").split() if "/" not in t)  # paths name things, not tasks

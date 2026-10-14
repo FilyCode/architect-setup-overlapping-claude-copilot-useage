@@ -40,11 +40,11 @@ def test_effort_hint_once():
 
 
 def test_default_threshold_sits_below_auto_compact_window():
-    # Auto-compaction fires just under CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000 (DECISION-026);
-    # the nudge must come earlier so the user can compact at a task boundary.
-    assert cn.DEFAULT_THRESHOLD == 250_000
-    msg, _ = cn.message(260_000, "next", {}, cn.DEFAULT_THRESHOLD)
-    assert "task boundary" in msg
+    # Owner 2026-10-14: compact between 50 % and 80 % of the 1M window. Nudge at 50 %;
+    # auto-compaction (CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000) is the backstop.
+    assert cn.DEFAULT_THRESHOLD == 500_000
+    msg, _ = cn.message(510_000, "next", {}, cn.DEFAULT_THRESHOLD)
+    assert "task boundary" in msg and "800k" in msg
 
 
 def test_state_is_per_session(tmp_path, monkeypatch, capsys):
