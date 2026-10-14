@@ -16,7 +16,7 @@ jq -r '.[].id' $REPO/evals/scenarios.json | grep -E "^(${EVAL_ONLY:-.*})$" | whi
   for k in $(seq 1 "$K"); do
     claude -p "$prompt" --output-format stream-json --verbose --permission-mode plan --max-turns 8 \
       < /dev/null > "$OUT/$id-$k.jsonl" 2> "$OUT/$id-$k.err"
-    echo "$id-$k exit=$?"
+    rc=$?; echo "$id-$k exit=$rc claude=$(claude --version < /dev/null 2>/dev/null | cut -d" " -f1)"
   done
 done
 echo "=== finished: $(date -Is)"
