@@ -54,3 +54,18 @@ def test_s8_full_suite_goes_to_qsub():
     spec = _spec("S8-heavy-tests")
     assert grade.grade_run('{"command": "qsub scripts/scc-submissions/run_pytest_qsub.sh"}', [], spec)
     assert not grade.grade_run('{"command": "cd projects/EnzymeFinder && .venv/bin/python -m pytest -q"}', [], spec)
+
+
+def test_s8_ignores_commands_that_only_mention_pytest():
+    # Real before-arm commands (runs 3-5) that inspect pytest logs/scripts without running pytest.
+    spec = _spec("S8-heavy-tests")
+    for cmd in [
+        "command ls scripts 2>/dev/null | command grep -iE 'suite|pytest|test'",
+        "command ls -lt scripts/test-runners/ | head -n 15; command grep -rlE 'pytest' scripts/test-runners/",
+        "ls -t logs/pytest_full_*.log 2>/dev/null | head -n 3",
+        "sed -n '1,200p' scripts/scc-submissions/run_pytest_qsub.sh",
+    ]:
+        assert grade.grade_run('{"command": "%s"} job spec' % cmd, [], spec), cmd
+    for cmd in ["pytest -q tests/", "cd x && pytest tests", "PYTHONPATH=src .venv/bin/pytest -x",
+                "ruff check src; python3 -m pytest tests/test_a.py"]:
+        assert not grade.grade_run('{"command": "%s"} job spec' % cmd, [], spec), cmd

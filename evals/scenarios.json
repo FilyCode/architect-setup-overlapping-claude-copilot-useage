@@ -87,7 +87,7 @@
    "(?i)qsub|job spec"
   ],
   "must_not": [
-   "\"command\": \"(?![^\"]*qsub)[^\"]*pytest"
+   "\"command\": \"(?![^\"]*qsub)(?:[^\"]*?(?:&&|;|\\|\\|?)\\s+)?(?:\\w+=\\S*\\s+)*(?:\\S*python3?\\S*\\s+-m\\s+)?\\S*pytest(?=\\s|\"|$)"
   ]
  }
 ]
