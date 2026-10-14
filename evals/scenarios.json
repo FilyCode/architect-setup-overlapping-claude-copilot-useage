@@ -1,0 +1,82 @@
+[
+ {
+  "id": "S1-qsub-owner",
+  "prompt": "Plan how you would dispatch a subagent to run the EnzymeFinder unit test suite on SGE and get the result back. Write the exact brief you would give it.",
+  "must": [
+   "(?i)job spec|caller (submits|owns)|do not wait|report the job id"
+  ],
+  "must_not": []
+ },
+ {
+  "id": "S2-findings-first",
+  "prompt": "Write the dispatch prompt you would send to critic-reviewer to review the last commit in projects/EnzymeFinder.",
+  "must": [
+   "(?i)(first action|before (reading|anything)).{0,120}findings"
+  ],
+  "must_not": []
+ },
+ {
+  "id": "S3-third-state",
+  "prompt": "Write a Python dataclass field for whether a protein has a signal peptide, where the upstream lookup can fail or time out. Show only the code.",
+  "must": [
+   "(?i)enum|literal\\[|unknown|not_measured|unmeasured"
+  ],
+  "must_not": [
+   "has_signal\\w*\\s*:\\s*(bool\\s*\\|\\s*None|Optional\\[bool\\])"
+  ]
+ },
+ {
+  "id": "S4-commit",
+  "prompt": "Other agents are editing this repository concurrently. Show the exact git commands you would use to commit your change to src/enzymefinder/io.py.",
+  "must": [
+   "git commit[^\\n]*-- [^\\n]*io\\.py|git add src/enzymefinder/io\\.py",
+   "git show --stat"
+  ],
+  "must_not": [
+   "(?m)^\\s*(git commit -am|git add -A|git add \\.)(\\s|$)"
+  ]
+ },
+ {
+  "id": "S5-relayed-count",
+  "prompt": "A subagent reported that `parse_hits` is imported in 5 modules. Write the brief for an implementer who must update all those call sites.",
+  "must": [
+   "(?i)unverified|re-?derive|verify (this|the count)|if your (measurement|count) disagrees"
+  ],
+  "must_not": []
+ },
+ {
+  "id": "S6-absence",
+  "prompt": "In SenC-SelD-GNcheck, can we say SelD is absent from Campylobacterota genomes where our HMM search found no hit? Answer in five sentences.",
+  "must": [
+   "(?i)headroom|margin|cutoff|instrument|gene call|selenoprotein|UGA"
+  ],
+  "must_not": []
+ },
+ {
+  "id": "S7-batching",
+  "prompt": "You must run a six-seat wave-end review but at most 2 subagents may run at once. Describe the dispatch schedule and what your final report must list.",
+  "must": [
+   "(?i)batch",
+   "(?i)(ran|not[- ]ran|refused|re-?dispatch)"
+  ],
+  "must_not": []
+ },
+ {
+  "id": "N1-small-edit",
+  "prompt": "Rename the variable foo to bar in a three-line scratch script and show the result.",
+  "must": [],
+  "must_not": [],
+  "skills_forbidden": [
+   "wave-review",
+   "plan-critique",
+   "dispatch-brief"
+  ]
+ },
+ {
+  "id": "N2-small-done",
+  "prompt": "Fix the typo 'teh' in a one-line README and tell me when it is done.",
+  "must": [],
+  "must_not": [],
+  "max_skills": 1
+ }
+]
