@@ -712,8 +712,49 @@ nothing.
 
 ---
 
+### [2026-10-14] [DECISION-026]: Restructure the instruction layer — core rules + skills + mechanisms; retire the rtk hook (supersedes DECISION-025)
+
+**Problem**: every session and every subagent paid for ≈ 125 KB of always-loaded text
+(`subagent-dispatch.md` 54.8 KB, `verification.md` 45.8 KB, MEMORY.md 14.1 KB, `scc.md` 5.4 KB).
+At ≈ 3.0 bytes/token (regression over 755 subagent transcripts) that is ≈ 41k tokens: ≈ 41 % of
+a main session's first call and ≈ 80 % of a named review seat's. MEMORY.md was injected into
+757/757 subagent transcripts although the docs say otherwise. General-purpose subagents were
+81.2 % of subagent context tokens (n = 411 of 757). Anthropic's guidance is < 200 lines per
+always-loaded file; ours were 752 and 553. Of six recorded "rule existed and was not followed"
+incidents, one was burial in a long file and three were fixed by a mechanism.
+
+**Decision**: one always-loaded `.claude/rules/core.md` (≈ 3.7 KB, 11 invariants plus "when to
+load which process" triggers); the rest of the three rule files moved **verbatim** into seven
+skills (`dispatch-brief`, `wave-review`, `plan-critique`, `verification-patterns`,
+`scientific-evidence`, `running-sge-jobs`, `completion-check`), assembled by
+`tools/build_skills.py` from `docs/history/rule-map.tsv` (185 items, checked by
+`tools/rule_map.py`); originals kept in `docs/history/rules-2026-10-14/`. Seats start with
+`omitClaudeMd: true` (first call 4,772 tokens vs ≈ 50k, Phase 0 P1) and preload only their
+skills. New seats `implementer` and `lean-critic`. Mechanisms: `bash_guard.py` (PreToolUse:
+git stash, `--work-tree` checkout, recursive delete under `projects/`, pytest outside an SGE
+job), `context_nudge.py` (UserPromptSubmit: context ≥ 400k and an effort hint for heavy
+planning), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=2`, `CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000` (deterministic
+compaction; added after a best-practice sweep, `reviews/2026-10-14-restructure/best-practice-sweep.md`),
+`effortLevel: medium`. The rtk
+`PreToolUse` hook is removed; the binary stays for `rtk gain`.
+
+**Supersedes DECISION-025**: its bounded `cat` reads of multi-GB files are gone — use
+`head -c`, `sed -n` or the Read tool's offset/limit. `rtk_selftest.sh` retired. The lossless replacement: `bash_guard.py` warns on unbounded `cat` of
+large files and `find /` without `-maxdepth` — the two shapes that held 91 % of rtk's lifetime
+savings — and never rewrites a command.
+
+**Evidence and gates**: spec, plan and six-seat critique wave under
+`docs/superpowers/{specs,plans,reviews}/2026-10-14*`; before/after behavioural evals
+(10 scenarios, k = 5) gate retirement of the old files; `tools/context_budget.py` enforces byte
+ceilings; `tools/measure_context.py` is the gate of record on real transcripts.
+
+**Limits**: the static cut is worth ≈ 5.6 % of main-session and ≈ 20.5 % of subagent cost
+(simulation over the corpus). Most main-session cost is calls above 500k context (≈ 69 %),
+which is behaviour; the nudge hook targets it.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design
-- [PROJECT_STATE.md](PROJECT_STATE.md) — Current sprint
 - [.claude/rules/](.claude/rules/) — Scheduler, storage, verification and language rules
