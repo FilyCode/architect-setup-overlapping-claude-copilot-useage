@@ -2,12 +2,7 @@
 
 Things only the owner can do (account-side, or blocked for the session). Each says why.
 
-1. **Restore the three parked plugins** (uninstalled by mistake; `parked-extensions.md` records
-   them as disabled-but-installed for instant re-enable; the auto-mode classifier blocked the
-   session from doing it):
-   ```
-   ! for p in example-skills@anthropic-agent-skills research-skills@claude-code-skills planning-with-files@planning-with-files; do claude plugin install $p --scope user && claude plugin disable $p --scope user; done
-   ```
+1. ~~Restore the three parked plugins~~ — owner 2026-10-14: not needed; the uninstall stands.
 2. **Account-synced writing plugins** (managed in the desktop app / claude.ai, not from here):
    - Disable `humanize-kit`. It targets AI-detector evasion, which conflicts with journals'
      AI-use disclosure policies, and it adds a SessionStart hook.
