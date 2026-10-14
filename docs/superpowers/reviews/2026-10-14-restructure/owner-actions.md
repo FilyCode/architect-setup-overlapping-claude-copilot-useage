@@ -25,3 +25,18 @@ Things only the owner can do (account-side, or blocked for the session). Each sa
    and compare the main first-call median. Disable connectors you do not use either way.
 5. **Not ours, noticed in passing:** SGE job 8054899 (`roadseg_au`) has been in `Eqw` since
    2026-10-13.
+6. **Move transcripts out of home** (owner approved 2026-10-14; `cleanupPeriodDays` already 90). Do it
+   with **no Claude session running** — open sessions keep appending to their files in home, and a
+   move under them loses those writes. Snapshot taken 2026-10-14 17:49 in
+   `archives/claude-transcripts-2026-10-14/` (file lists identical to the source).
+   ```
+   rsync -a ~/.claude/projects/ /projectnb/liu-scc/philipp/software/claude-projects/ && \
+   mv ~/.claude/projects ~/.claude/projects.old && \
+   ln -s /projectnb/liu-scc/philipp/software/claude-projects ~/.claude/projects && \
+   diff -rq ~/.claude/projects.old ~/.claude/projects && \rm -rf ~/.claude/projects.old
+   ```
+7. **pr-review-toolkit** disabled 2026-10-14 (≈ 2k tokens per session; a plugin cannot be scoped to
+   chosen subagents). For a session that needs `/review-pr` or its agents:
+   `claude plugin enable pr-review-toolkit@claude-plugins-official --scope user`, then disable again.
+   hookify and diagram-design were disabled the same day (0 uses; hookify added ≈ 100 ms per Bash call).
+   The Claude Docs connector is hidden in Claude Code via `deniedMcpServers` (still on claude.ai).
