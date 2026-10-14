@@ -16,7 +16,7 @@ import rule_map as rm  # noqa: E402
 
 SKILLS = ("dispatch-brief", "wave-review", "plan-critique", "verification-patterns",
           "scientific-evidence", "running-sge-jobs")
-PART = 12_288
+PART = 12_000
 MARK = "<!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->\n"
 PROV = "<!-- from "
 

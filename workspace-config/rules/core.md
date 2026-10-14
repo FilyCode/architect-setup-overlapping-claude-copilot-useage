@@ -30,7 +30,8 @@ Detail and history for every line: `architect-setup-overlapping-claude-copilot-u
    `cp` onto tracked files; render to scratch and diff there.
 
 ## When to load which process
-8. - Dispatching an implementer or a review seat → skill `dispatch-brief`.
+8. - Dispatching an implementer or a review seat → skill `dispatch-brief`. Code goes to
+     `implementer`, ad hoc questions to `investigator`, never to general-purpose.
    - Before Task 1 of an architectural plan → `plan-critique`. A known-heavy problem (before any
      attempt) or a third failed fix → the escalation section of `plan-critique`.
    - End of a wave → `wave-review`. Self-verification is not independent review.

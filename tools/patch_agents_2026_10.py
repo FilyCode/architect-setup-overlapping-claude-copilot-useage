@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""One-off Task 10 patch for the 11 existing seats (plan 2026-10-14). Idempotent.
+"""Task 10 patch for the existing seats (plan 2026-10-14, agent-seat-review). Idempotent.
+
+Also the standing sync for the Environment block: every agent file in the directory gets the
+block from workspace-config/seat-environment.md (tests/test_agents.py checks they match).
 
 Usage: patch_agents_2026_10.py <agents dir>
 """
@@ -7,19 +10,19 @@ import re
 import sys
 from pathlib import Path
 
-ENV = Path(__file__).resolve().parents[1] / "docs/superpowers/plans/2026-10-14-setup-restructure.md"
-TABLE = {  # name: (model, effort, preloaded skills)
-    "critic-reviewer": ("opus", "medium", ["verification-patterns", "completion-check"]),
-    "domain-reviewer": ("opus", "high", ["scientific-evidence"]),
-    "anomaly-hunter": ("opus", "high", ["scientific-evidence"]),
-    "alignment-officer": ("sonnet", "medium", []),
-    "docs-sync": ("sonnet", "medium", []),
-    "inventory-auditor": ("sonnet", "medium", []),
-    "pragmatism-officer": ("sonnet", "medium", []),
-    "figure-auditor": ("opus", "medium", ["scientific-evidence"]),
-    "security-specialist": ("opus", "high", []),
-    "research-scout": ("sonnet", "medium", []),
-    "scc-monitor": ("haiku", "medium", ["running-sge-jobs"]),
+ENV = Path(__file__).resolve().parents[1] / "workspace-config/seat-environment.md"
+TABLE = {  # name: (model, effort, preloaded skills, maxTurns)
+    "critic-reviewer": ("opus", "medium", ["verification-patterns", "completion-check"], 40),
+    "domain-reviewer": ("opus", "high", ["scientific-evidence"], 45),
+    "anomaly-hunter": ("opus", "high", ["scientific-evidence"], 45),
+    "alignment-officer": ("sonnet", "medium", [], 30),
+    "docs-sync": ("sonnet", "medium", [], 25),
+    "inventory-auditor": ("sonnet", "medium", [], 35),
+    "pragmatism-officer": ("sonnet", "medium", [], 20),
+    "figure-auditor": ("opus", "medium", ["scientific-evidence"], 35),
+    "security-specialist": ("opus", "high", [], 40),
+    "research-scout": ("sonnet", "medium", [], 25),
+    "scc-monitor": ("haiku", "medium", ["running-sge-jobs"], 15),
 }
 KEEP_WORKING = ("Keep working until the task is done or you are blocked; there is no one to answer a\n"
                 "question mid-run. Before you report, check your claims against the files or command\n"
@@ -45,23 +48,38 @@ EXTRA = {
 }
 
 
+FINDINGS = ("Your first action, before you investigate anything: create the findings file the caller\n"
+            "names (or `<scratchpad>/<your name>/findings.md`) with a one-line header, using Write or a\n"
+            "Bash heredoc. Append each finding the moment you confirm it. If your turns run out, that file\n"
+            "is the deliverable.\n")
+REVIEW = {"critic-reviewer", "alignment-officer", "docs-sync", "inventory-auditor", "figure-auditor",
+          "security-specialist", "pragmatism-officer", "domain-reviewer", "anomaly-hunter", "research-scout"}
+ENV_RE = re.compile(r"## Environment\n.*?(?:\n\s*(?=\n## |\nKeep working)|\s*\Z)", re.S)
+
+
 def env_block() -> str:
-    plan = ENV.read_text()
-    m = re.search(r"```markdown\n(## Environment\n.*?)```", plan, re.S)
-    return m.group(1)
+    return ENV.read_text().rstrip("\n") + "\n"
+
+
+def sync_env(text: str) -> str:
+    """Replace an existing Environment block with the single source; leave files without one alone."""
+    def keep_tail(m):
+        return env_block().rstrip("\n") + "\n"
+    return ENV_RE.sub(keep_tail, text, count=1)
 
 
 def patch(path: Path) -> str:
     name = path.stem
-    model, effort, skills = TABLE[name]
+    model, effort, skills, turns = TABLE[name]
     s = path.read_text()
     for old, new in POINTERS:
         s = s.replace(old, new)
     fm_end = s.index("\n---\n", 4)
     fm, body = s[:fm_end], s[fm_end:]
-    lines = [ln for ln in fm.split("\n") if not ln.startswith(("effort:", "omitClaudeMd:", "skills:"))]
+    drop = ("effort:", "omitClaudeMd:", "skills:", "maxTurns:") + (("memory:",) if name == "scc-monitor" else ())
+    lines = [ln for ln in fm.split("\n") if not ln.startswith(drop)]
     fm = "\n".join(f"model: {model}" if ln.startswith("model:") else ln for ln in lines)
-    fm += f"\neffort: {effort}\nomitClaudeMd: true"
+    fm += f"\neffort: {effort}\nmaxTurns: {turns}\nomitClaudeMd: true"
     if skills:
         fm += f"\nskills: [{', '.join(skills)}]"
     body = re.sub(r"- \*\*`rtk` filters only `cat`\*\*.*?a pipeline is not a bypass\.\n", "", body, flags=re.S)
@@ -69,6 +87,9 @@ def patch(path: Path) -> str:
     body = body.replace(
         " You do\n   not have access to the `simplify`/`code-review` skills here (no `Skill` tool) — this\n"
         "   item exists so that gap doesn't silently drop the check.", "")
+    if name in REVIEW and not re.search(r"(?i)first action.{0,200}findings file", body, re.S):
+        body = "\n---\n\n" + FINDINGS + "\n" + body[len("\n---\n"):].lstrip("\n")
+    body = sync_env(body)
     add = ""
     if "## Environment" not in body:
         add += "\n" + env_block()
@@ -83,10 +104,11 @@ def patch(path: Path) -> str:
 
 
 def main(d):
-    for name in TABLE:
-        p = Path(d) / f"{name}.md"
-        p.write_text(patch(p))
-        print("patched", p.name)
+    for p in sorted(Path(d).glob("*.md")):
+        new = patch(p) if p.stem in TABLE else sync_env(p.read_text())
+        if new != p.read_text():
+            p.write_text(new)
+            print("patched", p.name)
 
 
 if __name__ == "__main__":
