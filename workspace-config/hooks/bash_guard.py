@@ -16,6 +16,7 @@ SEP = {";", "&&", "||", "|", "&", "\n"}
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1")
 VAR = re.compile(r"\$\{?(\w+)\}?")
 CACHE = {"__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache"}
+BIG = 1_000_000  # bytes; rtk's measured savings came from cat on multi-GB files (DECISION-026)
 
 
 def _lines(command: str):
@@ -40,18 +41,19 @@ def _expand(arg: str, env: dict):
 
 
 def _segments(command: str):
+    """Yield (tokens, piped): piped is True when the segment's output feeds a `|`."""
     lex = shlex.shlex(command, posix=True, punctuation_chars=";&|")
     lex.whitespace_split = True
     seg = []
     for tok in lex:
         if tok in SEP or set(tok) <= set(";&|"):
             if seg:
-                yield seg
+                yield seg, tok == "|"
             seg = []
         else:
             seg.append(tok)
     if seg:
-        yield seg
+        yield seg, False
 
 
 def _strip(seg):
@@ -61,6 +63,8 @@ def _strip(seg):
     seg = seg[i:]
     if seg and seg[0].startswith("\\"):
         seg = [seg[0][1:]] + seg[1:]
+    if seg and seg[0] == "command":
+        seg = seg[1:]
     return seg
 
 
@@ -113,6 +117,42 @@ def _rm(seg, cwd, shvars):
     return "allow", ""
 
 
+def _cat(seg, cwd, shvars, piped):
+    """Warn on cat of a large file whose output reaches the context (not piped, not redirected)."""
+    if piped or any(t.lstrip("1").startswith(">") for t in seg[1:]):
+        return ("allow", "")
+    for a in seg[1:]:
+        path = _expand(a, shvars)
+        if not path or path.startswith("-"):
+            continue
+        if not os.path.isabs(path):
+            if cwd is None:
+                continue
+            path = os.path.join(cwd, path)
+        try:
+            if os.path.getsize(path) > BIG:
+                return ("warn", f"cat of a {os.path.getsize(path) // 1_000_000} MB file: bound it "
+                                "(head -n N, sed -n 'A,Bp', or Read with offset/limit).")
+        except OSError:
+            continue
+    return ("allow", "")
+
+
+def _find(seg, shvars):
+    """Warn on find from / or home without -maxdepth."""
+    if "-maxdepth" in seg:
+        return ("allow", "")
+    home = shvars["HOME"]
+    for a in seg[1:]:
+        if a.startswith("-") or a in ("(", "!"):
+            break
+        path = _expand(a, shvars)
+        if a.rstrip("/") == "~" or path in ("/", home, home + "/"):
+            return ("warn", "find from / or home without -maxdepth walks everything: add -maxdepth N "
+                            "or start from a narrower directory.")
+    return ("allow", "")
+
+
 def _is_assign(tok):
     name, eq, _ = tok.partition("=")
     return bool(eq) and name.isidentifier()
@@ -126,7 +166,7 @@ def decide(command: str, cwd: str, env: dict):
             segs = list(_segments(line))
         except ValueError:
             continue
-        for raw in segs:
+        for raw, piped in segs:
             if raw and raw[0] == "export":
                 raw = raw[1:]
             for tok in raw:
@@ -157,6 +197,10 @@ def decide(command: str, cwd: str, env: dict):
                 v = ("deny", "pytest outside an SGE job ($JOB_ID unset): submit it with qsub.") if not env.get("JOB_ID") else ("allow", "")
             elif cmd == "find" and "-delete" in seg and cwd and any(_under_projects(a, cwd) for a in seg[1:2] or ["."]):
                 v = ("warn", "find -delete under projects/: confirm the match list first with the same find and no -delete.")
+            elif cmd == "find":
+                v = _find(seg, shvars)
+            elif cmd == "cat":
+                v = _cat(seg, cwd, shvars, piped)
             else:
                 v = ("allow", "")
             if v[0] == "deny":

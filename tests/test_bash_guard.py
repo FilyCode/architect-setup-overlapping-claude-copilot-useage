@@ -82,3 +82,30 @@ def test_agent_scratch_areas_allowed():
     assert d("rm -rf .scratch/w1b/T6/mypy_before") == "allow"
     assert d("cd .superpowers/sdd/p/scratch_taskA3 && rm -rf mirrors/cls1") == "allow"
     assert d("rm -rf tests/fixtures/sources") == "deny"
+
+
+def test_cat_of_large_file_warns(tmp_path):
+    big = tmp_path / "big.tsv"
+    big.write_bytes(b"x" * 1_100_000)
+    small = tmp_path / "small.txt"
+    small.write_text("ok\n")
+    assert d(f"cat {big}", cwd=str(tmp_path)) == "warn"
+    assert d("cat big.tsv", cwd=str(tmp_path)) == "warn"
+    assert d(f"cat {small}", cwd=str(tmp_path)) == "allow"
+    assert d(f"cat {big} | head -n 20", cwd=str(tmp_path)) == "allow"
+    assert d(f"cat {big} | wc -l", cwd=str(tmp_path)) == "allow"
+    assert d("cat missing.txt", cwd=str(tmp_path)) == "allow"
+    # redirected output never reaches the context (real corpus shapes)
+    assert d(f"cat {big} {small} > {tmp_path}/out.faa", cwd=str(tmp_path)) == "allow"
+    assert d(f"cat {big} >> cand_all.csv", cwd=str(tmp_path)) == "allow"
+    assert d(f"cat {big} >{tmp_path}/o", cwd=str(tmp_path)) == "allow"
+
+
+def test_unbounded_find_from_root_or_home_warns():
+    assert d("find / -name '*.fa'") == "warn"
+    assert d("find ~ -name x") == "warn"
+    assert d("find $HOME -type f") == "warn"
+    assert d("command find / -name x") == "warn"
+    assert d("find / -maxdepth 3 -name x") == "allow"
+    assert d("find . -name '*.py'") == "allow"
+    assert d("find /projectnb/liu-scc/philipp/projects -name x") == "allow"

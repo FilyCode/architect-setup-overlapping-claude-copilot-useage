@@ -2,14 +2,17 @@
 """UserPromptSubmit hook: nudge when context is large; hint effort for heavy planning.
 
 Threshold is declared workspace-specific (2026-10-14 corpus: calls above 500k carry
-~69% of main-session cost) and overridable with CLAUDE_NUDGE_TOKENS. Fires once per
-100k band per session. Any error exits 0 silently.
+~69% of main-session cost) and overridable with CLAUDE_NUDGE_TOKENS. It sits below the
+auto-compaction window (CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000) so compaction can happen
+at a task boundary rather than wherever the threshold lands. Fires once per 100k band. Any error exits 0 silently.
 """
 import json
 import os
 import re
 import sys
 from pathlib import Path
+
+DEFAULT_THRESHOLD = 250_000
 
 TAIL = 2_000_000
 BAND = 100_000
@@ -39,8 +42,9 @@ def message(ctx, prompt, state, threshold):
         band = ctx // BAND
         if band > state.get("band", -1):
             state["band"] = band
-            parts.append(f"Context is {ctx // 1000}k tokens. Tell the user in one line: before an unrelated task, "
-                         f"`/clear`; otherwise `/compact <what to keep>`; hand long investigations to a seat.")
+            parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires near 400k. Tell the user in one "
+                         f"line: at the next task boundary, `/compact <what to keep>` (or `/clear` before an "
+                         f"unrelated task); hand long investigations to a seat.")
     if HEAVY.search(prompt or "") and not state.get("effort_hint"):
         state["effort_hint"] = True
         parts.append("This looks like heavy planning or brainstorming. The default effort is medium; tell the user "
@@ -52,10 +56,11 @@ def main():
     try:
         d = json.load(sys.stdin)
         tx = Path(d.get("transcript_path", ""))
-        state_path = Path(d.get("scratchpad_dir") or "/tmp") / "context_nudge_state.json"
+        sid = re.sub(r"[^\w-]", "", str(d.get("session_id") or "nosession"))
+        state_path = Path(os.environ.get("TMPDIR") or "/tmp") / f"context_nudge_{sid}.json"
         state = json.loads(state_path.read_text()) if state_path.exists() else {}
         ctx = last_context(tx) if tx.is_file() else None
-        msg, state = message(ctx, d.get("prompt", ""), state, int(os.environ.get("CLAUDE_NUDGE_TOKENS", 400_000)))
+        msg, state = message(ctx, d.get("prompt", ""), state, int(os.environ.get("CLAUDE_NUDGE_TOKENS", DEFAULT_THRESHOLD)))
         state_path.write_text(json.dumps(state))
         if msg:
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": msg}}))
