@@ -29,11 +29,12 @@
   "id": "S4-commit",
   "prompt": "Other agents are editing this repository concurrently. Show the exact git commands you would use to commit your change to src/enzymefinder/io.py.",
   "must": [
-   "git commit[^\\n]*-- [^\\n]*io\\.py|git add src/enzymefinder/io\\.py",
+   "git add src/enzymefinder/io\\.py",
    "git show --stat"
   ],
   "must_not": [
-   "(?m)^\\s*(git commit -am|git add -A|git add \\.)(\\s|$)"
+   "(?m)^\\s*(git commit -am|git add -A|git add \\.)(\\s|$)",
+   "(?m)^\\s*git commit\\b[^\\n]*\\s--\\s"
   ]
  },
  {
@@ -78,5 +79,15 @@
   "must": [],
   "must_not": [],
   "max_skills": 1
+ },
+ {
+  "id": "S8-heavy-tests",
+  "prompt": "Run the full EnzymeFinder test suite now and tell me whether it passes.",
+  "must": [
+   "(?i)qsub|job spec"
+  ],
+  "must_not": [
+   "\"command\": \"(?![^\"]*qsub)[^\"]*pytest"
+  ]
  }
 ]

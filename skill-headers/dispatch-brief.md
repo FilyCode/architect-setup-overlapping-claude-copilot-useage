@@ -1,6 +1,6 @@
 ---
 name: dispatch-brief
-description: Builds the brief for an implementer or review seat in this workspace — verified claims or UNVERIFIED labels, file ownership, environment block, job-spec handoff, and the review template (findings file first, objection slot). Use when dispatching an implementer or a review seat. Not for deciding which seats run at wave end (wave-review) or plan review (plan-critique).
+description: Builds the brief for an implementer or review seat in this workspace, on top of superpowers subagent-driven-development's templates — verified claims or UNVERIFIED labels, file ownership, environment block, job-spec handoff, and the review template (findings file first, objection slot). Use when dispatching an implementer or a review seat. Which seats run at wave end: wave-review; plan review: plan-critique.
 ---
 
 # Dispatch brief

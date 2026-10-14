@@ -11,7 +11,7 @@ REPO=/projectnb/liu-scc/philipp/architect-setup-overlapping-claude-copilot-useag
 OUT=${EVAL_OUT:-$REPO/evals/runs/$ARM}; mkdir -p "$OUT"
 echo "=== cc-evals arm=$ARM k=$K started: $(date -Is) commit=$(git -C $REPO rev-parse --short HEAD)"
 cd /projectnb/liu-scc/philipp
-jq -r '.[].id' $REPO/evals/scenarios.json | while read -r id; do
+jq -r '.[].id' $REPO/evals/scenarios.json | grep -E "^(${EVAL_ONLY:-.*})$" | while read -r id; do
   prompt=$(jq -r --arg id "$id" '.[] | select(.id==$id) | .prompt' $REPO/evals/scenarios.json)
   for k in $(seq 1 "$K"); do
     claude -p "$prompt" --output-format stream-json --verbose --permission-mode plan --max-turns 8 \

@@ -1,6 +1,6 @@
 ---
 name: verification-patterns
-description: Catalogue of verification failures seen in this workspace — stale artifacts, gates that cannot fail, vacuous tests, counts taken with grep, fixes that are effective but unsafe, claims and docs that decay. Use when implementing or reviewing a fix, a test, a gate or a generated document. Evidence about scientific absences and anomalies is in scientific-evidence.
+description: Catalogue of verification failures seen in this workspace — stale artifacts, gates that cannot fail, vacuous tests, counts taken with grep, fixes that are effective but unsafe, claims and docs that decay. Use when writing or reviewing a test, gate or check, or before claiming a fix works. Scientific absences and anomalies are in scientific-evidence.
 ---
 
 # Verification patterns
