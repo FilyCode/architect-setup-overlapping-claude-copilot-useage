@@ -16,33 +16,30 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
 
 - `workspace-config/` — the workspace root's config, symlinked back to `/projectnb/liu-scc/philipp/`:
   - `CLAUDE.md`, `ARCHITECTURE.md`, `DECISIONS.md` → workspace root
-  - `rules/*.md` → `.claude/rules/` (9 files, all read on demand via prose references from
-    `CLAUDE.md` or other rules — no hook auto-injects any of them; a file only reaches a
-    session if something actually points to it, verified 2026-09-06)
-  - `agents/*.md` → `.claude/agents/` (10 files: `critic-reviewer`, `alignment-officer`,
-    `scc-monitor`, `docs-sync`, `research-scout`, `security-specialist`, `pragmatism-officer`,
-    `figure-auditor`, `inventory-auditor`, `domain-reviewer`). Verify with
-    `for f in .claude/agents/*.md` rather than trusting this list — it went stale once.
-    `domain-reviewer` was added 2026-09-23; the rules had required a domain-role seat since
-    August while stating no such agent existed, so every one was an ad hoc prompt.
-  - `rtk/config.toml` → `~/.config/rtk/config.toml`, and `rtk/rtk_selftest.sh` →
-    `software/bin/rtk_selftest.sh`. Same symlink rule: a missing or unparseable rtk config
-    silently restores "rewrite every Bash command" with no warning, so it is version-controlled
-    rather than left loose in a quota-capped home. See DECISION-025.
-- `.claude/skills/` — `council`, `storm`, `ccusage`, `rtk`, `caveman`, `workspace-audit`.
+  - `rules/*.md` → `.claude/rules/`. Unscoped rules load in every session and every subagent
+    that does not set `omitClaudeMd`; path-scoped rules (`paths:` frontmatter) load when a
+    matching file is touched. Only `core.md` may be unscoped (`tools/context_budget.py`).
+  - `agents/*.md` → `.claude/agents/` (review seats plus `implementer`; list them with
+    `ls workspace-config/agents/` rather than trusting a list here — it went stale twice).
+  - `rtk/` — retired 2026-10-14 (DECISION-026); kept for history, see `rtk/RETIRED.md`.
+- `.claude/skills/` — `council`, `storm`, `ccusage`, `caveman`, `workspace-audit`, and the
+  process skills built from `skill-headers/` by `tools/build_skills.py`.
   All explicit-invocation only except `caveman`; also symlinked into the workspace root's
   `.claude/skills/` so they load project-wide rather than only inside this repo.
 - `.claude/context/` — `runbook.md`, `domain-glossary.md`, `learnings.md` (cross-project
   patterns; promotion bar is 3+ recurrences across 2+ projects), `parked-extensions.md`
   (plugins disabled but still on disk, with re-enable commands — check it before installing
   anything new).
-- `docs/superpowers/` — specs and plans from skill-building work.
+- `docs/superpowers/` — specs, plans and reviews. `docs/history/` — retired rule text and
+  `rule-map.tsv` (where every old rule went).
 
 ## Conventions
 
 - Rules belong in the workspace root `.claude/rules/`, not here. This repo is for skills,
   context and history.
 - Do not hand-copy a skill that has an upstream marketplace — install the plugin instead.
-  This has gone wrong three times; see `.claude/context/learnings.md`.
+  This has gone wrong three times; see `.claude/context/learnings.md`. Exception: a skill
+  with no Claude marketplace may be vendored with its LICENSE and a `SOURCE.md` pinning the
+  upstream commit (`thermo-nuclear-code-quality-review`).
 - The repo name still mentions Copilot. Renaming means renaming the GitHub remote too —
   left alone deliberately rather than done silently.

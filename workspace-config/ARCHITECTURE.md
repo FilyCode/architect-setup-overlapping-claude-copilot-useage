@@ -8,9 +8,9 @@
 
 ## Layers
 
-1. **Workspace governance** — root docs (`CLAUDE.md`, this file, `DECISIONS.md`,
-   `PROJECT_STATE.md`) and `.claude/rules/` (`ROADMAP.md` was planned in DECISION-002 but
-   never created — not tracked here until it exists)
+1. **Workspace governance** — root docs (`CLAUDE.md`, this file, `DECISIONS.md`) and
+   `.claude/rules/`. The root `PROJECT_STATE.md` was archived 2026-10-14; each project keeps
+   its own. (`ROADMAP.md` was planned in DECISION-002 but never created.)
 2. **Project execution** — code and phase-based docs under `projects/<project>/`
 3. **Session memory** — auto memory at `~/.claude/projects/<project>/memory/`
 
@@ -130,4 +130,3 @@ cost. See [.claude/rules/codebase-navigation.md](.claude/rules/codebase-navigati
 
 - [.claude/rules/](.claude/rules/) — scheduler, storage, verification, language and project rules
 - [DECISIONS.md](DECISIONS.md) — workspace-wide decision log
-- [PROJECT_STATE.md](PROJECT_STATE.md) — current state
