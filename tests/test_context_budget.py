@@ -43,3 +43,13 @@ def test_disable_model_invocation_description_not_counted(tmp_path):
     ws, home, mem = _ws(tmp_path)
     (ws / ".claude/skills/s1/SKILL.md").write_text("---\nname: s1\ndescription: " + "d" * 600 + "\ndisable-model-invocation: true\n---\nb\n")
     assert cb.check(ws, home, mem) == []
+
+
+def test_memory_entry_and_byte_caps(tmp_path):
+    ws, home, mem = _ws(tmp_path)
+    mem.write_text("".join(f"- [m{i}](m{i}.md) — x\n" for i in range(60)))
+    assert cb.check(ws, home, mem) == []
+    mem.write_text("".join(f"- [m{i}](m{i}.md) — x\n" for i in range(61)))
+    assert any("entries" in v for v in cb.check(ws, home, mem))
+    mem.write_text("- [a](a.md) — " + "y" * 6_700 + "\n")
+    assert any("MEMORY.md loaded part" in v for v in cb.check(ws, home, mem))

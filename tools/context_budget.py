@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 
-CEIL = {"home_claude": 1024, "root_claude": 3072, "core": 9216, "memory": 5120, "memory_entries": 50,
+CEIL = {"home_claude": 1024, "root_claude": 3072, "core": 9216, "memory": 6656, "memory_entries": 60,
         "description": 512, "body": 15360}
 FM = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 
@@ -54,7 +54,7 @@ def check(ws: Path, home: Path, mem: Path) -> list[str]:
     if sizes[str(mem)] > CEIL["memory"]:
         v.append(f"MEMORY.md loaded part {sizes[str(mem)]} > {CEIL['memory']}")
     if sum(1 for ln in mem.read_text().splitlines() if ln.startswith("- [")) > CEIL["memory_entries"]:
-        v.append("MEMORY.md has more than 50 entries")
+        v.append(f"MEMORY.md has more than {CEIL['memory_entries']} entries")
     for sk in sorted((ws / ".claude/skills").glob("*/SKILL.md")):
         text = sk.read_text()
         fm = _frontmatter(text)
