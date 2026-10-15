@@ -51,8 +51,8 @@ incapable of firing, a checkpoint silently dropping a field, a cached column rep
 enforcement — the docs say so explicitly.
 
 **Fix:** anything that must hold every time goes in a hook — but the guarantee depends on
-what kind. A **command hook** (script/shell) is deterministic: the rtk `PreToolUse` hook has
-run 2,100+ times this workspace's history with zero failures. A **prompt hook** adds a model
+what kind. A **command hook** (script/shell) is deterministic: the rtk `PreToolUse` hook (retired 2026-10-14,
+DECISION-026) ran 2,100+ times this workspace's history with zero failures. A **prompt hook** adds a model
 call in the loop, and that call can fail independently of the logic being sound: the
 completion-evidence `Stop` hook added under DECISION-013 had a 100% API-error rate against
 the evaluator's default fast model (haiku access failing in that specific code path, not a

@@ -16,22 +16,24 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
 
 - `workspace-config/` — the workspace root's config, symlinked back to `/projectnb/liu-scc/philipp/`:
   - `CLAUDE.md`, `ARCHITECTURE.md`, `DECISIONS.md` → workspace root
-  - `rules/*.md` → `.claude/rules/`. Unscoped rules load in every session and every subagent
+  - `rules/*.md` → `.claude/rules/` (path-scoped); `core.md` → `~/.claude/rules/`. Unscoped rules load in every session and every subagent
     that does not set `omitClaudeMd`; path-scoped rules (`paths:` frontmatter) load when a
     matching file is touched. Only `core.md` may be unscoped (`tools/context_budget.py`).
-  - `agents/*.md` → `.claude/agents/` (review seats plus `implementer`; list them with
+  - `agents/*.md` → `~/.claude/agents/` (14 seats; list them with
     `ls workspace-config/agents/` rather than trusting a list here — it went stale twice).
   - `rtk/` — retired 2026-10-14 (DECISION-026); kept for history, see `rtk/RETIRED.md`.
 - `.claude/skills/` — `council`, `storm`, `ccusage`, `caveman`, `workspace-audit`, and the
   process skills built from `skill-headers/` by `tools/build_skills.py`.
-  All explicit-invocation only except `caveman`; also symlinked into the workspace root's
-  `.claude/skills/` so they load project-wide rather than only inside this repo.
+  `ccusage`, `council`, `storm` and `workspace-audit` are explicit-invocation only and linked
+  at the workspace root; the process skills are model-invocable and linked at user scope
+  (`~/.claude/skills/`) together with `core.md`, the seats and the hooks — recreate those links
+  with `tools/link_user_scope.sh`.
 - `.claude/context/` — `runbook.md`, `domain-glossary.md`, `learnings.md` (cross-project
   patterns; promotion bar is 3+ recurrences across 2+ projects), `parked-extensions.md`
   (plugins disabled but still on disk, with re-enable commands — check it before installing
   anything new).
 - `docs/superpowers/` — specs, plans and reviews. `docs/history/` — retired rule text and
-  `rule-map.tsv` (where every old rule went).
+  `rule-map.tsv` (where every old rule went) and `rule-index.md`.
 
 ## Conventions
 

@@ -69,3 +69,15 @@ def test_user_scope_skills_are_checked(tmp_path):
     (other / "SKILL.md").write_text("---\nname: vendor\ndescription: v\n---\n" + "z" * 50_000)
     v = " ".join(cb.check(ws, home, mem))
     assert "big body" in v and "big description" in v and "vendor" not in v
+
+
+def test_user_scope_rules_are_counted(tmp_path):
+    # core.md is linked at ~/.claude/rules so sessions started inside a project load it too.
+    ws, home, mem = _ws(tmp_path)
+    (ws / ".claude/rules/core.md").unlink()
+    (home / "rules").mkdir()
+    (home / "rules/core.md").write_text("x" * 10_000)
+    (home / "rules/extra.md").write_text("y")
+    v = " ".join(cb.check(ws, home, mem))
+    assert "core.md 10000 >" in v and "unscoped rule extra.md" in v
+    assert str(home / "rules/core.md") in cb.always_loaded(ws, home, mem)

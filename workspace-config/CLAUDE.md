@@ -12,12 +12,15 @@ changing anything in it.
 - Claude runs inside an SGE job on a compute node; `$JOB_ID` is set there. SGE details:
   skill `running-sge-jobs`.
 - Shared config is version-controlled in
-  `architect-setup-overlapping-claude-copilot-useage/`; root `CLAUDE.md`, rules and agents
-  are symlinks into it. Edit either path; never replace a symlink with a copy.
+  `architect-setup-overlapping-claude-copilot-useage/`. Root `CLAUDE.md` and path-scoped rules
+  are symlinked at the workspace root; `core.md`, agents and skills at user scope
+  (`~/.claude/{rules,agents,skills}`, recreated by `tools/link_user_scope.sh`). Edit either
+  path; never replace a symlink with a copy.
 
 ## Always-on rules
 
-`.claude/rules/core.md` holds the invariants. Process detail lives in skills:
+`core.md` (user scope, so it also loads in sessions started inside a project) holds the
+invariants. Process detail lives in skills:
 `dispatch-brief`, `plan-critique`, `wave-review`, `verification-patterns`,
 `scientific-evidence`, `running-sge-jobs`, `completion-check`. History and the old rule
 text: `architect-setup-overlapping-claude-copilot-useage/docs/history/`.

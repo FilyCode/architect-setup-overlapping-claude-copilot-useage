@@ -1,6 +1,6 @@
 # Runbook
 
-Operational procedures proven across projects. Detail lives here; `.claude/rules/scc.md` links to this file rather than embedding it, to keep always-on context small.
+Operational procedures proven across projects. Detail lives here; the `running-sge-jobs` skill links to this file rather than embedding it, to keep always-on context small.
 
 ## Running tests on the SCC (never on the login node)
 
@@ -19,12 +19,12 @@ qsub -v PYTEST_FILTER="not some_marker" scripts/scc-submissions/run_pytest_qsub.
 ```
 
 Track with a single backgrounded wait loop, not repeated `qstat -j <JOB_ID>` checks — see
-`.claude/rules/scc.md`'s "Waiting on a job without burning tokens". Results land in
+the `running-sge-jobs` skill's wait loop. Results land in
 `logs/pytest_qsub.$JOB_ID.out`.
 
 Each project that runs pytest on the SCC needs its own `scripts/scc-submissions/run_pytest_qsub.sh` — this runbook entry documents the pattern, not a shared script (job scripts are project-specific: paths, modules, conda envs differ).
 
-**Token-efficient defaults:** `run_pytest_qsub.sh` should invoke pytest with `--tb=short -q` — full verbose tracebacks and passing-test lines cost real context for no benefit; `rtk`'s generic Bash-output filter still runs on top but cutting the output at the source is cheaper than filtering it after. On repeat runs while fixing a failure, use `--last-failed` so the agent only reruns and re-reads what's still broken, not the whole green suite.
+**Token-efficient defaults:** `run_pytest_qsub.sh` should invoke pytest with `--tb=short -q` — full verbose tracebacks and passing-test lines cost real context for no benefit; cutting output at the source is cheaper than filtering it after. On repeat runs while fixing a failure, use `--last-failed` so the agent only reruns and re-reads what's still broken, not the whole green suite.
 
 ## Job lifecycle
 

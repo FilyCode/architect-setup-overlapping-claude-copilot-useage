@@ -18,8 +18,8 @@ def _frontmatter(text: str) -> str:
     return m.group(1) if m else ""
 
 
-def _unscoped_rules(ws: Path):
-    for p in sorted((ws / ".claude/rules").glob("*.md")):
+def _unscoped_rules(ws: Path, home: Path):
+    for p in sorted([*(ws / ".claude/rules").glob("*.md"), *(home / "rules").glob("*.md")]):
         if "paths:" not in _frontmatter(p.read_text()):
             yield p
 
@@ -32,7 +32,7 @@ def _memory_loaded(mem: Path) -> str:
 def always_loaded(ws: Path, home: Path, mem: Path) -> dict[str, int]:
     out = {str(home / "CLAUDE.md"): len((home / "CLAUDE.md").read_bytes()),
            str(ws / "CLAUDE.md"): len((ws / "CLAUDE.md").read_bytes())}
-    for p in _unscoped_rules(ws):
+    for p in _unscoped_rules(ws, home):
         out[str(p)] = len(p.read_bytes())
     out[str(mem)] = len(_memory_loaded(mem).encode())
     return out
@@ -45,7 +45,7 @@ def check(ws: Path, home: Path, mem: Path) -> list[str]:
         v.append(f"~/.claude/CLAUDE.md {sizes[str(home / 'CLAUDE.md')]} > {CEIL['home_claude']}")
     if sizes[str(ws / "CLAUDE.md")] > CEIL["root_claude"]:
         v.append(f"root CLAUDE.md {sizes[str(ws / 'CLAUDE.md')]} > {CEIL['root_claude']}")
-    for p in _unscoped_rules(ws):
+    for p in _unscoped_rules(ws, home):
         n = len(p.read_bytes())
         if p.name != "core.md":
             v.append(f"unscoped rule {p.name} ({n} bytes): only core.md may be unscoped")
