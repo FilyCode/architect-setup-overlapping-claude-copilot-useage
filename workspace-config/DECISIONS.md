@@ -723,16 +723,24 @@ a main session's first call and ≈ 80 % of a named review seat's. MEMORY.md was
 always-loaded file; ours were 752 and 553. Of six recorded "rule existed and was not followed"
 incidents, one was burial in a long file and three were fixed by a mechanism.
 
-**Decision**: one always-loaded `.claude/rules/core.md` (≈ 3.7 KB, 11 invariants plus "when to
+**Decision**: one always-loaded `core.md` (linked at `~/.claude/rules/` so it also loads in
+sessions started inside a project; ≈ 3.7 KB, 11 invariants plus "when to
 load which process" triggers); the rest of the three rule files moved **verbatim** into seven
 skills (`dispatch-brief`, `wave-review`, `plan-critique`, `verification-patterns`,
 `scientific-evidence`, `running-sge-jobs`, `completion-check`), assembled by
 `tools/build_skills.py` from `docs/history/rule-map.tsv` (185 items, checked by
 `tools/rule_map.py`); originals kept in `docs/history/rules-2026-10-14/`. Seats start with
-`omitClaudeMd: true` (first call 4,772 tokens vs ≈ 50k, Phase 0 P1) and preload only their
-skills. New seats `implementer` and `lean-critic`. Mechanisms: `bash_guard.py` (PreToolUse:
-git stash, `--work-tree` checkout, recursive delete under `projects/`, pytest outside an SGE
-job), `context_nudge.py` (UserPromptSubmit: context ≥ 500k and an effort hint for heavy
+`omitClaudeMd: true` (first call ≈ 12k tokens vs 49.6–55.6k before, n = 20 interactive seats;
+the Phase 0 probe's 4,772 was one two-tool agent) and preload only their skills; their shared
+Environment block (`workspace-config/seat-environment.md`) carries the invariants seats need,
+because `core.md` never reaches them. New seats `implementer`, `investigator` and `lean-critic`
+(no `Skill` tool; agent-seat-review). Agents, process skills, `core.md` and the hooks are linked
+at user scope (`~/.claude/`), recreated by `tools/link_user_scope.sh`; path-scoped rules and the
+root CLAUDE.md stay at the workspace root. MEMORY.md ceiling 6,656 B / 60 entries
+(executor ruling over the spec's 5 KB / 50; owner to ratify). Mechanisms: `bash_guard.py` (PreToolUse; denies
+git stash, `--work-tree` checkout, recursive delete under `projects/` outside caches and scratch,
+pytest with `$JOB_ID` unset; warns on `cat` of files over 1 MB, `find` from `/` or home without
+`-maxdepth`, and `find -delete` under `projects/`), `context_nudge.py` (UserPromptSubmit: context ≥ 500k and an effort hint for heavy
 planning), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=2`, `CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000` (backstop at ≈ 80 % of the 1M window; the
 nudge fires from 50 %, owner band 50–80 % so compaction lands at a task boundary; added after a best-practice sweep, `reviews/2026-10-14-restructure/best-practice-sweep.md`),
 `effortLevel: medium`. The rtk
@@ -745,7 +753,9 @@ savings — and never rewrites a command.
 
 **Evidence and gates**: spec, plan and six-seat critique wave under
 `docs/superpowers/{specs,plans,reviews}/2026-10-14*`; before/after behavioural evals
-(10 scenarios, k = 5) gate retirement of the old files; `tools/context_budget.py` enforces byte
+(10 scenarios, k = 5) gated retirement of the old files — a weak gate: headless main sessions
+in plan mode with `core.md` loaded, no seat or project-started session tested
+(`evals/results-after.md`, `reviews/2026-10-14-restructure/wave-end-review.md`); `tools/context_budget.py` enforces byte
 ceilings; `tools/measure_context.py` is the gate of record on real transcripts.
 
 **Limits**: the static cut is worth ≈ 5.6 % of main-session and ≈ 20.5 % of subagent cost
@@ -757,4 +767,5 @@ which is behaviour; the nudge hook targets it.
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design
-- [.claude/rules/](.claude/rules/) — Scheduler, storage, verification and language rules
+- `~/.claude/rules/core.md` — the always-loaded invariants; [.claude/rules/](.claude/rules/) —
+  path-scoped language and project rules; process detail in the skills (DECISION-026)

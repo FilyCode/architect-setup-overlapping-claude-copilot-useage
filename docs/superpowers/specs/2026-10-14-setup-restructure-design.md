@@ -367,3 +367,23 @@ allowlists to recurring patterns; keep the Stop hook; ponytail stays `defaultMod
   `completion-check` carries the silent-failure checklist.
 - **Q4 Root `PROJECT_STATE.md`:** archive and point CLAUDE.md to project state files — recommended.
 - **Q5 (only if Phase 0 shows double-sent connector deltas):** disable unused claude.ai connectors.
+
+## Amendments after execution (2026-10-15)
+
+Recorded by the wave-end review (`docs/superpowers/reviews/2026-10-14-restructure/wave-end-review.md`).
+
+- **lean-critic** ships without the `Skill` tool and without the `/ponytail-review` clause
+  (§5.4, §5.9): adopted from `agent-seat-review.md`. Ponytail stays reachable from the main
+  session (`/ponytail-review`), not from the seat.
+- **MEMORY.md ceiling** is 6,656 B and 60 entries, not 5 KB and 50 (§5.1, §5.6): executor ruling
+  (Task 4) after the 13 rule-duplicate entries were dropped; owner to ratify.
+- **`core.md` and the seats, process skills and hooks** are linked at user scope
+  (`~/.claude/`), not at the workspace root: a session started inside a project loaded neither
+  the root's agents/skills (Phase 0 P4) nor its rules (verified 2026-10-14). Recreated by
+  `tools/link_user_scope.sh`.
+- **New seat `investigator`** (ad hoc questions; replaces general-purpose for them).
+- **Seats see project rules**: `omitClaudeMd` drops launch-time CLAUDE.md only; a seat's first
+  project read attaches the project CLAUDE.md and path-scoped rules. `core.md` never reaches a
+  seat, so the seat Environment block carries the invariants seats need.
+- **Seat first-call context** is ≈ 12k tokens (n = 20 interactive seats), not the 4,772 of the
+  Phase 0 probe.
