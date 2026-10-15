@@ -49,7 +49,7 @@ EXTRA = {
 
 
 FINDINGS = ("Your first action, before you investigate anything: create the findings file the caller\n"
-            "names (or `<scratchpad>/<your name>/findings.md`) with a one-line header, using Write or a\n"
+            "names (or `<findings dir>/<your name>.md`, see Environment) with a one-line header, using Write or a\n"
             "Bash heredoc. Append each finding the moment you confirm it. If your turns run out, that file\n"
             "is the deliverable.\n")
 REVIEW = {"critic-reviewer", "alignment-officer", "docs-sync", "inventory-auditor", "figure-auditor",

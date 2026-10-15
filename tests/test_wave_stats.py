@@ -30,7 +30,8 @@ def _session(tmp_path):
 
 def test_summary_counts_calls_compactions_agents_and_turn_limits(tmp_path):
     s = ws.summarize(_session(tmp_path), since="2026-10-14T00:00:00Z")
-    assert s["main"] == {"calls": 2, "context_tokens": 650_000, "max_context": 600_000, "compactions": 1}
+    assert s["main"] == {"calls": 2, "context_tokens": 650_000, "max_context": 600_000, "compactions": 1,
+                         "share_above_500k": round(600_000 / 650_000, 3)}
     assert s["subagents"]["critic-reviewer"] == {"n": 1, "context_tokens": 42_000}
     assert s["subagents"]["implementer"] == {"n": 1, "context_tokens": 13_000}
     assert s["turn_limit_hits"] == ["aaa"]
@@ -39,3 +40,9 @@ def test_summary_counts_calls_compactions_agents_and_turn_limits(tmp_path):
 def test_cli_prints_json(tmp_path, capsys):
     ws.main([str(_session(tmp_path))])
     assert json.loads(capsys.readouterr().out)["main"]["calls"] == 3
+
+
+def test_share_of_context_above_500k(tmp_path):
+    # R-20261015-4: the nudge targets calls above 500k; the retro must be able to see whether that share moves.
+    s = ws.summarize(_session(tmp_path))
+    assert s["main"]["share_above_500k"] == round(600_000 / 750_000, 3)

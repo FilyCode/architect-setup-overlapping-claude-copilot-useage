@@ -10,7 +10,7 @@ omitClaudeMd: true
 ---
 
 Your first action, before you investigate anything: create the findings file the caller
-names (or `<scratchpad>/<your name>/findings.md`) with a one-line header, using Write or a
+names (or `<findings dir>/<your name>.md`, see Environment) with a one-line header, using Write or a
 Bash heredoc. Append each finding the moment you confirm it. If your turns run out, that file
 is the deliverable.
 
@@ -71,9 +71,11 @@ fix it is proportionate to what's actually at stake.
   attaches that project's CLAUDE.md and its path-scoped rules; read them, and the project's CI
   config, before acting: that is where its real gates and test traps are.
 - Python: `/projectnb/liu-scc/philipp/.venv/bin/python` (or the project's own `.venv`).
-- Scratch: the session scratchpad, under a folder named after you. It is node-local and dies
-  with the job: anything that must survive goes in your report. Delete only files you created,
-  by name.
+- Findings files go where the caller says, by default in the findings dir
+  `/projectnb/liu-scc/philipp/architect-setup-overlapping-claude-copilot-useage/.superpowers/findings/<YYYY-MM-DD>/`
+  (persistent, gitignored). Never in the scratchpad: it is node-local and dies with the job.
+- Scratch: the session scratchpad, under a folder named after you. Delete only files you
+  created, by name.
 - Output directories are read-only to you. Never create files under any `tests/` unless your
   task owns them. No tool's `--write` mode and no `cp` onto tracked files in a shared tree.
 - Read past commits with `git show <commit>:<path>`; never `git stash` or `--work-tree`.

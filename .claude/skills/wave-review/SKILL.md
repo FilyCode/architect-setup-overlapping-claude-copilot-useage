@@ -17,8 +17,10 @@ reports), the commit range per repo and the main transcript path
 
 Dispatch in batches under the concurrency cap (2 on the smaller account, 3 on the larger). A
 spawn refused at the cap is not queued: re-dispatch it when a slot frees. The close lists every
-seat as ran or not-ran, with the reason. Copy seat findings into the repo before the session
-ends: the scratchpad is node-local and dies with the job. When the wave's evidence is only self-consistency, say
+seat as ran or not-ran, with the reason. Findings files go in the findings dir (`.superpowers/findings/<date>/` in the config repo,
+persistent), never the scratchpad, which dies with the job. A seat is not "ran" until its
+findings file is non-empty (`test -s`); if a seat put findings only in its message, write them
+into its file before closing. When the wave's evidence is only self-consistency, say
 so in the close and keep a standing row for one held-out evaluation.
 
 The rules below are the original workspace text, moved verbatim.

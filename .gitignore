@@ -3,3 +3,6 @@ AGENTS.override.md
 CLAUDE.local.md
 evals/runs/
 __pycache__/
+
+# Seat findings files (persistent across SGE jobs, never committed; DECISION-027 / R-20261015-1)
+.superpowers/findings/

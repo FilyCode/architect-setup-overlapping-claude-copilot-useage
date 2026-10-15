@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Cost summary of one session for the retro-officer seat: main-session calls and summed
-per-call context, compactions, subagents by type with their summed context, and the subagents
+per-call context, the share of it from calls at or above 500k, compactions, subagents by type with their summed context, and the subagents
 that hit their turn limit. Reads transcripts only; never the conversation text beyond the
 turn-limit notices.
 
@@ -50,7 +50,12 @@ def summarize(main: Path, since: str | None = None) -> dict:
         s["n"] += 1
         s["context_tokens"] += sum(c)
     return {"main": {"calls": len(ctx), "context_tokens": sum(ctx), "max_context": max(ctx, default=0),
-                     "compactions": compactions},
+                     "compactions": compactions,
+                     # summed context of calls at or above 500k over all summed context: the
+                     # share the 500k nudge targets. Raw context, not cost: the 2026-10-14
+                     # cost-weighted share (cache write/read and output priced) was ≈ 0.67, n = 15;
+                     # compare this number only with itself across waves.
+                     "share_above_500k": round(sum(c for c in ctx if c >= 500_000) / sum(ctx), 3) if ctx else 0.0},
             "subagents": subs, "turn_limit_hits": limited}
 
 

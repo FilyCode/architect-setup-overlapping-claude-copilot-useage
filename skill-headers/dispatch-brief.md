@@ -9,7 +9,7 @@ Every brief carries: verified claims (or `UNVERIFIED — check before relying on
 the agent owns and the ones it must not touch, the environment block from the agent file, the
 job-spec handoff (the agent never waits on SGE), and the closing line *"report anything in
 this brief that you found to be wrong."* Review briefs add the review-dispatch template below:
-findings file created as the first action, ranked areas with a drop order, HEAD/status checked
+findings file created as the first action (in the findings dir, never the scratchpad), ranked areas with a drop order, HEAD/status checked
 at start and end, the minor-triage question, and the unenumerated-objection slot.
 
 **Which seat.** Code tasks, SDD tasks included, go to `implementer` (`model: opus` for
