@@ -55,7 +55,11 @@ def check(ws: Path, home: Path, mem: Path) -> list[str]:
         v.append(f"MEMORY.md loaded part {sizes[str(mem)]} > {CEIL['memory']}")
     if sum(1 for ln in mem.read_text().splitlines() if ln.startswith("- [")) > CEIL["memory_entries"]:
         v.append(f"MEMORY.md has more than {CEIL['memory_entries']} entries")
-    for sk in sorted((ws / ".claude/skills").glob("*/SKILL.md")):
+    skills = {p.resolve(): p for p in (ws / ".claude/skills").glob("*/SKILL.md")}
+    # user-scope links count when they resolve into the workspace (ours); third-party skills do not
+    skills.update({p.resolve(): p for p in (home / "skills").glob("*/SKILL.md")
+                   if p.resolve().is_relative_to(ws.resolve())})
+    for sk in sorted(skills.values()):
         text = sk.read_text()
         fm = _frontmatter(text)
         body = len(text.encode()) - len(fm.encode())

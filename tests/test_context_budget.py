@@ -53,3 +53,19 @@ def test_memory_entry_and_byte_caps(tmp_path):
     assert any("entries" in v for v in cb.check(ws, home, mem))
     mem.write_text("- [a](a.md) — " + "y" * 6_700 + "\n")
     assert any("MEMORY.md loaded part" in v for v in cb.check(ws, home, mem))
+
+
+def test_user_scope_skills_are_checked(tmp_path):
+    # Process skills are linked into ~/.claude/skills, not the workspace .claude/skills.
+    # Only skills that resolve into the workspace (ours) count; third-party user skills do not.
+    ws, home, mem = _ws(tmp_path)
+    src = ws / "repo/.claude/skills/big"
+    src.mkdir(parents=True)
+    (src / "SKILL.md").write_text("---\nname: big\ndescription: " + "x" * 600 + "\n---\n" + "y" * 16_000)
+    (home / "skills").mkdir()
+    (home / "skills/big").symlink_to(src)
+    other = home / "skills/vendor"
+    other.mkdir()
+    (other / "SKILL.md").write_text("---\nname: vendor\ndescription: v\n---\n" + "z" * 50_000)
+    v = " ".join(cb.check(ws, home, mem))
+    assert "big body" in v and "big description" in v and "vendor" not in v

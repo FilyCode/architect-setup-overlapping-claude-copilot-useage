@@ -65,3 +65,12 @@ def test_effort_hint_ignores_paths():
     assert cn.message(10_000, p, {}, cn.DEFAULT_THRESHOLD)[0] is None
     assert cn.message(10_000, "see `docs/superpowers/specs/2026-10-14-x-design.md`", {}, cn.DEFAULT_THRESHOLD)[0] is None
     assert cn.message(10_000, "let's architect the import graph", {}, cn.DEFAULT_THRESHOLD)[0] is not None
+
+
+def test_nudge_rearms_after_compaction():
+    # Compaction keeps the session id but drops context; the next climb past the threshold must nudge again.
+    state, fired = {}, []
+    for ctx in (510_000, 620_000, 90_000, 520_000):
+        msg, state = cn.message(ctx, "", state, 500_000)
+        fired.append(msg is not None)
+    assert fired == [True, True, False, True]

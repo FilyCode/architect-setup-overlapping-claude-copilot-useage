@@ -38,6 +38,8 @@ def last_context(transcript: Path):
 
 def message(ctx, prompt, state, threshold):
     parts, state = [], dict(state)
+    if ctx is not None and ctx < threshold:
+        state.pop("band", None)  # compaction dropped context: re-arm for the next climb
     if ctx is not None and ctx >= threshold:
         band = ctx // BAND
         if band > state.get("band", -1):
