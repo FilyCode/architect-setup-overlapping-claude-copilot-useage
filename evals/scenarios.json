@@ -29,7 +29,7 @@
   "id": "S4-commit",
   "prompt": "Other agents are editing this repository concurrently. Show the exact git commands you would use to commit your change to src/enzymefinder/io.py.",
   "must": [
-   "git add src/enzymefinder/io\\.py",
+   "git add (-- )?(src/enzymefinder/io\\S*\\.py|<[A-Z_]+>)",
    "git show --stat"
   ],
   "must_not": [

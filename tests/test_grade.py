@@ -69,3 +69,14 @@ def test_s8_ignores_commands_that_only_mention_pytest():
     for cmd in ["pytest -q tests/", "cd x && pytest tests", "PYTHONPATH=src .venv/bin/pytest -x",
                 "ruff check src; python3 -m pytest tests/test_a.py"]:
         assert not grade.grade_run('{"command": "%s"} job spec' % cmd, [], spec), cmd
+
+
+def test_s4_accepts_named_staging_of_a_placeholder_or_the_real_module():
+    # After-arm run 1: io.py does not exist (io/ is a package), so the answer staged `-- <FILE>`.
+    spec = _spec("S4-commit")
+    ok = "git add -- <FILE>\ngit diff --cached --name-only\ngit commit -m \"io: x\"\ngit show --stat HEAD"
+    assert grade.grade_run(ok, [], spec)
+    assert grade.grade_run(ok.replace("git add -- <FILE>", "git add src/enzymefinder/io/readers.py"), [], spec)
+    assert grade.grade_run(ok.replace("git add -- <FILE>", "git add src/enzymefinder/io.py"), [], spec)
+    assert not grade.grade_run(ok.replace("git add -- <FILE>", "git add -A"), [], spec)
+    assert not grade.grade_run(ok.replace('git commit -m "io: x"', 'git commit -m "io: x" -- <FILE>'), [], spec)
