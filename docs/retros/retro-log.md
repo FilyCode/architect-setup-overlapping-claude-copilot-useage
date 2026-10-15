@@ -5,7 +5,7 @@ integration session (skill `workspace-audit`, retro step) applies, defers or rej
 proposal, ticks it with the outcome, and updates the line below. The `context_nudge` hook
 reminds once per session when proposals are open and integration is over 7 days old.
 
-Last integrated: never
+Last integrated: 2026-10-15
 
 Proposal lines: `- [ ] R-<date>-<n> <target file>: <change> — evidence: <…> — expected: <…>`.
 Ticked when integrated: `- [x] R-… — applied <commit> | rejected: <reason> | merged into R-…`.
@@ -31,10 +31,17 @@ Ticked when integrated: `- [x] R-… — applied <commit> | rejected: <reason> |
 - Plan code had Important defects reaching commits before review: implementer gate path wrong (F5), ceilings skipping user-scope skills (F8), nudge never re-arming (F1), core.md linked only at workspace (C1). Retrospective Task 11 measurement never done (A1, deferred).
 
 ### Proposals
-- [ ] R-20261015-1 workspace-config/seat-environment.md (and tests/test_agents.py drift check): replace "scratch is node-local" prose with a rule that a seat's findings file goes under the config repo's docs/…/reviews/<wave>/ (never scratchpad), and add a check in wave-review that every seat's findings file is non-empty before the seat is marked done — evidence: 3 files lost with job 8090063, 2 audit seats left empty files — expected: no reconstruction from controller context.
+- [x] R-20261015-1 — applied 001d948 (findings dir `.superpowers/findings/<date>/`, non-empty check in wave-review) — workspace-config/seat-environment.md (and tests/test_agents.py drift check): replace "scratch is node-local" prose with a rule that a seat's findings file goes under the config repo's docs/…/reviews/<wave>/ (never scratchpad), and add a check in wave-review that every seat's findings file is non-empty before the seat is marked done — evidence: 3 files lost with job 8090063, 2 audit seats left empty files — expected: no reconstruction from controller context.
 - [ ] R-20261015-2 skill-headers/dispatch-brief.md: review seats get a stated turn budget and "write findings file at turn 1, append per finding, final message = path + count"; raise review-seat max turns or cut seat count — evidence: 3 turn-limit hits of 5 wave-end seats — expected: zero turn-limit losses.
 - [ ] R-20261015-3 evals/ runner (tools): freeze graders in a committed hash before the after arm runs; a later grader change must re-grade both arms and fail the gate unless the commit says so — evidence: S4 and S8 graders changed after results; F6/F2 misgrades — expected: no post-hoc widening without record.
-- [ ] R-20261015-4 tools/ (new script from anomaly F8): save the 69 %/5.6 %/20.5 % cost-share script and run it in wave_stats.py — evidence: figure replicated (0.67–0.68, n=15) but no script exists — expected: next retro measures nudge effect instead of re-deriving.
+- [x] R-20261015-4 — applied 001d948 (`share_above_500k` in wave_stats.py; raw context, not cost-weighted) — tools/ (new script from anomaly F8): save the 69 %/5.6 %/20.5 % cost-share script and run it in wave_stats.py — evidence: figure replicated (0.67–0.68, n=15) but no script exists — expected: next retro measures nudge effect instead of re-deriving.
 - [ ] R-20261015-5 skill-headers/wave-review.md: add the pragmatism-officer's check "next 10 post-restructure seat transcripts for breaks of core rules 1–4" as a dated follow-up in the retro-log integration step — evidence: eval tested main session with core.md only; general-purpose invoked a skill in 1 of 419 transcripts (F7) — expected: seat compliance gets measured, not assumed.
 
 _Controller check 2026-10-15: corrected the turn-budget figure (the eval's `--max-turns 8` had been read as the seat budget), the skill count and three target paths._
+
+### Integration 2026-10-15
+- Applied: R-20261015-1, R-20261015-4 (commit 001d948).
+- Left open to accumulate: R-20261015-2 (turn budgets; one wave of evidence, raising limits costs
+  tokens, R-1 already removes the loss — apply if turn-limit hits recur), R-20261015-3 (grader
+  freeze; only matters if the eval is reused as a gate), R-20261015-5 (seat compliance check;
+  needs the next 10 post-restructure seat transcripts).
