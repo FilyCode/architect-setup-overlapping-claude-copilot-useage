@@ -737,7 +737,7 @@ because `core.md` never reaches them. New seats `implementer`, `investigator` an
 (no `Skill` tool; agent-seat-review). Agents, process skills, `core.md` and the hooks are linked
 at user scope (`~/.claude/`), recreated by `tools/link_user_scope.sh`; path-scoped rules and the
 root CLAUDE.md stay at the workspace root. MEMORY.md ceiling 6,656 B / 60 entries
-(executor ruling over the spec's 5 KB / 50; owner to ratify). Mechanisms: `bash_guard.py` (PreToolUse; denies
+(executor ruling over the spec's 5 KB / 50; owner-ratified 2026-10-15). Mechanisms: `bash_guard.py` (PreToolUse; denies
 git stash, `--work-tree` checkout, recursive delete under `projects/` outside caches and scratch,
 pytest with `$JOB_ID` unset; warns on `cat` of files over 1 MB, `find` from `/` or home without
 `-maxdepth`, and `find -delete` under `projects/`), `context_nudge.py` (UserPromptSubmit: context ≥ 500k and an effort hint for heavy
