@@ -1,3 +1,0 @@
-# project-audit-B findings
-EanB: CLAUDE.md 115 lines, good durable style; but canonical files named as SoT (results/EanB_merged_final.csv, publication_tiers.csv, SSN csv) are gitignored (git check-ignore). No tests/, no PROJECT_STATE.md, CI=gitleaks only; .github/copilot-instructions.md stale (4,444 rows, EanB_merged_with_seqs.csv). CLAUDE.md claims hook blocks mkdir hidden dirs (unverified).
-K4: CLAUDE.md 123 lines, pipeline table omits scripts 21-28,34-79 mostly; python path software/local/bin/python3; no test command documented though scripts/99_full_pytest_qsub.sh + 28 test files; scratch_* dirs untracked-ignored? .claude/ gitignored.
