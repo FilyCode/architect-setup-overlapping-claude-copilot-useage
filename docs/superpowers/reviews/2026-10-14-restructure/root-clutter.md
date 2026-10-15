@@ -4,8 +4,8 @@
 stray `14F 14D:` file (an old `sigma-baseline.mjs`) and the task13 worktree's re-rendered figures
 moved to `archives/root-clutter-2026-10-15/`; the CaMES task13 worktree removed. List as found:
 
-Measured 2026-10-15 in `/projectnb/liu-scc/philipp` (`ls -la`, `du -sh --apparent-size`). Nothing
-here has been deleted or moved.
+Measured 2026-10-15 in `/projectnb/liu-scc/philipp` (`ls -la`, `du -sh --apparent-size`), before the
+cleanup.
 
 | Path | Size | Last modified | What it is | Suggestion |
 |---|---|---|---|---|
