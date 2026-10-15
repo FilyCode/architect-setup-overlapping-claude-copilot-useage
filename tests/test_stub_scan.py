@@ -36,3 +36,13 @@ def test_narrow_except_not_flagged_broad_is(tmp_path):
     assert r.returncode == 0, r.stdout
     r = run(tmp_path, "def a(d):\n    try:\n        return d['k']\n    except Exception:\n        return None\n")
     assert "swallowed-except" in r.stdout
+
+
+def test_non_python_paths_are_skipped(tmp_path):
+    # Implementers pass every changed path; a shell script is not Python and must not fail the gate.
+    sh = tmp_path / "run.sh"
+    sh.write_text('#!/bin/bash\nSKILLS="a\nb"\n')
+    md = tmp_path / "notes.md"
+    md.write_text("pass\n")
+    r = subprocess.run([sys.executable, str(S), str(sh), str(md)], capture_output=True, text=True)
+    assert r.returncode == 0 and r.stdout == "", r.stdout

@@ -59,6 +59,8 @@ def main(argv):
     hits = 0
     for a in argv:
         for p in ([Path(a)] if Path(a).is_file() else sorted(Path(a).rglob("*.py"))):
+            if p.suffix != ".py":  # changed-path lists include shell, docs, data
+                continue
             for n, tag, what in scan(p):
                 print(f"{p}:{n}: {tag}: {what}")
                 hits += 1
