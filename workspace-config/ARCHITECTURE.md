@@ -73,7 +73,7 @@ What loads, and the ceilings `tools/context_budget.py` enforces (DECISION-026):
 | project `CLAUDE.md` | when working in that project, also in seats | none | project facts only |
 | `docs/history/` | never | none | retired rule text, `rule-index.md`, `rule-map.tsv` |
 
-**Subagents** (14 seats in `workspace-config/agents/`; list them with `ls`). Every seat sets
+**Subagents** (15 seats in `workspace-config/agents/`; list them with `ls`). Every seat sets
 `omitClaudeMd: true`, an explicit model, effort and `maxTurns`, and preloads its skills; seats
 have no `Skill` tool. Their shared Environment block (`workspace-config/seat-environment.md`)
 carries the invariants they need, since `core.md` never reaches them.
@@ -94,6 +94,7 @@ carries the invariants they need, since `core.md` never reaches them.
 | lean-critic | sonnet / medium | thermo-nuclear-code-quality-review, verification-patterns | on-demand debloat review |
 | research-scout | sonnet / medium | — | best-practice check while brainstorming |
 | scc-monitor | haiku / medium | running-sge-jobs | SGE job diagnosis |
+| retro-officer | sonnet / medium | — | last wave-end step: appends worked / did not / proposals to `docs/retros/retro-log.md` |
 
 Dispatch rules live in skill `dispatch-brief`, the wave roster in `wave-review`.
 

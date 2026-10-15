@@ -1,13 +1,14 @@
 ---
 name: workspace-audit
-description: Periodic health check of the Claude Code / Copilot setup — instruction drift, unused skills, stale plugin versions, home-quota creep, promotion of recurring patterns into learnings.md, and an optional external scan for new Anthropic docs, model changes, and new repos/plugins worth evaluating. Run after finishing a development branch, after a broad maintenance pass, or roughly monthly.
+description: Weekly retro integration (open proposals in docs/retros/retro-log.md) plus a periodic health check of the Claude Code setup — instruction drift, unused skills, stale plugin versions, home-quota creep, promotion of recurring patterns into learnings.md, and an optional external scan for new Anthropic docs, model changes, and new repos/plugins worth evaluating. Run after finishing a development branch, after a broad maintenance pass, or roughly monthly.
 disable-model-invocation: true
 allowed-tools: Read Grep Glob WebFetch WebSearch Bash(du *) Bash(ls *) Bash(claude plugin *) Bash(curl -s https://api.github.com/*)
 ---
 
 # Workspace audit
 
-Explicit invocation only. This runs at most monthly; it is not a per-session check.
+Explicit invocation only. Step 0 runs weekly (the `context_nudge` hook reminds when it is due);
+steps 1-7 run at most monthly. Neither is a per-session check.
 
 ## When it is worth running
 
@@ -17,6 +18,13 @@ Explicit invocation only. This runs at most monthly; it is not a per-session che
   promotion candidate, note it even if you do not run the full audit.
 
 ## Steps
+
+**0. Retro integration (weekly).** Read the open `- [ ] R-…` proposals in
+`docs/retros/retro-log.md`. For each: apply it (smallest change, test-first where it is code;
+governance files still need the owner's approval), defer it with a trigger, or reject it with
+a reason; tick it with the outcome and the commit. Apply first what recurs across entries or
+removes text; leave a one-off idea open until it recurs. A pattern seen in 3+ entries across
+2+ projects is promoted into `learnings.md`. Set `Last integrated:` to today and commit.
 
 **1. Instruction drift.** Read the workspace `CLAUDE.md`, `.claude/rules/*.md`, and
 `~/.claude/CLAUDE.md`. For each instruction ask: would Claude do this anyway? Is it fixing

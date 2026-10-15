@@ -762,6 +762,26 @@ ceilings; `tools/measure_context.py` is the gate of record on real transcripts.
 (simulation over the corpus). Most main-session cost is calls above 500k context (≈ 69 %),
 which is behaviour; the nudge hook targets it.
 
+### [2026-10-15] [DECISION-027]: Per-wave retro log and a weekly integration step
+
+**Problem**: lessons were captured unevenly — EnzymeFinder's manual `/retro` skill,
+`learnings.md` (promotion at 3+ recurrences) and the monthly `workspace-audit` existed, but no
+wave produced a structured "what worked, what did not, what to change" record by default, and
+nothing scheduled acting on one. The 2026-10-14 wave lost three seats' findings with a
+node-local scratchpad; nothing would have turned that into a change.
+
+**Decision**: a `retro-officer` seat (sonnet/medium, 20 turns) runs as the last `wave-review`
+step and appends one entry (≤ 40 lines: scope and cost, worked, did not work, ≤ 5 proposals
+naming one file and one change each) to `docs/retros/retro-log.md`. Its inputs are cheap by
+design: ledger lines, review findings, `git log --stat`, and `tools/wave_stats.py` (summed
+context, compactions, subagents by type, turn-limit hits); it never reads whole transcripts.
+`workspace-audit` step 0 integrates open proposals weekly (apply, defer with trigger, reject
+with reason; 3+ recurrences across projects promote to `learnings.md`). `context_nudge.py`
+reminds once per session when proposals are open and integration is over 7 days old.
+
+**Cost**: one seat per wave (first call ≈ 12k tokens plus its reads) and one integration
+session per week; zero always-loaded text added.
+
 ---
 
 ## Related Documents

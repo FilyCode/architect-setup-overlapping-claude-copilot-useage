@@ -7,7 +7,7 @@ AGENTS = sorted((REPO / "workspace-config" / "agents").glob("*.md"))
 ENV = (REPO / "workspace-config" / "seat-environment.md").read_text()
 REVIEW_SEATS = {"critic-reviewer", "alignment-officer", "docs-sync", "inventory-auditor", "figure-auditor",
                 "security-specialist", "lean-critic", "pragmatism-officer", "domain-reviewer", "anomaly-hunter",
-                "investigator", "research-scout"}
+                "investigator", "research-scout", "retro-officer"}
 
 
 def _fm(text):
@@ -24,8 +24,8 @@ def _skill_flags(name):
 
 def test_agent_set():
     names = {p.stem for p in AGENTS}
-    assert {"implementer", "investigator", "lean-critic", "critic-reviewer", "scc-monitor"} <= names
-    assert len(names) == 14
+    assert {"implementer", "investigator", "lean-critic", "critic-reviewer", "scc-monitor", "retro-officer"} <= names
+    assert len(names) == 15
 
 
 def test_frontmatter_complete():

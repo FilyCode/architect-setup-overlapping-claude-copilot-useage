@@ -4,8 +4,11 @@
 Threshold is declared workspace-specific (2026-10-14 corpus: calls above 500k carry
 ~69% of main-session cost) and overridable with CLAUDE_NUDGE_TOKENS. Owner band
 2026-10-14: nudge at 50 % of the 1M window, auto-compaction backstop at 80 %
-(CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000), so compaction lands at a task boundary. Fires once per 100k band. Any error exits 0 silently.
+(CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000), so compaction lands at a task boundary. Fires once per 100k band. Also reminds once per session
+when the retro log has open proposals and was last integrated over 7 days ago. Any error exits
+0 silently.
 """
+import datetime as dt
 import json
 import os
 import re
@@ -16,6 +19,8 @@ DEFAULT_THRESHOLD = 500_000
 
 TAIL = 2_000_000
 BAND = 100_000
+RETRO_LOG = Path(os.environ.get("CLAUDE_RETRO_LOG", "/projectnb/liu-scc/philipp/"
+                 "architect-setup-overlapping-claude-copilot-useage/docs/retros/retro-log.md"))
 HEAVY = re.compile(r"\b(brainstorm\w*|architect\w*|design doc|spec|implementation plan|writing-plans|plan the)\b", re.I)
 
 
@@ -36,8 +41,24 @@ def last_context(transcript: Path):
     return None
 
 
-def message(ctx, prompt, state, threshold):
+def retro_hint(log: Path, today: dt.date):
+    """One line when proposals are open and the last integration is older than 7 days."""
+    if not log.is_file():
+        return None
+    text = log.read_text()
+    n = len(re.findall(r"^- \[ \] R-", text, re.M))
+    m = re.search(r"^Last integrated: (\d{4}-\d{2}-\d{2})", text, re.M)
+    if not n or (m and (today - dt.date.fromisoformat(m.group(1))).days <= 7):
+        return None
+    return (f"Retro log: {n} open proposals, last integrated {m.group(1) if m else 'never'}. Tell the user "
+            f"once: a weekly integration session runs skill `workspace-audit` (retro step).")
+
+
+def message(ctx, prompt, state, threshold, retro=None):
     parts, state = [], dict(state)
+    if retro and not state.get("retro_hint"):
+        state["retro_hint"] = True
+        parts.append(retro)
     if ctx is not None and ctx < threshold:
         state.pop("band", None)  # compaction dropped context: re-arm for the next climb
     if ctx is not None and ctx >= threshold:
@@ -63,7 +84,9 @@ def main():
         state_path = Path(os.environ.get("TMPDIR") or "/tmp") / f"context_nudge_{sid}.json"
         state = json.loads(state_path.read_text()) if state_path.exists() else {}
         ctx = last_context(tx) if tx.is_file() else None
-        msg, state = message(ctx, d.get("prompt", ""), state, int(os.environ.get("CLAUDE_NUDGE_TOKENS", DEFAULT_THRESHOLD)))
+        retro = None if state.get("retro_hint") else retro_hint(RETRO_LOG, dt.date.today())
+        msg, state = message(ctx, d.get("prompt", ""), state, int(os.environ.get("CLAUDE_NUDGE_TOKENS", DEFAULT_THRESHOLD)),
+                             retro)
         state_path.write_text(json.dumps(state))
         if msg:
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": msg}}))

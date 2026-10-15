@@ -74,3 +74,29 @@ def test_nudge_rearms_after_compaction():
         msg, state = cn.message(ctx, "", state, 500_000)
         fired.append(msg is not None)
     assert fired == [True, True, False, True]
+
+
+def _log(tmp_path, last, open_items):
+    p = tmp_path / "retro-log.md"
+    p.write_text(f"# Retro log\n\nLast integrated: {last}\n\n" + "".join(
+        f"- [{'x' if i >= open_items else ' '}] R-20261015-{i} something\n" for i in range(3)))
+    return p
+
+
+def test_retro_hint_when_open_items_and_overdue(tmp_path):
+    import datetime as dt
+    today = dt.date(2026, 10, 30)
+    assert "3 open" in cn.retro_hint(_log(tmp_path, "2026-10-15", 3), today)
+    assert cn.retro_hint(_log(tmp_path, "never", 1), today)
+    assert cn.retro_hint(_log(tmp_path, "2026-10-25", 3), today) is None   # integrated within 7 days
+    assert cn.retro_hint(_log(tmp_path, "2026-10-01", 0), today) is None   # nothing open
+    assert cn.retro_hint(tmp_path / "missing.md", today) is None
+
+
+def test_retro_hint_once_per_session():
+    import datetime as dt
+    state = {}
+    msg, state = cn.message(None, "", state, 500_000, retro="Retro log: 2 open proposals")
+    assert "Retro log" in msg
+    msg, state = cn.message(None, "", state, 500_000, retro="Retro log: 2 open proposals")
+    assert msg is None
