@@ -91,7 +91,7 @@ carries the invariants they need, since `core.md` never reaches them.
 | docs-sync | sonnet / medium | — | governance-doc drift, read-only |
 | inventory-auditor | sonnet / medium | — | does it already exist |
 | pragmatism-officer | sonnet / medium | — | proportionality triage (`memory: project`) |
-| lean-critic | sonnet / medium | thermo-nuclear-code-quality-review, verification-patterns | on-demand debloat review |
+| lean-critic | sonnet / medium | ponytail:ponytail (plugin), thermo-nuclear-code-quality-review, verification-patterns | debloat review; always in plan-critique and wave-review (owner, 2026-10-16) |
 | research-scout | sonnet / medium | — | best-practice check while brainstorming |
 | scc-monitor | haiku / medium | running-sge-jobs | SGE job diagnosis |
 | retro-officer | sonnet / medium | — | last wave-end step: appends worked / did not / proposals to `docs/retros/retro-log.md` |

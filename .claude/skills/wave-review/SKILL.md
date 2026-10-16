@@ -9,7 +9,7 @@ effort: high
 Roster by wave type: critic-reviewer always; alignment-officer and docs-sync when a plan or
 phase doc exists; domain-reviewer for domain work; anomaly-hunter when the wave produced a new
 measurement (skip on pure bug-fix or doc-only waves); inventory-auditor when the wave added
-capability; lean-critic only on request; pragmatism-officer last, once findings exist; then
+capability; lean-critic, always, on the wave's diff (it preloads ponytail); pragmatism-officer last, once findings exist; then
 retro-officer, always, as the final step: give it the ledger path, the findings (files or
 reports), the commit range per repo and the main transcript path
 (`~/.claude/projects/<project>/<session id>.jsonl`). It appends one entry to

@@ -375,6 +375,9 @@ Recorded by the wave-end review (`docs/superpowers/reviews/2026-10-14-restructur
 - **lean-critic** ships without the `Skill` tool and without the `/ponytail-review` clause
   (§5.4, §5.9): adopted from `agent-seat-review.md`. Ponytail stays reachable from the main
   session (`/ponytail-review`), not from the seat.
+  Changed 2026-10-16 (owner): lean-critic preloads the plugin skill `ponytail:ponytail` (verified
+  in a fresh session; a running session keeps the seat definition it started with) and runs in
+  every plan-critique and wave-review, not on demand.
 - **MEMORY.md ceiling** is 6,656 B and 60 entries, not 5 KB and 50 (§5.1, §5.6): executor ruling
   (Task 4) after the 13 rule-duplicate entries were dropped; ratified by the owner 2026-10-15.
 - **`core.md` and the seats, process skills and hooks** are linked at user scope
