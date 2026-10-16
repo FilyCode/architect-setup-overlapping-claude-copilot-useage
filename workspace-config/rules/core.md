@@ -54,3 +54,18 @@ Detail and history for every line: `architect-setup-overlapping-claude-copilot-u
 11. `ARCHITECTURE.md`, `DECISIONS.md`, any `CLAUDE.md`, `PROJECT_STATE.md`, the files under
     `.claude/rules/`, `.claude/agents/` and `.claude/skills/`, pushes, GitHub issues and CI
     changes need the owner's explicit approval.
+
+## Quality bar and known limitations
+12. Code must work and be reproducible (pinned inputs, recorded versions, seeded or
+    deterministic), clean, lean, documented, findable and easy to maintain. It need not be
+    optimal on the first pass, because the surrounding design is often not settled yet: get it
+    running correctly first; perfect and optimize it later.
+13. Every known limitation, weakness, shortcut or optimization opportunity becomes a tracked
+    row in the project's register. That covers ones you introduce, accept, defer or find. A row
+    is never only a code comment, a ledger line or a free-text list. Each row states:
+    - what the limitation is;
+    - why it is acceptable now;
+    - what triggers fixing it (scale, cost, a later phase);
+    - its evidence (file:symbol, job id, report).
+    A wave does not close with an unregistered one. The project's rule file names its
+    register; the EnzymeFinder register is named in `enzymefinder.md`.
