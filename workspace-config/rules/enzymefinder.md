@@ -43,6 +43,16 @@ Results land in `logs/pytest_qsub.$JOB_ID.out`. Track with a single backgrounded
 loop, not repeated `qstat -j <JOB_ID>` checks — see the `running-sge-jobs` skill's "Waiting on a job
 without burning tokens".
 
+## Known limitations and optimization register (core.md 12-13)
+The register is `phases/W9-BACKLOG.md`, with one row per item and its routing line in
+`phases/ROW_ASSIGNMENTS.tsv`. Route each item to the wave that owns its fix. When no wave owns
+it yet, route it to `OPT`, the planned pre-P14 optimization phase (WAVES in
+`scripts/build_open_tasks.py`, row in `phases/PLANS.md`).
+
+Then regenerate with `scripts/build_open_tasks.py` and run `--check`, which must report
+0 UNASSIGNED and 0 STALE. `docs/IMPROVEMENT_OPTIONS.md` is free text that the check never
+reads, so it is not a substitute.
+
 ## Comparison data for end-to-end runs
 Use real results from the other projects as baselines rather than synthetic fixtures:
 EanB, CaMES/MeMES, MqnE/MqnC, K4-K26. Before calling a mismatch a defect, rule out the
