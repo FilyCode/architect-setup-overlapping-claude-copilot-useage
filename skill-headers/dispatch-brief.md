@@ -18,6 +18,11 @@ cross-module or contract changes, or a retry); ad hoc questions to
 implementer runs only its own tests and the linter, and stops instead of asking: this
 overrides the SDD template. Name the project: seats omit CLAUDE.md.
 
+**Turn budget, first line of every implementer brief:** *"Commit your finished work and write
+your report by turn 40 of 60; leave the rest as a listed remainder."* W4d hit the 60-turn cap
+12 times, each leaving uncommitted work and no report (retro R-20261019-2, third proposal;
+owner-approved 2026-10-19).
+
 The rules below are the original workspace text, moved verbatim; incident detail explains why
 each exists. The index of where every old rule went is
 `architect-setup-overlapping-claude-copilot-useage/docs/history/rule-index.md`.
