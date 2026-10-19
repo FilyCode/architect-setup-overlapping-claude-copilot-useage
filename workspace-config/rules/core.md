@@ -69,3 +69,8 @@ Detail and history for every line: `architect-setup-overlapping-claude-copilot-u
     - its evidence (file:symbol, job id, report).
     A wave does not close with an unregistered one. The project's rule file names its
     register; the EnzymeFinder register is named in `enzymefinder.md`.
+14. Record every decision, small ones included (schema, caps, cache keys, abort rules), in the
+    project's DECISIONS file: what, why, alternatives, the best-practice reference, and its
+    revisit trigger. The bar is the field's current best practice. A gain inside noise is no
+    gain: document it and move on rather than spending a wave on it. Nothing moves on until it
+    works on the normal path, catches its edge cases with tests, and is documented.
