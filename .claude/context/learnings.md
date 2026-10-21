@@ -65,6 +65,11 @@ all. Reach for a prompt hook only when the judgment genuinely needs a model, and
 is actually succeeding (check `hookEvent` + `type` in transcript attachments) before trusting
 it as enforcement — don't assume a hook "holds" just because it's configured.
 
+**Recurred 2026-10-21 (seat turn limits; EnzymeFinder, BileAcidDB, SenC, setup):** a turn-40
+commit line in every implementer brief left the 60-turn hit rate at 22.0% (n=59) vs 21.9%
+(n=64) before; seven proposals re-stated it in prose across five retro entries. The fix was
+structural: raise `maxTurns` (eda994d). Measure a prose rule's effect before re-proposing it.
+
 ## `memory:` on a subagent grants unrestricted Write/Edit — `disallowedTools` cannot revoke it
 
 **Found:** 2026-08-18, while building `docs-sync`, a deliberately read-only agent meant to
@@ -100,3 +105,12 @@ guarantee than the rest of this workspace's rules provide.
   Installed `pyright-lsp` and `diagram-design`. Skipped ECC, SuperClaude, BMAD, Archon,
   claude-squad, claude-mem, headroom and OmniRoute -- each either duplicates something already
   in place or adds listing bloat this audit exists to remove.
+
+**2026-10-21 (workspace-audit step 0 only).** Retro integration over 42 proposals (2026-10-15..20):
+5 applied in eda994d (maxTurns raised; CLOSING check; 650k firm nudge; science-first seat
+order; SGE host filters) plus the wave_stats turn-limit regex fix; 9 handed to projects; 3 left
+open as cluster heads (R-20261016-3 measure_context table, R-20261019-1 measured rulings,
+R-20261019-7 claims table). Setup check: lean-critic ran with ponytail preloaded in 10 of 13
+reviews (misses: a session started before e30779a); nudge fires and is relayed but compaction
+lags hours. `context_budget.py` fails on MEMORY.md (8,321 bytes > 6,656; >60 entries) — owner
+to trim. Steps 1-6 not run. Evidence: `.superpowers/findings/2026-10-21/`.
