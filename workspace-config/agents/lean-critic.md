@@ -4,7 +4,7 @@ description: Debloat review of a plan or a finished diff — finds tasks, code a
 tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: medium
-maxTurns: 35
+maxTurns: 50
 omitClaudeMd: true
 skills: [ponytail:ponytail, thermo-nuclear-code-quality-review, verification-patterns]
 ---

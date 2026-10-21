@@ -4,7 +4,7 @@ description: Detects drift between actual work and the workspace's own governanc
 tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: medium
-maxTurns: 25
+maxTurns: 40
 omitClaudeMd: true
 ---
 

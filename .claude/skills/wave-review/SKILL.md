@@ -15,12 +15,15 @@ reports), the commit range per repo and the main transcript path
 (`~/.claude/projects/<project>/<session id>.jsonl`). It appends one entry to
 `docs/retros/retro-log.md` in the config repo.
 
-Dispatch in batches under the concurrency cap (2 on the smaller account, 3 on the larger). A
+Dispatch in batches under the concurrency cap (2 on the smaller account, 3 on the larger),
+science seats first (domain-reviewer, anomaly-hunter), then critic-reviewer and
+alignment-officer, then docs-sync, inventory-auditor and lean-critic, so governance text is
+drafted after the findings it must not contradict. A
 spawn refused at the cap is not queued: re-dispatch it when a slot frees. The close lists every
 seat as ran or not-ran, with the reason. Findings files go in the findings dir (`.superpowers/findings/<date>/` in the config repo,
 persistent), never the scratchpad, which dies with the job. A seat is not "ran" until its
-findings file is non-empty (`test -s`); if a seat put findings only in its message, write them
-into its file before closing. When the wave's evidence is only self-consistency, say
+findings file has its closing section (`command grep -q '^## CLOSING' <file>`); if a seat put
+findings only in its message, write them into its file, marked controller-written, before closing. When the wave's evidence is only self-consistency, say
 so in the close and keep a standing row for one held-out evaluation.
 
 The rules below are the original workspace text, moved verbatim.

@@ -13,7 +13,7 @@ from pathlib import Path
 
 from measure_context import _entries, agent_type
 
-TURN_LIMIT = re.compile(r"<task-id>(\w+)</task-id>.*?stopped at its \d+-turn limit", re.S)
+TURN_LIMIT = re.compile(r"<task-id>(\w+)</task-id>(?:(?!</task-notification>).)*?stopped at its \d+-turn limit", re.S)
 
 
 def _calls(path: Path, since: str | None):

@@ -4,7 +4,7 @@ description: Senior-engineer code review in a fresh context. Re-derives correctn
 tools: Read, Grep, Glob, Bash, WebFetch
 model: opus
 effort: medium
-maxTurns: 40
+maxTurns: 60
 omitClaudeMd: true
 skills: [verification-patterns, completion-check]
 ---

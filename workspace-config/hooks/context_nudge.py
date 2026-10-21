@@ -4,7 +4,7 @@
 Threshold is declared workspace-specific (2026-10-14 corpus: calls above 500k carry
 ~69% of main-session cost) and overridable with CLAUDE_NUDGE_TOKENS. Owner band
 2026-10-14: nudge at 50 % of the 1M window, auto-compaction backstop at 80 %
-(CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000), so compaction lands at a task boundary. Fires once per 100k band. Also reminds once per session
+(CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000), so compaction lands at a task boundary; from 650k the nudge asks for /compact before the next task. Fires once per 100k band. Also reminds once per session
 when the retro log has open proposals and was last integrated over 7 days ago. Any error exits
 0 silently.
 """
@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 DEFAULT_THRESHOLD = 500_000
+FIRM = 650_000  # R-20261016-2: the soft nudge was relayed as a footnote; 97 calls in 4 sessions ran above 650k
 
 TAIL = 2_000_000
 BAND = 100_000
@@ -65,9 +66,14 @@ def message(ctx, prompt, state, threshold, retro=None):
         band = ctx // BAND
         if band > state.get("band", -1):
             state["band"] = band
-            parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires near 800k. Tell the user in one "
-                         f"line: at the next task boundary, `/compact <what to keep>` (or `/clear` before an "
-                         f"unrelated task); hand long investigations to a seat.")
+            if ctx >= FIRM:
+                parts.append(f"Context is {ctx // 1000}k tokens, past the 650k firm band. Make the first line of your "
+                             f"reply a request that the user run `/compact <what to keep>` (name what to keep) "
+                             f"before starting the next task; finish only the step in progress until they do.")
+            else:
+                parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires near 800k. Tell the user in one "
+                             f"line: at the next task boundary, `/compact <what to keep>` (or `/clear` before an "
+                             f"unrelated task); hand long investigations to a seat.")
     words = " ".join(t for t in (prompt or "").split() if "/" not in t)  # paths name things, not tasks
     if HEAVY.search(words) and not state.get("effort_hint"):
         state["effort_hint"] = True

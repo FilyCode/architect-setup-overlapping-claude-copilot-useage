@@ -46,3 +46,11 @@ def test_share_of_context_above_500k(tmp_path):
     # R-20261015-4: the nudge targets calls above 500k; the retro must be able to see whether that share moves.
     s = ws.summarize(_session(tmp_path))
     assert s["main"]["share_above_500k"] == round(600_000 / 750_000, 3)
+
+
+def test_turn_limit_does_not_span_notifications():
+    # 2026-10-21 investigator: with re.S, `.*?` ran from a completed task's id into the next block's limit notice.
+    done = "<task-notification><task-id>ok1</task-id><status>completed</status><summary>done</summary></task-notification>"
+    hit = ("<task-notification><task-id>hit2</task-id><status>completed</status><summary>Agent \"x\" "
+           "stopped at its 60-turn limit</summary></task-notification>")
+    assert ws.TURN_LIMIT.findall(done + "\n" + hit) == ["hit2"]

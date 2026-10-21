@@ -4,7 +4,7 @@ description: Implements one task from an approved plan — failing test first, m
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 effort: medium
-maxTurns: 60
+maxTurns: 100
 omitClaudeMd: true
 skills: [verification-patterns, completion-check]
 ---

@@ -5,7 +5,7 @@ tools: Read, Grep, Glob, Bash
 model: sonnet
 memory: project
 effort: medium
-maxTurns: 30
+maxTurns: 45
 omitClaudeMd: true
 ---
 

@@ -4,7 +4,7 @@ description: Answers one bounded question by reading code, data, logs and the we
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: sonnet
 effort: medium
-maxTurns: 40
+maxTurns: 60
 omitClaudeMd: true
 skills: [verification-patterns]
 ---

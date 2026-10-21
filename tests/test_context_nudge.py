@@ -100,3 +100,10 @@ def test_retro_hint_once_per_session():
     assert "Retro log" in msg
     msg, state = cn.message(None, "", state, 500_000, retro="Retro log: 2 open proposals")
     assert msg is None
+
+def test_firm_band_from_650k():
+    # R-20261016-2: the 500k nudge was relayed as a footnote and compaction came hours later; 97 calls ran above 650k.
+    soft, _ = cn.message(560_000, "next", {}, 500_000)
+    firm, _ = cn.message(660_000, "next", {}, 500_000)
+    assert "before starting" not in soft.lower()
+    assert "660k" in firm and "first line" in firm and "before starting" in firm.lower()

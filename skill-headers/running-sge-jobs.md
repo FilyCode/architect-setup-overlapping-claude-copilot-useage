@@ -19,6 +19,12 @@ while [ $absent -lt 3 ]; do
 done
 ```
 
+**Host filters (2026-10-21, `qconf -sc`).** `-l mem_per_core=N` (relop `<=`) keeps only hosts
+with at least N per core; 12G matched only the 24G/core GPU nodes and job 8132228 sat 70 min in
+qw: request memory with `-pe omp K` and a lower value. A job in qw over 10 min: read the
+scheduling info in `qstat -j <id>`. CPU test and eval jobs whose wheels need AVX2 (FBGEMM,
+torch CPU) request `-l avx2`: job 8171407 on a non-AVX2 host gave 6 false failures.
+
 Claude runs inside an SGE job on a compute node (`$JOB_ID` set); the login-node limits below
 apply to work started from a login shell.
 
