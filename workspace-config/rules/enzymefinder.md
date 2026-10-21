@@ -17,15 +17,16 @@ plan is approved, `Completed` when it finishes. External `~/.claude/plans/` file
 content source; `PLANS.md` is the in-repo pointer and is what makes a plan discoverable.
 
 ## Cache location
-The cache is **CWD-relative**: `SearchPipelineConfig.cache_dir` defaults to
-`Path(".cache/enzymefinder")`, and `stages.py` uses `<project_dir>/cache`. There is no
-`ENZYMEFINDER_CACHE_DIR` env var — a P4-MVP note describes one, but it was never
-implemented, so do not rely on it.
+On `main` the cache is **CWD-relative** (`SearchPipelineConfig.cache_dir` defaults to `.cache/enzymefinder`,
+`stages.py` uses `<project_dir>/cache`): run from the project root and set
+`-wd /projectnb/liu-scc/philipp/projects/EnzymeFinder` in qsub scripts. `ENZYMEFINDER_CACHE_DIR` never existed.
 
-Consequence: the cache lands wherever the process starts. **Run the pipeline from the
-project root**, and set `-wd /projectnb/liu-scc/philipp/projects/EnzymeFinder` (or `cd`
-first) in any qsub script, so caches never accumulate in a home directory or a scratch
-path that gets swept.
+From the CDB wave (branch `cdb`, until merged) one function picks the store:
+`cache/resolve.py::resolve_cache_store`. Set `cdb.root` (absolute path; `ENZYMEFINDER_CDB__ROOT`, or `[cdb] root`
+in the project/user/site `enzymefinder.toml`) to use the shared DuckDB shard store; the owner-only root is
+`/projectnb/liu-scc/philipp/software/enzymefinder/cdb/`. Unset, each run caches in `<output_dir>/<run_name>/cache`
+with one WARNING; nothing defaults under `~`. `CacheConfig.cache_dir` is deprecated and selects nothing.
+A run's shard becomes visible to other runs only after the run-end merge.
 
 ## Tests
 Full suite is ~11 min — always via `qsub`, never on the login node.
