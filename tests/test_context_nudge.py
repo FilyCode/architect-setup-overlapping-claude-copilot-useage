@@ -20,13 +20,6 @@ def test_no_usage_is_none(tmp_path):
     p.write_text('{"type":"user"}\n')
     assert cn.last_context(p) is None
 
-def test_nudge_once_per_band():
-    msg, st = cn.message(410_000, "next", {}, 400_000)
-    assert msg and "410k" in msg
-    msg2, st = cn.message(450_000, "next", st, 400_000)
-    assert msg2 is None
-    msg3, st = cn.message(520_000, "next", st, 400_000)
-    assert msg3 and "520k" in msg3
 
 def test_below_threshold_silent():
     assert cn.message(120_000, "hi", {}, 400_000)[0] is None
@@ -38,13 +31,6 @@ def test_effort_hint_once():
     msg2, _ = cn.message(10_000, "brainstorm more", st, 400_000)
     assert msg2 is None
 
-
-def test_default_threshold_sits_below_auto_compact_window():
-    # Owner 2026-10-14: compact between 50 % and 80 % of the 1M window. Nudge at 50 %;
-    # auto-compaction (CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000) is the backstop.
-    assert cn.DEFAULT_THRESHOLD == 500_000
-    msg, _ = cn.message(510_000, "next", {}, cn.DEFAULT_THRESHOLD)
-    assert "task boundary" in msg and "800k" in msg
 
 
 def test_state_is_per_session(tmp_path, monkeypatch, capsys):
@@ -66,14 +52,6 @@ def test_effort_hint_ignores_paths():
     assert cn.message(10_000, "see `docs/superpowers/specs/2026-10-14-x-design.md`", {}, cn.DEFAULT_THRESHOLD)[0] is None
     assert cn.message(10_000, "let's architect the import graph", {}, cn.DEFAULT_THRESHOLD)[0] is not None
 
-
-def test_nudge_rearms_after_compaction():
-    # Compaction keeps the session id but drops context; the next climb past the threshold must nudge again.
-    state, fired = {}, []
-    for ctx in (510_000, 620_000, 90_000, 520_000):
-        msg, state = cn.message(ctx, "", state, 500_000)
-        fired.append(msg is not None)
-    assert fired == [True, True, False, True]
 
 
 def _log(tmp_path, last, open_items):
@@ -101,9 +79,86 @@ def test_retro_hint_once_per_session():
     msg, state = cn.message(None, "", state, 500_000, retro="Retro log: 2 open proposals")
     assert msg is None
 
-def test_firm_band_from_650k():
-    # R-20261016-2: the 500k nudge was relayed as a footnote and compaction came hours later; 97 calls ran above 650k.
-    soft, _ = cn.message(560_000, "next", {}, 500_000)
-    firm, _ = cn.message(660_000, "next", {}, 500_000)
-    assert "before starting" not in soft.lower()
-    assert "660k" in firm and "first line" in firm and "before starting" in firm.lower()
+
+# Owner 2026-10-22: look for a good compaction point from 300k, firm nudge at 500k, auto-compaction at 650k.
+def test_bands_are_300_500_650():
+    assert (cn.DEFAULT_THRESHOLD, cn.FIRM, cn.AUTO_COMPACT) == (300_000, 500_000, 650_000)
+
+
+def test_window_300_500_nudges_only_at_a_boundary():
+    assert cn.message(350_000, "next", {}, cn.DEFAULT_THRESHOLD)[0] is None
+    msg, st = cn.message(350_000, "next", {}, cn.DEFAULT_THRESHOLD, boundary="commit")
+    assert msg and "350k" in msg and "good point" in msg
+    assert cn.message(380_000, "next", st, cn.DEFAULT_THRESHOLD, boundary="commit")[0] is None  # once per 100k band
+    assert cn.message(420_000, "next", st, cn.DEFAULT_THRESHOLD, boundary="idle")[0]
+
+
+def test_firm_from_500k_without_boundary():
+    msg, st = cn.message(510_000, "next", {}, cn.DEFAULT_THRESHOLD)
+    assert "510k" in msg and "first line" in msg and "before starting" in msg.lower() and "650k" in msg
+    assert cn.message(560_000, "next", st, cn.DEFAULT_THRESHOLD)[0] is None
+    assert cn.message(610_000, "next", st, cn.DEFAULT_THRESHOLD)[0]
+
+
+def test_nudge_rearms_after_compaction():
+    state, fired = {}, []
+    for ctx in (510_000, 90_000, 520_000):
+        msg, state = cn.message(ctx, "", state, cn.DEFAULT_THRESHOLD)
+        fired.append(msg is not None)
+    assert fired == [True, False, True]
+
+
+def _turns(tmp_path, entries):
+    p = tmp_path / "b.jsonl"
+    p.write_text("\n".join(json.dumps(e) for e in entries) + "\n")
+    return p
+
+
+def _user(text, ts):
+    return {"type": "user", "timestamp": ts, "message": {"role": "user", "content": text}}
+
+
+def _bash(cmd, ts):
+    return {"type": "assistant", "timestamp": ts, "message": {"id": ts, "content": [
+        {"type": "tool_use", "name": "Bash", "input": {"command": cmd}}]}}
+
+
+def test_boundary_detects_commit_since_last_prompt(tmp_path):
+    now = cn.dt.datetime(2026, 10, 22, 12, 0, tzinfo=cn.dt.timezone.utc)
+    commit = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash("git commit -q -F - <<EOF", "2026-10-22T11:58:00Z")])
+    assert cn.boundary(commit, now) == "commit"
+    old = _turns(tmp_path, [_bash("git commit -m x", "2026-10-22T11:40:00Z"), _user("go", "2026-10-22T11:50:00Z"),
+                            _bash("ls", "2026-10-22T11:58:00Z")])
+    assert cn.boundary(old, now) is None   # the commit belongs to an earlier task
+    idle = _turns(tmp_path, [_user("go", "2026-10-22T11:00:00Z"), _bash("ls", "2026-10-22T11:10:00Z")])
+    assert cn.boundary(idle, now) == "idle"  # 50 min idle: the cache is cold, compaction costs nothing extra
+
+
+
+def test_boundary_ignores_request_blobs(tmp_path):
+    # Real transcripts hold `api-request-blob` entries that replay the whole history, old commits included.
+    now = cn.dt.datetime(2026, 10, 22, 12, 0, tzinfo=cn.dt.timezone.utc)
+    blob = {"type": "api-request-blob", "message": {"content": [
+        {"type": "tool_use", "name": "Bash", "input": {"command": "git commit -m old"}}]}}
+    p = _turns(tmp_path, [_bash("git commit -m old", "2026-10-22T11:00:00Z"), _user("go", "2026-10-22T11:50:00Z"),
+                          _bash("ls", "2026-10-22T11:58:00Z"), blob])
+    assert cn.boundary(p, now) is None
+
+
+def test_boundary_needs_a_real_git_commit_command(tmp_path):
+    now = cn.dt.datetime(2026, 10, 22, 12, 0, tzinfo=cn.dt.timezone.utc)
+    text = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash("python3 - <<EOF\nx = 'git commit' in s\nEOF", "2026-10-22T11:58:00Z")])
+    assert cn.boundary(text, now) is None
+    for cmd in ("cd repo && git add a && git commit -q -F - <<'EOF'", "git -C /x/repo commit -m y"):
+        p = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash(cmd, "2026-10-22T11:58:00Z")])
+        assert cn.boundary(p, now) == "commit", cmd
+
+
+def test_boundary_ignores_commit_text_inside_a_heredoc(tmp_path):
+    now = cn.dt.datetime(2026, 10, 22, 12, 0, tzinfo=cn.dt.timezone.utc)
+    cmd = "cat >> t.py <<'EOF'\nfor c in ('a && git commit -q',):\nEOF\npytest -q"
+    p = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash(cmd, "2026-10-22T11:58:00Z")])
+    assert cn.boundary(p, now) is None
+    msg = "git commit -q -F - <<'EOF'\nsubject\nEOF\ngit show --stat HEAD"
+    p = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash(msg, "2026-10-22T11:58:00Z")])
+    assert cn.boundary(p, now) == "commit"

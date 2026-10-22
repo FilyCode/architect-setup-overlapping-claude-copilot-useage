@@ -782,6 +782,46 @@ reminds once per session when proposals are open and integration is over 7 days 
 **Cost**: one seat per wave (first call ≈ 12k tokens plus its reads) and one integration
 session per week; zero always-loaded text added.
 
+### [2026-10-22] [DECISION-028]: Token cost — compaction bands, implementer model, resumes
+
+**Problem**: 10-16..21, 409 transcripts, 329.3M price-weighted units (1 = one Opus-5.5 input
+token; list prices from the `claude-api` reference): main session 60.2%, subagents 39.8%
+(implementer 24%); by component, cache reads 61.2%, 5m cache writes 28.7%, output 8.8%. Main
+calls at ≥300k context carry 70.8% of main cost, ≥500k 31.5% (n=5,127). The 500k nudge was
+relayed but compaction followed 2 h to 2 days later. Implementers ran opus on 98 of 166
+dispatches against their sonnet default. Evidence:
+`.superpowers/findings/2026-10-21/investigator-token-cost.md` (gitignored), re-derived by the
+controller.
+
+**Decision** (owner, 2026-10-22):
+1. Compaction: `context_nudge.py` nudges from 300k only at a task boundary (git commit since
+   the last prompt, or 30+ min idle when the cache is cold anyway), firmly from 500k ("compact
+   before the next task"), and `CLAUDE_CODE_AUTO_COMPACT_WINDOW` drops 800000 → 650000
+   (`~/.claude/settings.json`, not in git). Supersedes the 500k/800k band of 2026-10-14.
+   Simulated saving: 5–19% of main cost depending on where compaction lands, before the
+   re-reads compaction causes (unmeasured).
+2. Implementer model: sonnet by default; opus only for a cross-module or contract change or a
+   retry, with the reason in the brief's first line. Realistic saving about 3.5% of total.
+3. Seat reports: findings are appended to the file as found; final message ≤ 10 lines.
+4. Implementer resumes: kept. 69 resumes after idle rebuilt a median 155k context (13.6M units
+   excess). A 1h subagent cache TTL (`experimental.cacheTtl` / `subagentPromptCacheTtl`) would
+   add 25.8M units of write premium on 199 implementers (5m writes 42.9M × 0.6) to save at most
+   13.6M; a fresh dispatch loses the agent's working memory. Neither is taken.
+
+**Alternatives rejected**: 1h prompt-cache TTL for main or subagents (write premium exceeds
+the miss saving, above); trimming the startup prefix (our part is about 14k of the start:
+memory 5.5k, skills 6.8k, agents 1.9k; at most about 1–2% of total); sonnet for
+critic-reviewer (2.3% of total at most, review-quality risk); lowering auto-compaction to
+400–500k (more mid-task compactions; revisit if the 300–500k boundary nudges do not land
+compactions before 500k).
+
+**Best-practice reference**: code.claude.com/docs/en/prompt-caching (TTL, subagent caching),
+/en/model-config (auto-compact window), /en/context-window (what survives compaction).
+
+**Revisit trigger**: the next retro integration measures (a) main calls ≥500k and the share of
+main cost above 300k, (b) implementer review defects and turn-limit hits by model, (c) whether
+compactions land at boundary nudges. Revert a part that moves nothing (no-effect rule).
+
 ---
 
 ## Related Documents

@@ -102,9 +102,10 @@ Dispatch rules live in skill `dispatch-brief`, the wave roster in `wave-review`.
 (PreToolUse) denies `git stash`, `--work-tree` checkout, recursive `rm` under `projects/`
 outside caches and scratch, and pytest with `$JOB_ID` unset; it warns on `cat` of files over
 1 MB, `find` from `/` or home without `-maxdepth`, and `find -delete` under `projects/`.
-`context_nudge.py` (UserPromptSubmit) nudges at 500k context, once per 100k band and again
-after a compaction. `large-change-check.py` (Stop). Auto-compaction window 800k; idle compaction
-is live. The rtk hook was retired (DECISION-026).
+`context_nudge.py` (UserPromptSubmit) nudges from 300k at a task boundary (a commit since the
+last prompt, or 30+ min idle) and firmly from 500k, once per 100k band and again after a
+compaction. `large-change-check.py` (Stop). Auto-compaction window 650k (DECISION-028); idle
+compaction is live. The rtk hook was retired (DECISION-026).
 
 **Enforcement** vs **guidance**: rules and `CLAUDE.md` shape behaviour but are advisory.
 Anything that must hold every time is a hook in `~/.claude/settings.json`.

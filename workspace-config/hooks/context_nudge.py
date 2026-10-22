@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: nudge when context is large; hint effort for heavy planning.
 
-Threshold is declared workspace-specific (2026-10-14 corpus: calls above 500k carry
-~69% of main-session cost) and overridable with CLAUDE_NUDGE_TOKENS. Owner band
-2026-10-14: nudge at 50 % of the 1M window, auto-compaction backstop at 80 %
-(CLAUDE_CODE_AUTO_COMPACT_WINDOW=800000), so compaction lands at a task boundary; from 650k the nudge asks for /compact before the next task. Fires once per 100k band. Also reminds once per session
+Bands (owner 2026-10-22; token cost is 61% cache reads, so context length is the lever):
+from 300k the hook nudges only at a task boundary (a git commit since the last prompt, or 30+
+min idle, when the cache is cold anyway); from 500k it asks for /compact before the next task;
+auto-compaction (CLAUDE_CODE_AUTO_COMPACT_WINDOW=650000) is the backstop. Each nudge fires once
+per 100k band; CLAUDE_NUDGE_TOKENS overrides the 300k start. Also reminds once per session
 when the retro log has open proposals and was last integrated over 7 days ago. Any error exits
 0 silently.
 """
@@ -15,13 +16,17 @@ import re
 import sys
 from pathlib import Path
 
-DEFAULT_THRESHOLD = 500_000
-FIRM = 650_000  # R-20261016-2: the soft nudge was relayed as a footnote; 97 calls in 4 sessions ran above 650k
+DEFAULT_THRESHOLD = 300_000
+FIRM = 500_000
+AUTO_COMPACT = 650_000
+IDLE = dt.timedelta(minutes=30)
 
 TAIL = 2_000_000
 BAND = 100_000
 RETRO_LOG = Path(os.environ.get("CLAUDE_RETRO_LOG", "/projectnb/liu-scc/philipp/"
                  "architect-setup-overlapping-claude-copilot-useage/docs/retros/retro-log.md"))
+COMMIT = re.compile(r"(?:^|[;&|\n])\s*git\s+(?:-C\s+\S+\s+)?commit\b")
+HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?[^\n]*\n.*?\n\1(?=\n|$)", re.S)  # body is data, not commands
 HEAVY = re.compile(r"\b(brainstorm\w*|architect\w*|design doc|spec|implementation plan|writing-plans|plan the)\b", re.I)
 
 
@@ -42,6 +47,32 @@ def last_context(transcript: Path):
     return None
 
 
+def boundary(transcript: Path, now: dt.datetime):
+    """'commit' if a git commit ran since the last user prompt, 'idle' if the last entry is 30+ min old."""
+    with open(transcript, "rb") as f:
+        f.seek(0, 2)
+        f.seek(max(0, f.tell() - TAIL))
+        lines = f.read().decode("utf-8", errors="replace").split("\n")[1:]
+    last_ts = None
+    for line in reversed(lines):
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        last_ts = last_ts or e.get("timestamp")
+        m = e.get("message") if isinstance(e.get("message"), dict) else {}
+        content = m.get("content")
+        if e.get("type") == "user" and (isinstance(content, str) or not any(
+                isinstance(b, dict) and b.get("type") == "tool_result" for b in content or [])):
+            break  # the previous prompt: anything older belongs to an earlier task
+        for b in content if isinstance(content, list) else []:
+            if e.get("type") == "assistant" and isinstance(b, dict) and b.get("type") == "tool_use" and COMMIT.search(HEREDOC.sub("", str(b.get("input", {}).get("command", "")))):
+                return "commit"
+    if last_ts and now - dt.datetime.fromisoformat(last_ts.replace("Z", "+00:00")) >= IDLE:
+        return "idle"
+    return None
+
+
 def retro_hint(log: Path, today: dt.date):
     """One line when proposals are open and the last integration is older than 7 days."""
     if not log.is_file():
@@ -55,7 +86,7 @@ def retro_hint(log: Path, today: dt.date):
             f"once: a weekly integration session runs skill `workspace-audit` (retro step).")
 
 
-def message(ctx, prompt, state, threshold, retro=None):
+def message(ctx, prompt, state, threshold, retro=None, boundary=None):
     parts, state = [], dict(state)
     if retro and not state.get("retro_hint"):
         state["retro_hint"] = True
@@ -64,16 +95,18 @@ def message(ctx, prompt, state, threshold, retro=None):
         state.pop("band", None)  # compaction dropped context: re-arm for the next climb
     if ctx is not None and ctx >= threshold:
         band = ctx // BAND
-        if band > state.get("band", -1):
+        if band > state.get("band", -1) and (ctx >= FIRM or boundary):
             state["band"] = band
             if ctx >= FIRM:
-                parts.append(f"Context is {ctx // 1000}k tokens, past the 650k firm band. Make the first line of your "
-                             f"reply a request that the user run `/compact <what to keep>` (name what to keep) "
-                             f"before starting the next task; finish only the step in progress until they do.")
+                parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires at {AUTO_COMPACT // 1000}k. "
+                             f"Make the first line of your reply a request that the user run `/compact <what to "
+                             f"keep>` (name what to keep) before starting the next task; finish only the step in "
+                             f"progress until they do.")
             else:
-                parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires near 800k. Tell the user in one "
-                             f"line: at the next task boundary, `/compact <what to keep>` (or `/clear` before an "
-                             f"unrelated task); hand long investigations to a seat.")
+                why = "work was just committed" if boundary == "commit" else "the session was idle, so the cache is cold"
+                parts.append(f"Context is {ctx // 1000}k tokens and {why}: a good point to compact. If this prompt "
+                             f"starts a new task, tell the user in one line to run `/compact <what to keep>` first; "
+                             f"if it continues the current task, say nothing.")
     words = " ".join(t for t in (prompt or "").split() if "/" not in t)  # paths name things, not tasks
     if HEAVY.search(words) and not state.get("effort_hint"):
         state["effort_hint"] = True
@@ -91,8 +124,9 @@ def main():
         state = json.loads(state_path.read_text()) if state_path.exists() else {}
         ctx = last_context(tx) if tx.is_file() else None
         retro = None if state.get("retro_hint") else retro_hint(RETRO_LOG, dt.date.today())
-        msg, state = message(ctx, d.get("prompt", ""), state, int(os.environ.get("CLAUDE_NUDGE_TOKENS", DEFAULT_THRESHOLD)),
-                             retro)
+        threshold = int(os.environ.get("CLAUDE_NUDGE_TOKENS", DEFAULT_THRESHOLD))
+        edge = boundary(tx, dt.datetime.now(dt.timezone.utc)) if ctx and ctx >= threshold and tx.is_file() else None
+        msg, state = message(ctx, d.get("prompt", ""), state, threshold, retro, edge)
         state_path.write_text(json.dumps(state))
         if msg:
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": msg}}))
