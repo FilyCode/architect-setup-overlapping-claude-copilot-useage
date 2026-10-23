@@ -15,18 +15,31 @@ Vocabulary: `PLANNED | READY | IN_PROGRESS | COMPLETE | DEPLOYED | ARCHIVED`, ea
 `(verified YYYY-MM-DD)` appended. Also update `phases/PLANS.md` — `Approved` date when a
 plan is approved, `Completed` when it finishes. External `~/.claude/plans/` files are the
 content source; `PLANS.md` is the in-repo pointer and is what makes a plan discoverable.
+For a wave with no `phases/<WAVE>/` directory, surface 3 is the plan header under
+`docs/superpowers/plans/`. (CDB had none, and the header kept asserting "Task 13 not built" above
+its own ticked checkboxes until the wave-end review caught it.)
 
 ## Cache location
-On `main` the cache is **CWD-relative** (`SearchPipelineConfig.cache_dir` defaults to `.cache/enzymefinder`,
-`stages.py` uses `<project_dir>/cache`): run from the project root and set
-`-wd /projectnb/liu-scc/philipp/projects/EnzymeFinder` in qsub scripts. `ENZYMEFINDER_CACHE_DIR` never existed.
+One function picks a run's cache store: `cache/resolve.py::resolve_cache_store`. It is the only constructor of a
+cache store outside `enzymefinder.cache`, guarded by an AST test
+(`tests/test_cdb_resolve_store.py::test_all_cache_constructions_use_resolver`) — do not build a store anywhere else.
+Set `cdb.root` to an absolute path (`ENZYMEFINDER_CDB__ROOT`, or `[cdb] root` in the project / user / site
+`enzymefinder.toml`) to use the shared DuckDB shard store; the owner-only root is
+`/projectnb/liu-scc/philipp/software/enzymefinder/cdb/`. Unset, each run caches in
+`<output_dir>/<run_name>/cache` with one WARNING per process; nothing defaults under `~`.
+`CacheConfig.cache_dir` is deprecated and selects nothing; an explicit `--cache-dir` still names a per-run file cache.
 
-From the CDB wave (branch `cdb`, until merged) one function picks the store:
-`cache/resolve.py::resolve_cache_store`. Set `cdb.root` (absolute path; `ENZYMEFINDER_CDB__ROOT`, or `[cdb] root`
-in the project/user/site `enzymefinder.toml`) to use the shared DuckDB shard store; the owner-only root is
-`/projectnb/liu-scc/philipp/software/enzymefinder/cdb/`. Unset, each run caches in `<output_dir>/<run_name>/cache`
-with one WARNING; nothing defaults under `~`. `CacheConfig.cache_dir` is deprecated and selects nothing.
-A run's shard becomes visible to other runs only after the run-end merge.
+Visibility is merge-then-visible: a run sees its own shard plus the current merged generation, never another run's
+unmerged shard. A non-array run merges at run end; **array tasks do not** — submit one
+`qsub -hold_jid <array> ... enzymefinder cache merge` job and hold downstream readers on it. Layout, health check,
+rollback, move-a-root and snapshot restore: `docs/HPC_DATABASE_SETUP.md`, section "Shared cache store (CDB root)".
+
+Pre-CDB history: the cache was CWD-relative (`.cache/enzymefinder`, `stages.py` under `<project_dir>/cache`).
+Setting `-wd /projectnb/liu-scc/philipp/projects/EnzymeFinder` in qsub scripts is still right, but now because
+project-scoped Tier-2 entries key on the resolved project directory, not because the cache follows the CWD.
+There is no `ENZYMEFINDER_CACHE_DIR`; the environment name is `ENZYMEFINDER_CACHE__CACHE_DIR` (double underscore,
+the nested-key convention), it is outranked by an explicit `--cache-dir`, and it is read by `enzymefinder run` but
+deliberately not by every subcommand (`cli/main.py:383-387`, precedence at `:2352-2368`).
 
 ## Tests
 Full suite is ~11 min — always via `qsub`, never on the login node.
