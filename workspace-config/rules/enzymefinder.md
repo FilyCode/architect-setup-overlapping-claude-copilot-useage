@@ -57,6 +57,13 @@ Results land in `logs/pytest_qsub.$JOB_ID.out`. Track with a single backgrounded
 loop, not repeated `qstat -j <JOB_ID>` checks — see the `running-sge-jobs` skill's "Waiting on a job
 without burning tokens".
 
+## Reference index (P0, DECISION-138)
+A run reaches the Swiss-Prot tier indexes only through the site file named by
+`ENZYMEFINDER_SITE_CONFIG` (`/projectnb/liu-scc/philipp/software/enzymefinder/site/enzymefinder.toml`;
+no default). Every job script exports it; one that omits the export runs with both tiers
+unresolved. `[databases.uniprot]` carries no `release` on purpose: the run records the
+`X-UniProt-Release` header it observed.
+
 ## Known limitations and optimization register (core.md 12-13)
 The register is `phases/W9-BACKLOG.md`, with one row per item and its routing line in
 `phases/ROW_ASSIGNMENTS.tsv`. Route each item to the wave that owns its fix. When no wave owns
