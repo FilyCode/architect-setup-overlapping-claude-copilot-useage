@@ -73,4 +73,7 @@ Detail and history for every line: `architect-setup-overlapping-claude-copilot-u
     project's DECISIONS file: what, why, alternatives, the best-practice reference, and its
     revisit trigger. The bar is the field's current best practice. A gain inside noise is no
     gain: document it and move on rather than spending a wave on it. Nothing moves on until it
-    works on the normal path, catches its edge cases with tests, and is documented.
+    works on the normal path, catches its edge cases with tests, and is documented. A ruling
+    that changes a printed claim, score or tier names its measured cost (job id or probe path),
+    else it is labelled UNMEASURED and is not decided; one that asserts an absence or an external
+    fact cites the command and its output, else it is written unverified.

@@ -824,6 +824,44 @@ compactions land at boundary nudges. Revert a part that moves nothing (no-effect
 
 ---
 
+### [2026-10-24] [DECISION-029]: Token cost check 2 — main model pin, two enforcing hooks
+
+**Problem**: window 2026-10-22 15:11Z..10-24 (2.35 days), 10,261 deduped calls, 237.3M units
+(same unit and method as DECISION-028). DECISION-028 worked on context: main cost at ≥300k /
+≥500k context fell from 70.8% / 31.5% to 56.9% / 7.5%; 7 of 7 firm nudges were followed by a
+compaction within 1-11 calls; opus implementers fell from 56% to 45% (27 of 60). But only 8 of
+27 opus implementer briefs named a reason in the first line, and by model claude-opus-5 still
+carried 88.4M (37.3%, 2,600 calls) in four long sessions: priced as claude-opus-5-5 the same
+tokens cost 48.5M. MEMORY.md regrew past its 6,656-byte ceiling within minutes of a trim
+because sessions write live status into index lines. Evidence:
+`.superpowers/findings/2026-10-24/investigator-token-cost-after-028.md` (gitignored); model
+shares and context bands re-derived by the controller from the investigator's call table.
+
+**Decision** (owner, 2026-10-24):
+1. Main model pinned: `"model": "claude-opus-5-5"` in `~/.claude/settings.json` (was the alias
+   `opus`; not in git). Running sessions keep their model until restarted or `/model`.
+2. Fable 5.1 stays a deliberate choice for consulting sessions (19% of the window, one session).
+3. `workspace-config/hooks/dispatch_guard.py` (PreToolUse, Agent): warns on an opus
+   implementer whose brief's first line names no cross-module/contract/retry reason. Warn only.
+4. `workspace-config/hooks/memory_budget.py` (PostToolUse, Write|Edit): warns the writing
+   session when MEMORY.md exceeds the `context_budget.py` ceilings, with the trim rule.
+
+**Alternatives rejected**: denying opus implementer dispatches without a reason (a wrong
+reason-match would block legitimate retries; warn first, deny if the rate does not move);
+raising the MEMORY.md ceiling (the growth is status text that belongs in the memory files);
+moving Fable sessions to opus-5-5 (owner: deliberate quality choice).
+
+**Best-practice reference**: code.claude.com/docs/en/hooks (PreToolUse/PostToolUse
+`additionalContext`), /en/model-config (model setting and aliases); learnings.md "Prose rules
+do not hold; hooks do".
+
+**Revisit trigger**: next retro integration measures (a) claude-opus-5 share of main cost
+(expect ~0 in sessions started after 10-24), (b) opus implementer briefs with a first-line
+reason (from 8/27), (c) MEMORY.md over-budget events. Escalate the guard to deny if (b) stays
+below half; revert a hook that moves nothing.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design

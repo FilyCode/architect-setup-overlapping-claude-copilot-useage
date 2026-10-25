@@ -91,6 +91,26 @@ this reason. Agents whose "don't touch X" was already prose-only before this (e.
 implementation code") are unaffected in practice — they were never claiming a harder
 guarantee than the rest of this workspace's rules provide.
 
+## Claims without a checked artifact recur until the brief carries the output
+
+**Recurred:** controller-written claims (figures, state lines, absence claims) that were not
+checked against an artifact: R-20261015-9, -12, -18, R-20261018-4 (BileAcidDB), R-20261019-7,
+R-20261022-3 (MeMES), R-20261023-9, R-20261024-3 (EnzymeFinder): 8 entries, 3 projects. The
+prose rule ("verified or UNVERIFIED") stood for 9 days unapplied; only the seats' "errors in this
+brief" slot caught them.
+
+**Fix:** the brief pastes command output (source, n, denominator), a pasted state line and a
+pasted `command grep -rln` file list (dispatch-brief, 2026-10-24). See verification-patterns
+"Plausibility is not provenance".
+
+## A gate is accepted before anyone has seen it fail
+
+**Recurred:** R-20261022-2 (MeMES), R-20261022-6, R-20261023-4, R-20261024-1 (EnzymeFinder):
+acceptance harnesses and parity gates signed off without a planted fault. 4 entries, 2 projects.
+
+**Fix:** the cheap form is to re-run the gate over an old artifact with one planted bad row and
+quote the non-zero exit (core.md rule 1; verification-patterns).
+
 ## Audit trail
 
 - **2026-07-23:** full workspace audit. Plugin versions checked against primary manifests (not changelog summaries): superpowers 6.1.1 = latest, example-skills and research-skills current. Found and fixed `planning-with-files` stale hand-copy (see entry above). No skill has sat provably unused 30+ days yet (too early to tell — this is the first audit). Added `permissions.deny` hardening to shared `settings.json`, wired `continuous-improvement.md` into `CLAUDE.md`, wired `.claude/settings.json` pointer files into 4 previously-unwired projects. Evaluated `research-ops-skills` and `K-Dense-AI/scientific-agent-skills` — both real, both skipped, no concrete active need yet.
@@ -114,3 +134,11 @@ R-20261019-7 claims table). Setup check: lean-critic ran with ponytail preloaded
 reviews (misses: a session started before e30779a); nudge fires and is relayed but compaction
 lags hours. `context_budget.py` fails on MEMORY.md (8,321 bytes > 6,656; >60 entries) — owner
 to trim. Steps 1-6 not run. Evidence: `.superpowers/findings/2026-10-21/`.
+
+**2026-10-24 (workspace-audit step 0 + token check 2).** Retro integration over 27 open
+proposals: 10 applied in 5 edits (dispatch-brief claims sentence and 4-area cap; core.md rule 14
+measured rulings; enzymefinder.md branch gates), 1 done earlier (R-20261023-5, eda994d), 16
+deferred with triggers, 2 learnings promoted (above). R-20261024-6..9 arrived during the run and
+stay open. Token check: DECISION-029 (main model pinned to opus-5-5; dispatch_guard and
+memory_budget hooks). MEMORY.md trimmed to budget twice; old CLI versions 2.1.308/309 deleted
+(home 5.4 → 4.9 GB). Evidence: `.superpowers/findings/2026-10-24/investigator-*.md`.

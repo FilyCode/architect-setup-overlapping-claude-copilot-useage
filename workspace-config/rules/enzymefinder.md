@@ -57,6 +57,11 @@ Results land in `logs/pytest_qsub.$JOB_ID.out`. Track with a single backgrounded
 loop, not repeated `qstat -j <JOB_ID>` checks — see the `running-sge-jobs` skill's "Waiting on a job
 without burning tokens".
 
+Branch gates: at the first commit of a branch and again before the PR, run
+`pre-commit run --hook-stage push --all-files` and `python3 scripts/build_open_tasks.py --verify`
+(CI runs `--verify`, not `--check`). Run each gate as its own command, never piped into `| tail`,
+and quote its exit code, not trimmed output (R-20261022-10, R-20261024-5).
+
 ## Reference index (P0, DECISION-138)
 A run reaches the Swiss-Prot tier indexes only through the site file named by
 `ENZYMEFINDER_SITE_CONFIG` (`/projectnb/liu-scc/philipp/software/enzymefinder/site/enzymefinder.toml`;
