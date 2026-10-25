@@ -24,6 +24,9 @@ seat as ran or not-ran, with the reason. Findings files go in the findings dir (
 persistent), never the scratchpad, which dies with the job. A seat is not "ran" until its
 findings file has its closing section (`command grep -q '^## CLOSING' <file>`); if a seat put
 findings only in its message, write them into its file, marked controller-written, before closing. When the wave's evidence is only self-consistency, say
-so in the close and keep a standing row for one held-out evaluation.
+so in the close and keep a standing row for one held-out evaluation. A branch that is not merged,
+or whose full suite could not run, carries the line "MERGE GATE: full suite on the merge commit,
+job spec written" in its ledger and plan status, with the job spec's path; the wave is not marked
+closed without that line.
 
 The rules below are the original workspace text, moved verbatim.

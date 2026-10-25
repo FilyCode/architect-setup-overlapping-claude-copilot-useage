@@ -101,3 +101,14 @@ def test_patch_is_idempotent_and_keeps_spacing(tmp_path, capsys):
     assert capsys.readouterr().out == ""
     for p in tmp_path.glob("*.md"):
         assert "\n## Environment" in p.read_text() and "moved.\n## " not in p.read_text(), p.stem
+
+
+def test_seat_write_instructions_match_tools():
+    # R-20261025-3: a seat told to write its findings file must hold a tool that can write it.
+    for p in AGENTS:
+        text = p.read_text()
+        tools = {t.strip() for t in _fm(text)["tools"].split(",")}
+        if "Bash heredoc" in text:
+            assert "Bash" in tools, (p.stem, "names a Bash heredoc without the Bash tool")
+        if p.stem in REVIEW_SEATS and not tools & {"Write", "Bash"}:
+            assert "you cannot" in text and "caller writes it" in text, (p.stem, "cannot write; must say so")

@@ -21,7 +21,11 @@ opus` only for a cross-module or contract change or a retry, with that reason in
 first line (DECISION-028). Ad hoc questions go to `investigator`; "where is X" to Explore with
 `model: haiku`. Never general-purpose. The implementer runs only its own tests and the linter,
 and stops instead of asking: this overrides the SDD template. Name the project: seats omit
-CLAUDE.md.
+CLAUDE.md. At most 2 subagents run at once on the smaller account (3 on the larger); queue the rest and dispatch each when a slot frees.
+Every implementer brief also carries: *"Lean checks before commit: no pass-through wrappers, no
+assert that cannot fail, no test that re-implements the code under test, and each error message
+says what the check does."* Review seats other than research-scout can write their findings file
+with a Bash heredoc; a seat that answers only in its message has not followed its brief.
 
 **Turn budget, first line of every implementer brief:** *"Commit your finished work and write
 your report by turn 70 of 100; leave the rest as a listed remainder."* A task that still hits

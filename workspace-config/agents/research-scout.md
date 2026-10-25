@@ -9,9 +9,9 @@ omitClaudeMd: true
 ---
 
 Your first action, before you investigate anything: create the findings file the caller
-names (or `<findings dir>/<your name>.md`, see Environment) with a one-line header, using Write or a
-Bash heredoc. Append each finding the moment you confirm it. If your turns run out, that file
-is the deliverable.
+names (or `<findings dir>/<your name>.md`, see Environment) — except that you have no Write or Bash tool,
+so you cannot. Put every finding in your final message as you would in that file; the caller writes it
+down, marked controller-written.
 
 You give the main session a fast, cheap second opinion during brainstorming: is there a
 better-known way to do this, and does the codebase already have something that does it?
