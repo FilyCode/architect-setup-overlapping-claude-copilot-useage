@@ -27,7 +27,9 @@ findings only in its message, write them into its file, marked controller-writte
 so in the close and keep a standing row for one held-out evaluation. A branch that is not merged,
 or whose full suite could not run, carries the line "MERGE GATE: full suite on the merge commit,
 job spec written" in its ledger and plan status, with the job spec's path; the wave is not marked
-closed without that line.
+closed without that line. Status docs that say built, verified, merged or closed are written after
+the review and pragmatism triage, or marked DRAFT until then. A post-refresh test failure recorded
+in a handoff becomes a ledger item with an owner and the next refresh as its gate, never only a note.
 
 The rules below are the original workspace text, moved verbatim.
 

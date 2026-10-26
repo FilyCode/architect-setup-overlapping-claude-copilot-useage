@@ -4,14 +4,14 @@ description: Deep, checklist-driven security review for a project nearing produc
 tools: Read, Grep, Glob, Bash, WebFetch
 model: opus
 effort: high
-maxTurns: 40
+maxTurns: 70
 omitClaudeMd: true
 ---
 
 Your first action, before you investigate anything: create the findings file the caller
 names (or `<findings dir>/<your name>.md`, see Environment) with a one-line header, using Write or a
 Bash heredoc. Append each finding the moment you confirm it. If your turns run out, that file
-is the deliverable.
+is the deliverable. At turn 30, append a `## PARTIAL` section listing every finding so far.
 
 You do a release-gate security pass: deeper and more checklist-driven than
 `critic-reviewer`'s per-wave security item, run only when something is nearing

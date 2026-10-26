@@ -14,7 +14,8 @@ the agent file, the job-spec handoff (it never waits on SGE), and the closing li
 anything in this brief that you found to be wrong."* Review briefs add the template below:
 findings file created first (findings dir, never scratchpad), at most 4 ranked areas with a drop
 order, HEAD/status checked at start and end, the minor-triage question, and the
-unenumerated-objection slot.
+unenumerated-objection slot. A multi-seat brief names one owner (file or seat) per shared fact
+(a count, a register row); other seats cite it rather than re-derive it.
 
 **Which seat.** Code tasks (SDD included) go to `implementer` on its default sonnet; `model:
 opus` only for a cross-module or contract change or a retry, with that reason in the brief's
