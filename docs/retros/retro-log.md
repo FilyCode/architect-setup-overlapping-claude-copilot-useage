@@ -430,3 +430,61 @@ Range 6696c44..7ae5aa4 (Bile_acid_database, branch p0-unblock, worktree, not mer
 - [x] R-20261025-5 skill-headers/wave-review.md: a branch that is not merged and whose full suite could not run carries a "MERGE GATE: full suite on the merge commit, job spec written" line in the ledger/plan status, and the wave is not marked closed without it — evidence: docs-sync D-3, tests run per file only — expected: the first action after #15 is a named job, not a memory.
 
 Objection (retro seat, unasked): the 5-seat plan critique plus 6-seat wave-end review cost about 17M review context for 330 lines of code, and the one defect class the reviewers could not test (licence wording, domain F1-F3) was settled by a single seat reading live web pages; nothing checked that the register rows L-D183/L-D184 are consumed by anyone before a public deposit.
+
+## 2026-10-25 EC523 report-readiness wave
+Range: `3ca7283..origin/main` does not resolve in this repo (git: unknown revision); the PRs (#7-#10, 8eed2b9 d495802 01d2e03 6bb174d) are in the EC523 repo, so I did not read `git log --stat`. The plan `docs/superpowers/plans/2026-10-25-report-readiness.md` is not in this repo's plans dir either; I used the pragmatism seat's table instead. Config-repo HEAD a78f052 at start; only the retro log is modified by me.
+
+### Scope and cost
+- Scope: 7 review seats on the generated results tables (E0b/E1/E2/E3), a plan from their findings, 5 implementer tasks, 4 PRs, 4 seed-swap jobs (8278847-8278850) and one all-tile pinhole job (8278873).
+- Cost (`wave_stats.py --since 2026-10-25`, main transcript; counts summed per-call context, so it overstates fresh tokens): main 167 calls, 35.4M, max 337k, 1 compaction. Subagents: critic 5.2M, anomaly 5.0M, domain 3.4M, implementer x5 3.4M, docs-sync 1.9M, alignment 1.3M, lean 0.35M, pragmatism 0.30M. `turn_limit_hits`: 1 (a636f47007122019d, the anomaly-hunter).
+
+### Worked
+- The wave-end seats found the defect class that the task reviews had not: pragmatism G-SEED lists domain F1/F2, anomaly F5/F6, docs B13a as one mechanism (every between-model CI excluding zero used s11, the best main seed). Seed-swap jobs 8278847-8278850 confirmed it, and the pinhole artefact was confirmed on all 1112 tiles (job 8278873: raw dClDice +0.017, filled -0.003). Both tests were zero or low compute.
+- The critic re-derived every number exactly (ec523-critic-calculations.md); pragmatism turned that into "stop auditing arithmetic" and moved the effort to the seed and pinhole questions (ec523-pragmatism.md:88). Cost saved: no further number audits.
+- Pragmatism split 11 plan items from deferred items with triggers (D2, D3, D10) and gave a "may quote / may NOT quote" list (lines 70-71); the stand-in y0 expiring 2 Nov was used to rank work.
+- Local gitleaks before merge when the Actions minutes ran out: the "failed" check never ran, and a local run substituted for it rather than the merge going through unchecked.
+
+### Did not work
+- Before the wave the controller generated tables that printed single-seed contrasts as `significant=True`, so the claim reached generated docs and had to be retracted from them. The task reviews (Tasks 4-6, final review) looked at code, not at which seed fed each CI; the seed check came only at wave end. Cost: one fix-up round across 4 PRs plus 4 jobs.
+- Plan boxes were ticked on "artifact exists", not on the handout's wording; pragmatism had to downgrade R2 boxes to "partial" (ec523-pragmatism.md row 8). Recurs in kind (see 2026-10-22 EnzymeFinder CDB wave, where a ticked step's claim of "203 differences" was contradicted by its own harness).
+- E2 compared control B at K4, outside its trained regime; the brief for Task 5 had named the matched K only for A (ledger "P1 ... per-model comparison K"), so it was caught at task review, not at the spec.
+- The anomaly-hunter hit 45 turns before writing CLOSING and was resumed once (5.0M context). Recurs (see 2026-10-25 BileAcidDB, 2026-10-15 R-20261015-2); that entry's R-20261025-1 raised domain-reviewer to 70 but anomaly-hunter was not named.
+- The 2-subagent cap refused a third dispatch. Recurs (see 2026-10-25 BileAcidDB, R-20261025-2: "at most 2 at once" proposed for dispatch-brief.md); I did not check whether that edit reached a78f052 text before this wave began.
+
+### Proposals
+- [ ] R-20261025-6 tools/results_tables (EC523 repo; a test beside it): the "significant" column renders only when a seed-swap row exists for the same contrast, else prints "single-seed (s11)"; add a test that fails when a between-model CI is rendered significant with one seed — evidence: every s11 CI flipped or shrank under 8278847-8278850; the generated tables printed `significant=True` — expected: the retraction class cannot reach a generated doc.
+- [ ] R-20261025-7 skill-headers/dispatch-brief.md (plan-step block): "Tick a box only against the promise's quoted wording; if the artifact only partly meets it, write `partial: <what is missing>`" — evidence: R2 boxes downgraded to partial at wave end; recurs (see 2026-10-22 CDB wave) — expected: fewer post-hoc downgrades. Replaces nothing; one line.
+- [ ] R-20261025-8 skill-headers/scientific-evidence.md: add "a between-model contrast is quoted only with its comparison K inside every arm's trained regime and its seed-swap result" as the standing gate, and run the seed-swap negative control before the first results table, not at wave end — evidence: control B at K4; s11-only CIs — expected: both issues caught at the spec, not wave end.
+- [ ] R-20261025-9 workspace-config/agents/anomaly-hunter.md: set `maxTurns` to 70 and "write CLOSING at turn 40 even if incomplete" — evidence: turn-limit hit and one resume; recurs (see 2026-10-25 BileAcidDB R-20261025-1, domain seat only) — expected: 0 resumes.
+- [ ] R-20261025-10 skill-headers/wave-review.md: when CI minutes are exhausted, a check that "failed" with no job log is recorded as "not run", and the local equivalent's command and output go in the PR — evidence: gitleaks check red without running — expected: a red check is not mistaken for a finding or ignored.
+
+Objection (retro seat, unasked): the generated-table pipeline made wrong inferences cheap to print and cheap to propagate; the review fan-out found this only after four PRs, so the order of work (tables first, seed-swap last) was the failure, not any single seat.
+
+## 2026-10-26 bileaciddb-r15-release-wave
+Range 6696c44..fe089bc (project repo, branch source-refresh-census; dd24c44 refresh outputs, 7565838 status docs, 898ad8a D10, fe089bc FIX-NOW). Config HEAD a78f052 at start; only the retro log is modified by me. Project HEAD fe089bc unchanged.
+
+### Scope and cost
+- Scope: D011-D013 approvals, retro config changes, refresh #15 return (test fix b2497bc, ff merge, merge-gate 59/59, post-#15 jobs), D10 cleanup, 7-seat release review, pragmatism triage, FIX-NOW commit (20 files, 921+/54-).
+- Cost (`wave_stats.py --since 2026-10-25T20:00`, summed per-call context, overstates fresh tokens): main 260 calls, 54.4M, max 344k, 1 compaction. Subagents: domain x3 12.9M, critic x3 10.4M, implementer x3 4.9M, anomaly 3.2M, inventory x2 2.0M, alignment x2 2.0M, security 1.9M, docs-sync x3 1.2M, pragmatism x3 1.0M, lean x3 0.7M, retro x2 0.3M. `turn_limit_hits`: 4 (domain, anomaly, security among them; I identified two by brief text only).
+
+### Worked
+- Pragmatism triage (pragmatism-officer.md headline 1-3): "#15 signable as is", stop diff tracing, one FIX-NOW commit, deferred items with triggers. It stopped a re-run (pre+classify array+post) for a 5-row/114-check/1-row defect, and rejected a premise-wrong gap (merge-gate PostgreSQL).
+- Merge gate named and run (merge_gate.sh, job 8283834, 59/59 in the audit dir): R-20261025-5 fired; the full suite on the merge commit was a job, not a memory.
+- docs-sync findings file exists under its own name (docs-sync.md, 55 lines, no controller marker) after R-20261025-3: the fix appears to work; I did not rerun it to confirm the mechanism.
+- Review artifacts (compare.py, counts.json, sample.txt, logs) were committed under docs/audits/2026-10-26-r15-review/ in fe089bc, so the review is reproducible.
+
+### Did not work
+- Order of operations: 7565838 rewrote README/PLANS/PROJECT_STATE/handoff as "built and verified; merged" before the review; fe089bc then rewrote the same four files (PROJECT_STATE +26, README +26, handoff 30 lines). Pragmatism headline 3: "fix text before the owner reads it. The owner signs prose; four seats show the prose overstates." Cost: two edit rounds on governance-adjacent docs, and D012/D011 wording needing owner approval again (triage row 24). Not seen before in this log.
+- First post15 job ran verify-release without the manifest argument (the project's transcript has the --manifest correction; post15.sh line 19 now passes the path); cost one job round. Prose rule existed; nothing checks the command shape.
+- Turn limits: 4 hits, three of them the seat types R-20261025-1/-9 targeted (domain 70, anomaly proposed 70 but unticked in this log; security at 40 not addressed). Recurs (see 2026-10-25 EC523 and BileAcidDB, 2026-10-15); each hit costs a resume plus the partially written file. Anomaly-hunter and security-specialist limits were not changed by the earlier proposals.
+- test_judge_tools failed identically at #14 (handoff 2026-10-15 lines 46-48 record the two anchor tests reading the rotating v0.3_previous/) and was fixed only at #15 (b2497bc): a known failing test was carried one refresh as a note, then re-hit. Cost: one failed post step and fix round at #15.
+- The review's six non-pragmatism seats read the same artifacts (domain 12.9M, critic 10.4M) while pragmatism (1.0M) made the decisions; findings count was large (stale counts L-D172 reported by 3 seats separately: alignment U4, docs 1.12, anomaly F2/F3).
+
+### Proposals
+- [ ] R-20261026-1 skill-headers/wave-review.md: "Status docs that say built/verified/merged/closed are written after the wave-end review and pragmatism triage, or marked DRAFT until then" — evidence: 7565838 then fe089bc rewrote the same four files after four seats found overstated prose — expected: one status-doc pass per release. Replaces nothing; one line.
+- [ ] R-20261026-2 tests/test_refresh_chain_cli.py (project repo, owner of its tests): make `verify-release` without a manifest argument exit non-zero with usage, and test that — evidence: first post15 job passed verify-release silently without --manifest (lost job round) — expected: the omission fails fast instead of passing.
+- [ ] R-20261026-3 workspace-config/agents/anomaly-hunter.md and security-specialist.md: `maxTurns` 70 and "append PARTIAL at turn 30" (same text as R-20261025-1) — evidence: turn hits for these types; recurs (see 2026-10-25 EC523 R-20261025-9, unticked) — expected: no resume rounds; apply R-20261025-9 rather than a new edit.
+- [ ] R-20261026-4 skill-headers/wave-review.md: a post-refresh test failure that is recorded in a handoff is entered in the ledger as an item with an owner and the next refresh's gate, not as a note — evidence: test_judge_tools at #14 (handoff 2026-10-15:46-48) re-failed at #15 — expected: fixed before the next refresh starts.
+- [ ] R-20261026-5 skill-headers/dispatch-brief.md (reviewer block): "name the file/section owner for each shared fact (counts, L-D172) in the brief; seats cite, do not re-derive" — evidence: L-D172 counts reported separately by three seats — expected: fewer duplicate findings; pragmatism's merge step shrinks.
+
+Objection (retro seat, unasked): the release was signable "as is" from the pragmatism ruling, yet a 7-seat fan-out (~30M context) ran on an internal-only, private, undeposited release; the trigger for the full review should have been the deposit, not the refresh.
