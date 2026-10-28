@@ -13,4 +13,12 @@ wave (minimum 3 seats, batched under the concurrency cap; lean-critic, always, i
 them: which tasks, files and abstractions the plan can drop or reuse) → pragmatism-officer → fix the plan
 before Task 1. Ask of every new check: what is its third state, and how does it say so?
 
+**Correction (2026-10-28, owner-approved):** the Calibration section below says "~35% identity really is the
+field-wide ceiling for reliable annotation transfer (Zallot 2019)". That is wrong as stated. ~35% is EFI-EST's SSN
+edge-drawing threshold; Zallot 2019 states the transfer sentence without a citation of its own, and the same paper's
+worked example needs ~58% identity to separate isofunctional clusters. Do not quote it as a field-wide transfer
+limit; cite a project's own low-identity measurements instead. Source:
+`projects/EnzymeFinder/docs/superpowers/specs/2026-09-06-instrument-not-readout-design.md:271-290`. The MA-104
+half of that sentence (a fixable 37.5% edge loss of ours) stands, and is still the point of the Calibration block.
+
 The rules below are the original workspace text, moved verbatim.
