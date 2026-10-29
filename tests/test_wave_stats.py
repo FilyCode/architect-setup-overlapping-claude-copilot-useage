@@ -54,3 +54,56 @@ def test_turn_limit_does_not_span_notifications():
     hit = ("<task-notification><task-id>hit2</task-id><status>completed</status><summary>Agent \"x\" "
            "stopped at its 60-turn limit</summary></task-notification>")
     assert ws.TURN_LIMIT.findall(done + "\n" + hit) == ["hit2"]
+
+
+# --- regressions found by the 2026-10-29 MeMES retro ------------------------------------
+# Both were verified against the pre-fix code before being fixed: the explicit-offset bound
+# returned 2 calls instead of 1, and the list-content notice returned [] instead of ["zzz"].
+
+def _tz_session(tmp_path):
+    """Two calls four hours apart, straddling a local-vs-UTC boundary."""
+    main = tmp_path / "tz.jsonl"
+    lines = [_call(1, 10_000, "2026-10-29T15:00:00Z"),   # 11:00 EDT
+             _call(2, 20_000, "2026-10-29T19:00:00Z")]   # 15:00 EDT
+    main.write_text("\n".join(json.dumps(x) for x in lines) + "\n")
+    return main
+
+
+def test_since_with_an_explicit_offset_is_honoured(tmp_path):
+    """14:00 EDT == 18:00Z, so only the 19:00Z call is in window."""
+    s = ws.summarize(_tz_session(tmp_path), since="2026-10-29T14:00:00-04:00")
+    assert s["main"]["calls"] == 1
+    assert s["main"]["context_tokens"] == 20_000
+
+
+def test_since_with_a_trailing_Z_is_honoured(tmp_path):
+    s = ws.summarize(_tz_session(tmp_path), since="2026-10-29T18:00:00Z")
+    assert s["main"]["calls"] == 1
+
+
+def test_a_midnight_bound_keeps_the_whole_day(tmp_path):
+    s = ws.summarize(_tz_session(tmp_path), since="2026-10-29T00:00:00Z")
+    assert s["main"]["calls"] == 2
+
+
+def test_an_entry_with_no_timestamp_is_kept(tmp_path):
+    """Silently dropping it would shrink the window without saying so."""
+    main = tmp_path / "nots.jsonl"
+    main.write_text(json.dumps({"message": {"id": "x", "usage": {"input_tokens": 7_000}}}) + "\n")
+    s = ws.summarize(main, since="2026-10-29T00:00:00Z")
+    assert s["main"]["calls"] == 1
+
+
+def test_turn_limit_notice_in_list_content_is_found(tmp_path):
+    """Notices arrive as list-of-blocks far more often than as a bare string.
+
+    The string-only version reported turn_limit_hits: [] for the 2026-10-29 MeMES wave, in
+    which two seats demonstrably hit their limits.
+    """
+    main = tmp_path / "blocks.jsonl"
+    note = ("<task-notification><task-id>zzz</task-id><summary>Agent \"y\" stopped at its "
+            "35-turn limit (partial result)</summary></task-notification>")
+    main.write_text(json.dumps({"timestamp": "2026-10-29T19:00:00Z",
+                                "message": {"role": "user",
+                                            "content": [{"type": "text", "text": note}]}}) + "\n")
+    assert ws.summarize(main)["turn_limit_hits"] == ["zzz"]
