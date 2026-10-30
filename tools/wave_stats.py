@@ -5,16 +5,28 @@ that hit their turn limit. Reads transcripts only; never the conversation text b
 turn-limit notices.
 
 Usage: wave_stats.py <main transcript .jsonl> [--since ISO-8601]
+                     [--repo <path> --range <a..b> --register <relpath>]
+
+`review_seats` is the share of summed subagent context spent in review seats (REVIEW_SEATS) over
+the --since window. With --repo/--range/--register the output also carries `register`: markdown
+table rows of that file added between a and b, and rows closed (Status column CLOSED at b, not
+CLOSED at a) when the table has a Status column.
 """
 import argparse
 import json
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
 from measure_context import _entries, agent_type
 
 TURN_LIMIT = re.compile(r"<task-id>(\w+)</task-id>(?:(?!</task-notification>).)*?stopped at its \d+-turn limit", re.S)
+
+REVIEW_SEATS = frozenset({
+    "critic-reviewer", "domain-reviewer", "alignment-officer", "anomaly-hunter", "docs-sync",
+    "inventory-auditor", "lean-critic", "pragmatism-officer", "retro-officer", "figure-auditor",
+    "security-specialist"})
 
 
 def _parse_since(since: str | None) -> datetime | None:
@@ -109,6 +121,8 @@ def summarize(main: Path, since: str | None = None) -> dict:
         s = subs.setdefault(agent_type(p), {"n": 0, "context_tokens": 0})
         s["n"] += 1
         s["context_tokens"] += sum(c)
+    total = sum(v["context_tokens"] for v in subs.values())
+    review = sum(v["context_tokens"] for k, v in subs.items() if k in REVIEW_SEATS)
     return {"main": {"calls": len(ctx), "context_tokens": sum(ctx), "max_context": max(ctx, default=0),
                      "compactions": compactions,
                      # summed context of calls at or above 500k over all summed context: the
@@ -116,15 +130,75 @@ def summarize(main: Path, since: str | None = None) -> dict:
                      # cost-weighted share (cache write/read and output priced) was ≈ 0.67, n = 15;
                      # compare this number only with itself across waves.
                      "share_above_500k": round(sum(c for c in ctx if c >= 500_000) / sum(ctx), 3) if ctx else 0.0},
-            "subagents": subs, "turn_limit_hits": limited}
+            "subagents": subs, "turn_limit_hits": limited,
+            "review_seats": {"context_tokens": review, "subagent_tokens": total,
+                             "share": round(review / total, 3) if total else 0.0}}
+
+
+def _cells(line: str) -> list[str]:
+    return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+def _register_rows(text: str) -> tuple[dict[str, str | None], bool]:
+    """(first cell -> status or None, whether any table has a Status column) over all markdown tables."""
+    rows: dict[str, str | None] = {}
+    has_status = False
+    table: list[str] = []
+    for line in text.splitlines() + [""]:
+        if line.lstrip().startswith("|"):
+            table.append(line)
+            continue
+        if len(table) >= 2:
+            head = [c.lower() for c in _cells(table[0])]
+            col = head.index("status") if "status" in head else None
+            has_status = has_status or col is not None
+            for ln in table[2:]:  # table[1] is the |---| separator
+                c = _cells(ln)
+                rows[c[0]] = c[col].replace("*", "").replace("`", "").strip().upper() if col is not None and col < len(c) else None
+        table = []
+    return rows, has_status
+
+
+def _show(repo: Path, rev: str, rel: str) -> str | None:
+    r = subprocess.run(["git", "-C", str(repo), "show", f"{rev}:{rel}"], capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else None
+
+
+def register_delta(repo: Path, rng: str, rel: str) -> dict:
+    """Rows added and (with a Status column) rows closed in markdown tables of `rel` between a and b of `a..b`.
+
+    A file absent at a counts as an empty register; absent at b is an error, not zero rows.
+    """
+    a, sep, b = rng.partition("..")
+    if not sep or not a or not b:
+        raise SystemExit(f"register delta needs --range a..b with both ends, got {rng!r}")
+    after = _show(repo, b, rel)
+    if after is None:
+        raise SystemExit(f"register delta: cannot read {rel} at {b} in {repo} (git show failed)")
+    before_rows, before_status = _register_rows(_show(repo, a, rel) or "")
+    after_rows, after_status = _register_rows(after)
+    out = {"status_column": "present" if after_status else "absent", "rows_before": len(before_rows),
+           "rows_after": len(after_rows), "rows_added": len(after_rows.keys() - before_rows.keys())}
+    if after_status:
+        out["rows_closed"] = sum(1 for k, v in after_rows.items()
+                                 if v and v.startswith("CLOSED") and not (before_rows.get(k) or "").startswith("CLOSED"))
+    return out
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("transcript")
     ap.add_argument("--since")
+    ap.add_argument("--repo")
+    ap.add_argument("--range", dest="rng")
+    ap.add_argument("--register")
     a = ap.parse_args(argv)
-    print(json.dumps(summarize(Path(a.transcript), a.since), indent=1))
+    if bool(a.repo) != bool(a.rng) or (a.register and not a.repo):
+        ap.error("--repo and --range go together, and --register needs both")
+    out = summarize(Path(a.transcript), a.since)
+    if a.register:
+        out["register"] = register_delta(Path(a.repo), a.rng, a.register)
+    print(json.dumps(out, indent=1))
     return 0
 
 

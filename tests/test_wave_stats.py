@@ -1,5 +1,6 @@
 # REPO/tests/test_wave_stats.py — per-session cost summary for the retro-officer seat
 import json
+import pytest
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
@@ -107,3 +108,82 @@ def test_turn_limit_notice_in_list_content_is_found(tmp_path):
                                 "message": {"role": "user",
                                             "content": [{"type": "text", "text": note}]}}) + "\n")
     assert ws.summarize(main)["turn_limit_hits"] == ["zzz"]
+
+
+# --- R-20261029-2: review-seat share and register delta ---------------------------------
+import subprocess  # noqa: E402
+
+
+def _git(repo, *args):
+    return subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                          check=True, capture_output=True, text=True).stdout.strip()
+
+
+def test_review_seat_share_of_subagent_context(tmp_path):
+    # fixture: critic-reviewer 42_000 (review seat), implementer 13_000 (not one)
+    s = ws.summarize(_session(tmp_path))
+    assert s["review_seats"] == {"context_tokens": 42_000, "subagent_tokens": 55_000, "share": round(42_000 / 55_000, 3)}
+
+
+def test_review_seat_share_is_zero_not_error_without_subagents(tmp_path):
+    main = tmp_path / "s.jsonl"
+    main.write_text(json.dumps(_call(1, 10)) + "\n")
+    assert ws.summarize(main)["review_seats"] == {"context_tokens": 0, "subagent_tokens": 0, "share": 0.0}
+
+
+REG_A = "# Register\n\n| ID | Title | Status |\n|---|---|---|\n| D-1 | one | OPEN |\n| D-2 | two | OPEN |\n"
+REG_B = REG_A.replace("D-1 | one | OPEN", "D-1 | one | CLOSED") + "| D-3 | three | OPEN |\n| D-4 | four | CLOSED |\n"
+
+
+def _repo(tmp_path, a_text, b_text, name="REGISTER.md"):
+    repo = tmp_path / "repo"
+    (repo / "docs").mkdir(parents=True)
+    _git(repo, "init", "-q")
+    (repo / "docs" / name).write_text(a_text)
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "a")
+    a = _git(repo, "rev-parse", "HEAD")
+    (repo / "docs" / name).write_text(b_text)
+    _git(repo, "commit", "-qam", "b")
+    return repo, f"{a}..{_git(repo, 'rev-parse', 'HEAD')}"
+
+
+def test_register_delta_counts_added_and_closed_rows(tmp_path):
+    repo, rng = _repo(tmp_path, REG_A, REG_B)
+    assert ws.register_delta(repo, rng, "docs/REGISTER.md") == {
+        "status_column": "present", "rows_before": 2, "rows_after": 4, "rows_added": 2, "rows_closed": 2}
+
+
+def test_register_without_status_column_reports_it_instead_of_zero_closed(tmp_path):
+    a = "| ID | Title |\n|---|---|\n| 1 | x |\n"
+    repo, rng = _repo(tmp_path, a, a + "| 2 | y |\n")
+    d = ws.register_delta(repo, rng, "docs/REGISTER.md")
+    assert d == {"status_column": "absent", "rows_before": 1, "rows_after": 2, "rows_added": 1}
+
+
+def test_register_absent_at_range_start_counts_every_row_as_added(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    (repo / "x").write_text("x")
+    _git(repo, "add", "x")
+    _git(repo, "commit", "-qm", "a")
+    a = _git(repo, "rev-parse", "HEAD")
+    (repo / "R.md").write_text(REG_A)
+    _git(repo, "add", "R.md")
+    _git(repo, "commit", "-qm", "b")
+    assert ws.register_delta(repo, f"{a}..HEAD", "R.md")["rows_added"] == 2
+
+
+def test_register_missing_at_range_end_is_an_error_naming_the_check(tmp_path):
+    repo, rng = _repo(tmp_path, REG_A, REG_B)
+    with pytest.raises(SystemExit, match="register delta"):
+        ws.register_delta(repo, rng, "docs/NOPE.md")
+
+
+def test_cli_repo_range_register_prints_both_sections(tmp_path, capsys):
+    repo, rng = _repo(tmp_path, REG_A, REG_B)
+    ws.main([str(_session(tmp_path)), "--repo", str(repo), "--range", rng, "--register", "docs/REGISTER.md"])
+    out = json.loads(capsys.readouterr().out)
+    assert out["review_seats"]["share"] == round(42_000 / 55_000, 3)
+    assert out["register"]["rows_added"] == 2
