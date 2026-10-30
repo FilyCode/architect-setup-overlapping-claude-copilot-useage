@@ -70,6 +70,13 @@ commit line in every implementer brief left the 60-turn hit rate at 22.0% (n=59)
 (n=64) before; seven proposals re-stated it in prose across five retro entries. The fix was
 structural: raise `maxTurns` (eda994d). Measure a prose rule's effect before re-proposing it.
 
+**Recurred 2026-10-28/29 (register and withdrawal rules; MeMES, SenC):** 5-6 retro entries
+(R-20261028-3/-5, R-20261029-1/-3/-9 in both entries) report register close-or-carry and
+withdrawal rules written as prose that never fired; only a gate did. **And a hook guards only
+the path it matches:** the 2026-10-24 MEMORY.md guard matched Write|Edit, every index write
+came through Bash, so it fired 0 times in 6 days (DECISION-030). Before trusting a guard, list
+the routes a write actually takes in the transcripts.
+
 ## `memory:` on a subagent grants unrestricted Write/Edit — `disallowedTools` cannot revoke it
 
 **Found:** 2026-08-18, while building `docs-sync`, a deliberately read-only agent meant to
@@ -142,3 +149,12 @@ deferred with triggers, 2 learnings promoted (above). R-20261024-6..9 arrived du
 stay open. Token check: DECISION-029 (main model pinned to opus-5-5; dispatch_guard and
 memory_budget hooks). MEMORY.md trimmed to budget twice; old CLI versions 2.1.308/309 deleted
 (home 5.4 → 4.9 GB). Evidence: `.superpowers/findings/2026-10-24/investigator-*.md`.
+
+**2026-10-30 (workspace-audit steps 0-5 + token check 3).** `claude doctor`: no installation
+issues (2.1.314). Retro: 19 open (2 more already applied: R-20261025-9, R-20261029-6); 6 applied
+(dispatch-brief R-20261025-7, R-20261028-1, R-20261029-8, R-20261024-6; wave-review R-20261025-10;
+scientific-evidence R-20261025-8; wave_stats R-20261029-2 in 1bd49eb), the rest deferred or handed
+to their projects; R-20261029-1..5 were issued twice by two entries (IDs not unique). One learning
+sub-line (above). DECISION-030: aim-keeper seat + aim_nudge, core rule 15 + ask_guard,
+model_guard, memory guard on Bash, provenance sidecars, transcript move script. Home 5.6 of 10 GB
+(transcripts 3.2 GB). Evidence: `.superpowers/findings/2026-10-30/investigator-*.md`.

@@ -19,6 +19,7 @@ import rule_map as rm  # noqa: E402
 SKILLS = ("dispatch-brief", "wave-review", "plan-critique", "verification-patterns",
           "scientific-evidence", "running-sge-jobs")
 PART = 12_000
+PART_BY_SKILL = {"dispatch-brief": 11_400}  # header grew with retro rules; keeps the body under its ceiling
 OLD_NAMES = ("Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills\n"
              "`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`\n"
              "and `scientific-evidence`; `scc.md` is `running-sge-jobs`.\n\n")
@@ -47,10 +48,10 @@ def spans(hist: Path, tsv: Path) -> list[Span]:
     return out
 
 
-def _chunks(items: list[Span]) -> list[list[Span]]:
+def _chunks(items: list[Span], limit: int = PART) -> list[list[Span]]:
     parts, cur, size = [], [], 0
     for s in items:
-        if cur and size + len(s.text.encode()) > PART:
+        if cur and size + len(s.text.encode()) > limit:
             parts.append(cur)
             cur, size = [], 0
         cur.append(s)
@@ -70,7 +71,7 @@ def _prov_rows(items: list[Span], dest: str) -> str:
 
 def build(name: str, hist: Path, tsv: Path, headers: Path, out: Path) -> None:
     mine = [s for s in spans(hist, tsv) if s.dest == f"skill:{name}"]
-    parts = _chunks(mine)
+    parts = _chunks(mine, PART_BY_SKILL.get(name, PART))
     d = out / name
     (d / "reference").mkdir(parents=True, exist_ok=True)
     for old in (d / "reference").glob("part-*.md"):

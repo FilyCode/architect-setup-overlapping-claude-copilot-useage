@@ -8,7 +8,9 @@ description: Rules for scientific claims from pipelines — absence only within 
 Before writing "absent", measure where the instrument sits in that stratum. When known biology
 and the data disagree, write both branches down before choosing one. Attack the result you
 hoped for at a finer stratum. When a tool writes two reports, check whether they are filtered
-differently.
+differently. A between-model contrast is quoted only with its comparison K inside every arm's
+trained regime and with its seed-swap result; run the seed-swap negative control before the
+first results table, not at wave end.
 
 The moved text below refers to "the same three-state discipline as everywhere else in this
 file": that file is now the `verification-patterns` skill. The rule itself: unknown is its own

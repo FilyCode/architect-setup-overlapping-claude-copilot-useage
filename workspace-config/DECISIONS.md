@@ -862,6 +862,66 @@ below half; revert a hook that moves nothing.
 
 ---
 
+### [2026-10-30] [DECISION-030]: Aim check, owner-question format, token check 3
+
+**Problem**: window 2026-10-24 23:47Z..10-30 17:53Z (5.76 days), 17,061 priced calls, 348.2M
+units (60.4M per calendar day, was 101M). DECISION-029 revisit: (a) every session started after
+the pin ran claude-opus-5-5, but two long sessions started 10-20/10-21 still ran claude-opus-5:
+123.7M (35.5%); repriced as opus-5-5 the same tokens cost 56.3M less; (b) 29 of 40 opus
+implementer first lines match the guard's regex (the 8/27 baseline used a different regex);
+the warning fired 9 times and no warned dispatch moved to sonnet; (c) the memory guard never
+fired: every MEMORY.md index write came through Bash, which its Write|Edit matcher cannot see,
+and the index was over budget again (7,544 bytes, 63 entries). Aim drift: 54 of 67 wave-close
+or fix-round transitions since 10-20 (81%, keyword heuristic, precision unchecked) restated no
+aim; 68 of 261 owner messages (26%) ask by hand for "what is done, open, next"; two sessions
+drifted (EnzymeFinder into advanced EC prediction; a consulting session into implementation).
+Owner questions: 276 in 111 AskUserQuestion calls; 87% marked a recommendation, 59% gave every
+option a pro and a con, and in a 16-question sample 3 were in plain words; no rule covered the
+format. Evidence: `.superpowers/findings/2026-10-30/investigator-token-cost-3.md`,
+`investigator-retro-drift-decisions.md` (gitignored); model shares re-derived by the controller
+from the call table.
+
+**Decision** (owner, 2026-10-30):
+1. Aims at three levels — wave (plan `**Goal:**`), phase, project — because a large project's
+   aim is too far away to judge a single step. New seat `aim-keeper` (forward-looking; opus,
+   30 turns) quotes them, says what the wave moved, labels each proposed next step SERVES /
+   FOUNDATION-FIRST / POLISH / DRIFT and drafts the owner question. It runs after the retro in
+   `wave-review`, at a third fix round, and when Claude proposes the next wave (core rule 8).
+   Hook `aim_nudge.py` (PreToolUse Agent and Write, warn only) reminds at retro-officer
+   dispatch, at the third fix-like implementer dispatch since the last aim-keeper, and when a
+   new plan or phase file is created.
+2. Core rule 15: owner decisions go through AskUserQuestion in plain words, codes explained,
+   `Pro:` and `Con:` per option, recommendation first. Hook `ask_guard.py` (PreToolUse
+   AskUserQuestion) denies a question once when an option lacks Pro:/Con: or a code is
+   unexplained; the identical resubmission passes (false-alarm escape).
+3. `model_guard.py` (UserPromptSubmit): shows the owner a message, at most hourly, in a session
+   still on claude-opus-5, to type `/model claude-opus-5-5`.
+4. `memory_budget.py` also runs on Bash commands that mention MEMORY.md.
+5. Skill provenance comments move from the loaded skill text to `provenance.tsv` sidecars
+   (`tools/build_skills.py`); dispatch-brief splits at 11,400 bytes so its body fits the ceiling.
+6. `tools/move_transcripts.sh`: moves `~/.claude/projects` (3.2 GB of the 10 GB home) to
+   `software/claude-projects` behind a symlink; the owner runs it with every session closed.
+7. Opus reviewer seats stay on opus (26.0M, 7.5%, would reprice lower on sonnet; quality trade
+   not taken). The opus-implementer guard stays warn-only (rate above half).
+
+**Alternatives rejected**: one far-away project aim only (owner: too far for big projects); an
+aim check by prompt rule only, or a hook only (a session judging its own drift is not
+independent; an agent on every boundary without a hook depends on someone remembering);
+a memory note for the question format (memory is read, not enforced); deleting old CLI versions
+this round (owner declined).
+
+**Best-practice reference**: code.claude.com/docs/en/hooks (PreToolUse `permissionDecision`,
+`additionalContext`, `systemMessage`); learnings.md "Prose rules do not hold; hooks do".
+
+**Revisit trigger**: next retro integration measures (a) the share of wave transitions with an
+aim-keeper run or quoted Goal line (from 13/67), (b) owner questions with Pro:/Con: on every
+option (from 59%) and ask_guard denials resubmitted unchanged (false alarms; tune the code regex
+if over a third), (c) claude-opus-5 share (expect ~0), (d) MEMORY.md over-budget events and
+whether they were trimmed. Drop the aim check if the owner's "what is done, open, next" share does
+not fall.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design

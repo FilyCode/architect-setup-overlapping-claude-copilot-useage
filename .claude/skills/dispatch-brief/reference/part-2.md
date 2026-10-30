@@ -5,6 +5,16 @@ Old file names in the moved text are retired: `subagent-dispatch.md` is now the 
 and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
 
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
+**Reviewers write findings down as they confirm them, not at the end.** A wave-end
+`critic-reviewer` on 2026-08-29 burned 162,646 tokens over 49 tool calls and returned a single
+sentence, because it was exploring five equally-weighted areas before composing one report, and
+hit its turn limit with everything still in its head. On the resume it was told to append each
+finding to a file the moment it was confirmed, to rank the areas, and to drop the bottom two if
+turns ran short — it then produced one Blocking and three lesser findings from the same budget.
+So: give reviewers a findings file, rank what you want checked, say explicitly what to drop, and
+prefer instructing them to *execute* a small script over reading more source. A short report
+with three confirmed findings beats an exhaustive one that never lands.
+
 **"The brief is wrong" is a first-class finding.** A retrospective on the MqnE_cofactor_finding
 project (2026-08-24) found reviewers repeatedly and correctly identifying that a plan or brief's
 *premise* — not the implementation — was wrong, then filing it as "plan-quality issue, not this
@@ -133,26 +143,4 @@ carries all of these; composing one is a single lookup rather than several indep
 Same shape applies to implementer dispatches, whose non-negotiable line is the contradiction slot:
 *"report anything in this brief that you found to be wrong."* W14 caught **fourteen** brief errors
 that way, nearly all the controller's.
-
-**Thirteenth: NEVER tell a reviewer the tree is clean. Tell it to check, at both ends.** A W2b-1
-review dispatch (2026-09-23) carried the line *"the working tree is clean and HEAD is frozen at
-`56993903`; no files are concurrently modified."* It was true when written and false within
-minutes — the controller kept committing review fixes while six seats ran. The domain seat
-objected that this is **the single paragraph most likely to manufacture a wrong finding, because
-it tells a reviewer not to look**, and it is right: a reviewer that believes the tree is frozen
-files drift findings against text already corrected. Replace it with the opposite instruction:
-*"HEAD moves during this review. Run `git log -1` and `git status --porcelain` at the START and at
-the END of your work and say whether they moved."* Two of that wave's best corrections came from
-one seat doing this unprompted, and a second seat caught a figure that had shifted under it
-mid-review. No rule required it; now one does.
-
-**Fourteenth: a findings file must be created BEFORE investigation, and the evidence is now
-three-for-three.** Already stated above as item 1, and W2b-1 supplied the cleanest demonstration
-yet: seat 1 hit its 40-turn limit having delivered **no report at all** — and its findings file
-held 125 lines with three confirmed findings, two of them against commits made within the hour,
-one of which (CI red at committed HEAD) was Blocking. Nothing was lost. Prior instances lost
-162,630 and 144,164 tokens respectively to the same turn limit, one having been told to append as
-it went and never creating the file. **State it as the agent's literal first action, before it
-reads the brief**, not as advice inside the brief — an agent that reads the brief first has
-already started investigating.
 

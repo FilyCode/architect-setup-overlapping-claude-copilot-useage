@@ -35,6 +35,8 @@ Detail and history for every line: `architect-setup-overlapping-claude-copilot-u
    - Before Task 1 of an architectural plan → `plan-critique`. A known-heavy problem (before any
      attempt) or a third failed fix → the escalation section of `plan-critique`.
    - End of a wave → `wave-review`. Self-verification is not independent review.
+   - A wave closes, a third fix round starts, or Claude (not the owner) proposes the next wave →
+     aim check: dispatch `aim-keeper`, then put its options to the owner (rule 15).
    - Writing or reviewing a test, gate or check, or claiming a fix works → `verification-patterns`.
    - A result that says absent, surprising or settled → `scientific-evidence`.
    - Writing, submitting or waiting on an SGE job → `running-sge-jobs`.
@@ -77,3 +79,10 @@ Detail and history for every line: `architect-setup-overlapping-claude-copilot-u
     that changes a printed claim, score or tier names its measured cost (job id or probe path),
     else it is labelled UNMEASURED and is not decided; one that asserts an absence or an external
     fact cites the command and its output, else it is written unverified.
+
+## Asking the owner
+15. Put an owner decision to the owner through AskUserQuestion, not as a question inside prose.
+    Each question stands alone in plain words: the background it needs, and every ID or code
+    explained on first use. Each option says what happens, then `Pro:` and `Con:`; the
+    recommended option comes first and is marked. Routine choices that do not change the
+    deliverable you decide and mention.

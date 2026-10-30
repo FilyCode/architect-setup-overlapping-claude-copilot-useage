@@ -30,6 +30,14 @@ job spec written" in its ledger and plan status, with the job spec's path; the w
 closed without that line. Status docs that say built, verified, merged or closed are written after
 the review and pragmatism triage, or marked DRAFT until then. A post-refresh test failure recorded
 in a handoff becomes a ledger item with an owner and the next refresh as its gate, never only a note.
+A CI check that is red with no job log (minutes exhausted) is recorded as not run; the PR carries
+the local equivalent's command and output.
+
+**Aim check, after the retro.** Before any new wave or fix round, dispatch `aim-keeper` with the
+project path, the wave's Goal line and commit range, and the next step on the table (say whether
+the owner or Claude proposed it). Put its owner question to the owner with AskUserQuestion
+(core rule 15) and record the answer in the ledger. The `aim_nudge` hook reminds at retro
+dispatch and at the third fix round.
 
 The rules below are the original workspace text, moved verbatim.
 
