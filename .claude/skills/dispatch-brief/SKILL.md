@@ -48,7 +48,6 @@ Old file names in the moved text are retired: `subagent-dispatch.md` is now the 
 and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
 
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
-<!-- from subagent-dispatch.md:3 -->
 ## Never dispatch "wait and report" as a subagent's task
 
 A dispatched subagent's context is expensive to reload — every "still waiting, check
@@ -59,7 +58,6 @@ polled `qstat`/`qacct` across ~4 separate round-trips at ~230k tokens each.
 Do not dispatch a subagent whose task is, or includes as a multi-turn loop, "wait for
 job/agent X to finish, then report." Instead:
 
-<!-- from subagent-dispatch.md:13 -->
 - **A subagent that submits an SGE job does not wait for it.** It submits, reports the job
   id and what artifact it expects, and stops. The caller waits (one backgrounded loop, per
   `scc.md`) and resumes the subagent with the result. Observed 2026-08-29: four subagents in
@@ -68,25 +66,21 @@ job/agent X to finish, then report." Instead:
   backgrounded-loop bullet below was written for exactly this case and did not hold, because
   **a loop inside a subagent still ends when that subagent's turn ends.** Making the handoff
   explicit costs one message; leaving it implicit costs a stalled agent *plus* the check.
-<!-- from subagent-dispatch.md:21 -->
 - If a *non-SGE* wait genuinely must happen inside a subagent as one internal step, it must
   do so inside a single `Bash(run_in_background=true)` shell-level loop — never repeated
   foreground status-check calls across turns. Note that `scc.md`'s "Waiting on a job without
   burning tokens" is **entirely SGE-specific** (`qstat`/`qacct`, `Eqw`/`hqw` states,
   `h_rt`-derived deadlines); only its shape generalises — one backgrounded loop, a deadline,
   and no repeated foreground polling. Do not follow its `qstat` mechanics for a non-SGE wait.
-<!-- from subagent-dispatch.md:27 -->
 - If the wait is the *entire* reason for dispatch, don't dispatch at all — the caller
   (main session or a fork) checks directly instead; it is near-free there since it is not
   reloading a subagent's accumulated history each time, and only dispatches the real
   downstream-processing subagent once the artifact exists.
-<!-- from subagent-dispatch.md:31 -->
 - The same applies to waiting on another dispatched subagent/fork: never re-message or
   nudge it on a timer to ask if it is done — either it delivers a task notification on
   completion, or (for `/loop` dynamic pacing) use `ScheduleWakeup` with a delay sized to
   the actual expected duration, never a short fixed interval "just in case."
 
-<!-- from subagent-dispatch.md:36 -->
 **An instruction is not a backstop — the caller must own every `qsub`.** On 2026-09-05 two
 agents stalled mid-wait at **176k and 285k tokens**, each having been told verbatim in its
 brief *"submit, report the job id, and STOP — a wait loop inside a subagent dies when your
@@ -101,11 +95,9 @@ submits, waits in one backgrounded loop, and resumes the agent with the result. 
 is not expressible rather than merely forbidden. Cost of the old way, measured: two stalled
 agents, two resume cycles, and one dirty tree that raced a suite run.
 
-<!-- from subagent-dispatch.md:50 -->
 ## A follow-up note is a task, not a comment
 
 When an agent finds that the fix belongs in a file it does not own, that finding becomes a
-<!-- from subagent-dispatch.md:53 -->
 **dispatched task with declared ownership in the same wave**. It does not become a comment.
 
 The evidence is uncomfortable. In one wave `pipeline/stages.py` gained **94 lines: 81 comment,
@@ -125,12 +117,10 @@ for who actually *calls* the new thing.** A four-task chain built a manifest fie
 call sites, added a typed enum — and nobody passed the value. Its own test passed the argument
 directly and stayed green.
 
-<!-- from subagent-dispatch.md:91 -->
 ## Every relayed figure carries its column, not only its n
 
 The rule that a stratified figure carries its `n` is necessary and **not sufficient**. Two
 agents measured the same wire on the same corpus and reported **1,577 (10.79%)** and
-<!-- from subagent-dispatch.md:95 -->
 **1,459 (9.98%)** — both correct, on `top_hit_identity` and `identity_to_donor` respectively.
 Separately, two artifacts disagreed on 87 rows because one `fuse()` call silently omitted a
 signal, and each was quoted as "the b10 corpus".
@@ -138,10 +128,8 @@ signal, and each was quoted as "the b10 corpus".
 An `n` without the column it was measured on is how **one number acquires two
 independent-looking sources**. State the artifact, the column, and the arm.
 
-<!-- from subagent-dispatch.md:102 -->
 ## A dispatch's factual claims become code
 
-<!-- from subagent-dispatch.md:104 -->
 **A figure relayed from a SUBAGENT'S REPORT is UNVERIFIED, exactly like a figure from a plan.**
 This section's rule was being read as binding the controller's own assertions only. It is not.
 W2 (2026-09-21) produced **six wrong citations in one wave, every one the controller's, none
@@ -152,7 +140,6 @@ copy-paste defect"*, which would have sent a reviewer to file a Critical against
 A relayed figure FEELS verified because somebody measured it. It is not, because the person
 putting it in front of an implementer did not.
 
-<!-- from subagent-dispatch.md:114 -->
 **A relayed figure carrying a DEFECT HYPOTHESIS is the highest-risk form.** Re-derive it before
 writing it, never after: the hypothesis is what makes it actionable, so a wrong one is acted on.
 
@@ -163,7 +150,6 @@ report — do not reconcile toward mine."* The implementer that received it reso
 indirection across 71 shell scripts, found the controller's number inverted, and **wrote
 nothing**. The other five errors were all caught after the fact.
 
-<!-- from subagent-dispatch.md:124 -->
 **Mechanical backstop: `scripts/check_citations.py`** (EnzymeFinder) preflights a brief, plan or
 report — `path:line` citations (printing the cited line, because existence is not correctness),
 paths, arithmetic including prose decompositions, `owner/repo@sha` pins, and `--flag`
@@ -185,16 +171,13 @@ The same applies in reverse: when a subagent challenges one of your claims, chec
 before overruling it. On the same day a subagent correctly disputed a stale-exemption claim and
 the caller's doubt was the thing that was wrong.
 
-<!-- from subagent-dispatch.md:145 -->
 **Every stratified or conditional figure carries its n, in the brief and in the finding.** A
 rate without a denominator propagates and cannot be checked by the agent receiving it. This
 failed **three times in one wave** on 2026-09-01 — twice *after* the same correction had already
 been made and committed. `0.0717` travelled through a plan, a task brief and a backlog entry
 before anyone established it was 16/223 with a 48-row comparator.
 
-<!-- from subagent-dispatch.md:151 -->
 **Prefer a short brief of verified claims to a long brief of relayed ones.** In that same wave,
-<!-- from subagent-dispatch.md:152 -->
 **eleven of twelve implementers found at least one factual error in the controller's brief**.
 The single agent that found none had the shortest brief: entirely verified against source
 beforehand, naming one specific prior error rather than restating a dozen measurements.
@@ -203,7 +186,6 @@ failed most were figures without their n, line-number citations (which drift as 
 lines), and *mechanism* descriptions, where being right that something failed does not make you
 right about why.
 
-<!-- from subagent-dispatch.md:160 -->
 **Contradiction slot — every dispatch, not just reviews.** Reviewers get an
 unenumerated-objection slot (see the wave-end section below); implementers had no equivalent,
 and they are the ones who read a brief closely enough to catch it being wrong. End every
@@ -217,7 +199,6 @@ and a corpus size understated by half. Each would otherwise have been written in
 verify-or-label rule above is the primary defence; this is the backstop for when it slips, and
 it costs one sentence.
 
-<!-- from subagent-dispatch.md:173 -->
 **Reviewers write findings down as they confirm them, not at the end.** A wave-end
 `critic-reviewer` on 2026-08-29 burned 162,646 tokens over 49 tool calls and returned a single
 sentence, because it was exploring five equally-weighted areas before composing one report, and

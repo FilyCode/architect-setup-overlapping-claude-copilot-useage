@@ -1,0 +1,30 @@
+source	file	title
+subagent-dispatch.md:3	SKILL.md	Never dispatch "wait and report" as a subagent's task
+subagent-dispatch.md:13	SKILL.md	**A subagent that submits an SGE job does not wait for it.** It submits, reports
+subagent-dispatch.md:21	SKILL.md	If a *non-SGE* wait genuinely must happen inside a subagent as one internal step
+subagent-dispatch.md:27	SKILL.md	If the wait is the *entire* reason for dispatch, don't dispatch at all — the cal
+subagent-dispatch.md:31	SKILL.md	The same applies to waiting on another dispatched subagent/fork: never re-messag
+subagent-dispatch.md:36	SKILL.md	An instruction is not a backstop — the caller must own every `qsub`.** On 2026-0
+subagent-dispatch.md:50	SKILL.md	A follow-up note is a task, not a comment
+subagent-dispatch.md:53	SKILL.md	dispatched task with declared ownership in the same wave**. It does not become a
+subagent-dispatch.md:91	SKILL.md	Every relayed figure carries its column, not only its n
+subagent-dispatch.md:95	SKILL.md	1,459 (9.98%)** — both correct, on `top_hit_identity` and `identity_to_donor` re
+subagent-dispatch.md:102	SKILL.md	A dispatch's factual claims become code
+subagent-dispatch.md:104	SKILL.md	A figure relayed from a SUBAGENT'S REPORT is UNVERIFIED, exactly like a figure f
+subagent-dispatch.md:114	SKILL.md	A relayed figure carrying a DEFECT HYPOTHESIS is the highest-risk form.** Re-der
+subagent-dispatch.md:124	SKILL.md	Mechanical backstop: `scripts/check_citations.py`** (EnzymeFinder) preflights a 
+subagent-dispatch.md:145	SKILL.md	Every stratified or conditional figure carries its n, in the brief and in the fi
+subagent-dispatch.md:151	SKILL.md	Prefer a short brief of verified claims to a long brief of relayed ones.** In th
+subagent-dispatch.md:152	SKILL.md	eleven of twelve implementers found at least one factual error in the controller
+subagent-dispatch.md:160	SKILL.md	Contradiction slot — every dispatch, not just reviews.** Reviewers get an
+subagent-dispatch.md:173	SKILL.md	Reviewers write findings down as they confirm them, not at the end.** A wave-end
+subagent-dispatch.md:183	reference/part-2.md	"The brief is wrong" is a first-class finding.** A retrospective on the MqnE_cof
+subagent-dispatch.md:191	reference/part-2.md	Concurrent dispatches need declared file ownership
+subagent-dispatch.md:528	reference/part-2.md	Model and effort tiering for any subagent dispatch
+subagent-dispatch.md:593	reference/part-2.md	Every dispatch carries the environment-invariants block
+subagent-dispatch.md:607	reference/part-2.md	**Name the repo's own test-environment traps**: autouse fixtures in `conftest.py
+subagent-dispatch.md:613	reference/part-2.md	Generate a task's brief at dispatch time, not up front
+subagent-dispatch.md:657	reference/part-2.md	The review-dispatch template — because recall is the failure, not discipline
+subagent-dispatch.md:706	reference/part-2.md	Thirteenth: NEVER tell a reviewer the tree is clean. Tell it to check, at both e
+subagent-dispatch.md:728	reference/part-3.md	Fifteenth: `cp` after a `--write` is a fifth shared-worktree hazard.** The four 
+subagent-dispatch.md:751	reference/part-3.md	Twelfth item, and it belongs with the contradiction slot: say that your own summ

@@ -5,7 +5,6 @@ Old file names in the moved text are retired: `subagent-dispatch.md` is now the 
 and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
 
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
-<!-- from subagent-dispatch.md:516 -->
 - a **domain-role** reviewer if the problem is domain-shaped, same pattern as elsewhere in
   this file.
 
@@ -18,11 +17,9 @@ Before committing to a fix approach, run the combined research/review/domain fin
 through `pragmatism-officer` — a problem heavy enough to earn a wave still deserves a fix
 sized to what's actually at stake, not the largest one the wave surfaced.
 
-<!-- from subagent-dispatch.md:633 -->
 ## Three-state is a plan-time checklist item, not a review-time catch
 
 W14 ruled the same way five separate times (its R15, R19, R20, R21, R24), each on code written
-<!-- from subagent-dispatch.md:636 -->
 **during that wave to fix that class**: a check that could not express "deliberately absent", where
 the proposed fix removed the thing from view instead of teaching the check to see it — a marker
 nobody writes, rows excluded rather than accounted for, a claim rewritten so the checker stops

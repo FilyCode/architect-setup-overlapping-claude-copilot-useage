@@ -1,0 +1,57 @@
+source	file	title
+verification.md:7	SKILL.md	The shapes this takes
+verification.md:9	SKILL.md	An output file predates the fix, or was never regenerated. Check mtimes against 
+verification.md:11	SKILL.md	A clean exit code with no artifact. A tool that catches its own errors exits 0 h
+verification.md:13	SKILL.md	A comment or docstring describes a change the code below it never received. Afte
+verification.md:15	SKILL.md	A plan's own example code carries the bug. Re-derive maths, library behaviour an
+verification.md:18	SKILL.md	A field survives the forward path but is dropped by checkpoint serialization, so
+verification.md:20	SKILL.md	A cached column or stored flag is trusted as current. Re-check against the live 
+verification.md:22	SKILL.md	A gate that passes because it never exercises the path in use. A regression chec
+verification.md:26	SKILL.md	A parser validated against a fixture its own author wrote. The fixture encodes t
+verification.md:29	SKILL.md	Two artifacts compared positionally when their row order is not guaranteed. Alig
+verification.md:32	SKILL.md	A check that cannot fail, because it matches the wrong field. A docstring statin
+verification.md:34	SKILL.md	A test that fails *on the fix* — the inverse of the bullet above, and it does fa
+verification.md:41	SKILL.md	A named metric appears in a governance doc as evidence without three basic check
+verification.md:48	SKILL.md	**Positive-control corollary:** if a positive control scores below a candidate o
+verification.md:51	SKILL.md	A number that supports or closes a claim in a governance doc (decisions/findings
+verification.md:55	SKILL.md	Report-generating code contains a hardcoded numeric literal in its prose output,
+verification.md:59	SKILL.md	Two populations/rates/groups get compared without first listing every axis they 
+verification.md:63	SKILL.md	An isolation run credited with more than it executed. Isolating a diff to find *
+verification.md:74	SKILL.md	A green mocked test over a code path that cannot reach its service at all. Mocke
+verification.md:84	SKILL.md	A claim written into multiple locations gets its scope qualifier updated in only
+verification.md:91	SKILL.md	A three-state value collapsed back to two at a boundary its author did not own. 
+verification.md:103	SKILL.md	**A check that compares a derived quantity between two populations read through 
+verification.md:110	SKILL.md	**Where a record carries both a generated field and a hand-written one, the hand
+verification.md:117	SKILL.md	**When you correct a false statement, check what was DECIDED on it.** A false pr
+verification.md:123	SKILL.md	**Four shape gates cannot detect decay.** A gate that validates a record's *shap
+verification.md:129	SKILL.md	A claim that a signal is live, or dark, argued from wiring rather than measured.
+verification.md:136	SKILL.md	A boundary held constant while the thing producing it changed meaning, with no v
+verification.md:142	reference/part-2.md	A test made vacuous by a change that never edited it. `test_fusion_is_monotone_i
+verification.md:149	reference/part-2.md	**A capability claimed as "implemented" with no call path.** This workspace requ
+verification.md:221	reference/part-2.md	**Match the command as invoked, not as idealised.** `^git log\b` failed to cover
+verification.md:223	reference/part-2.md	**A positive control built from a convenient fixture proves nothing.** The `-l` 
+verification.md:227	reference/part-2.md	**Check the aggregate's distribution before optimising for it.** "98.8% of token
+verification.md:247	reference/part-2.md	The earlier line in this file that "every other command runs raw, so grep/find/d
+verification.md:250	reference/part-2.md	Before blaming the wrapper, check your own flags. A 0-vs-1 discrepancy that look
+verification.md:254	reference/part-2.md	Before overwriting** a canonical-named output with a `--redo`-style regeneration
+verification.md:258	reference/part-2.md	A stage that filters its own input must report what it dropped.** An omission fr
+verification.md:270	reference/part-2.md	This binds the CONTROLLER'S OWN counts, not only reviewers' absence claims.** W2
+verification.md:279	reference/part-2.md	Use `command grep` to find candidates, and a parser to count them.** `command gr
+verification.md:298	reference/part-2.md	A number in a comment is a claim and decays like one.** On 2026-09-05 a correct 
+verification.md:305	reference/part-2.md	**A fix copied from a sibling module, without opening the sibling's CALLER.** Th
+verification.md:307	reference/part-2.md	**RED-confirmed proves a fix is EFFECTIVE; it says nothing about whether it is S
+verification.md:312	reference/part-2.md	**A RED proof run from inside `tests/` can silently execute the CURRENT tree, no
+verification.md:327	reference/part-2.md	**A document that CLAIMS to be generated, and is not, decays faster than one tha
+verification.md:337	reference/part-2.md	**A gate that knows the answer and does not print it is half a gate.** `report_o
+verification.md:346	reference/part-3.md	**Making a no-op live is a behaviour change, and must not also move its default.
+verification.md:358	reference/part-3.md	**A boundary test that does not probe the disputed interval cannot fail.** The s
+verification.md:497	reference/part-3.md	Reporting.** State what was run and what it returned. If tests fail, say so with
+verification.md:500	reference/part-3.md	A plan's own tests and fixtures are suspects, not specifications
+verification.md:505	reference/part-3.md	one never exercised the state it existed to protect — the `UNMEASURED` branch of
+verification.md:507	reference/part-3.md	one asserted a branch that never executes (`if "ef_ec_confidence" in text:` wher
+verification.md:509	reference/part-3.md	one used a fixture that could not trip its own check;
+verification.md:510	reference/part-3.md	two could not run in CI at all, because they silently depended on a machine-loca
+verification.md:513	reference/part-3.md	So: tests arriving in a brief are drafts.** Every dispatch that hands an impleme
+verification.md:518	reference/part-3.md	The convenient-fixture rule now has a worked instance, and it is embarrassing en
+verification.md:531	reference/part-3.md	Execute the plan's own claims before Task 1
+verification.md:550	reference/part-3.md	Watch for the asymmetry.** These rules are applied reliably *outward* — to dispa

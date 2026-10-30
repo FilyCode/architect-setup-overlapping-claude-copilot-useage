@@ -22,21 +22,17 @@ Old file names in the moved text are retired: `subagent-dispatch.md` is now the 
 and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
 
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
-<!-- from verification.md:372 -->
 - `selD` is itself a selenoprotein, so its in-frame UGA defeats gene calling — 66 of 73
   genomes called SelD-negative carried a near-full-length unannotated *selD* in their DNA;
-<!-- from verification.md:374 -->
 - `TIGR00475` (SelB) sits a median **32.6 bits** over its trusted cutoff in Actinomycetota
   against **209** in Pseudomonadota, and Actinomycetota SelA+/SelB− is **46.7%** of the
   published orphan count;
-<!-- from verification.md:377 -->
 - `RF01852` (tRNA-Sec) declares **TC 47.00 against NC 46.90** — a **0.1-bit** discrimination
   band — and Campylobacterota's surviving calls cluster **3.2 bits** over the gate against
   31.0 for Pseudomonadota.
 
 Each was read as biology before it was read as instrumentation. So:
 
-<!-- from verification.md:383 -->
 - **Before writing "X is absent in C", measure where the instrument sits in C.** Report the
   margin between C's surviving calls and the cutoff beside the same margin elsewhere. A clade
   whose calls pile onto the gate cannot support an absence claim, and the pile-up is itself
@@ -74,7 +70,6 @@ Each was read as biology before it was read as instrumentation. So:
   the same margin elsewhere. In the originating project that was Campylobacterota's
   tRNA-Sec calls clustering **3.2 bits** over the gate against **31.0** for
   Pseudomonadota, and that leg stands on its own.
-<!-- from verification.md:420 -->
 - **A general score depression is a mechanism, not a verdict.** Campylobacterota scores lower
   on *every* selenium model (SelA 0.88, SelD 0.81, SelB 0.65 of Pseudomonadota's median). That
   makes "the cutoff is failing this clade" plausible; it does not make it true. Test it against
@@ -84,19 +79,16 @@ Each was read as biology before it was read as instrumentation. So:
   What discriminated was a *relational* measure the negatives could not fake (the Sec model
   outscoring the generic tRNA model at the same locus: 16/16 in the test arm, **0/80** in
   controls).
-<!-- from verification.md:429 -->
 - **When known biology says a thing must be present and the data says absent, write BOTH
   branches down before choosing.** Branch A, the instrument is failing — then name how, measure
   it, and the failure mode is a finding in its own right. Branch B, the premise does not hold
   here — then you have found something. A write-up naming only branch A has not done the work.
   The phrasing that marks the error is *"X must be true, therefore the measurement is wrong"*;
   it is usually right, which is exactly why it is invisible when it is not.
-<!-- from verification.md:435 -->
 - **An instrument-driven absence and a real absence are different states and must be typed as
   such** — the same three-state discipline as everywhere else in this file, applied to the
   detector rather than to the value.
 
-<!-- from verification.md:439 -->
 **Attack the results that CONFIRMED what you expected, not only the surprising ones.** Effort
 is allocated by surprise, so confirming results are the least audited and the most likely to be
 quietly wrong. Measured on 2026-09-25: a wave's own headline negative — "not one of 3,866 fusion
@@ -139,20 +131,16 @@ that is really 816) and moved a project's core population by 3.
 
 Generalising, because the specific flag is not the point:
 
-<!-- from verification.md:481 -->
 - **Any tool with more than one output format may gate them differently.** Read the manual
   for the format you are parsing, not for the tool. The same applies to summary-vs-detail
   reports, `--long`/`--short` modes, and API "list" versus "get" endpoints that apply
   different default filters.
-<!-- from verification.md:485 -->
 - **Prefer the report whose UNIT matches your question.** A membership question ("does this
   genome have the gene?") is a sequence-level question; a coordinate question ("where does
   the domain align?") is a domain-level one. The pipeline above needed both and collected one.
-<!-- from verification.md:488 -->
 - **When two reports should agree, compute the difference and store it**, with a third state
   for "this run produced only one of them, so the gap is NOT MEASURABLE". A clean zero and an
   unmeasurable gap are different, and collapsing them is the error this file names most often.
-<!-- from verification.md:491 -->
 - **The symptom to watch for is a phylum, class or subgroup that looks "marginal" on one
   instrument.** That was read here as a biological signal (a model failing a clade) for a
   whole investigation before anyone re-ran the search a different way. A subgroup pressed

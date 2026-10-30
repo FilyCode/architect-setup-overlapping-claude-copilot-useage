@@ -1,0 +1,13 @@
+source	file	title
+verification.md:372	SKILL.md	`selD` is itself a selenoprotein, so its in-frame UGA defeats gene calling — 66 
+verification.md:374	SKILL.md	`TIGR00475` (SelB) sits a median **32.6 bits** over its trusted cutoff in Actino
+verification.md:377	SKILL.md	`RF01852` (tRNA-Sec) declares **TC 47.00 against NC 46.90** — a **0.1-bit** disc
+verification.md:383	SKILL.md	**Before writing "X is absent in C", measure where the instrument sits in C.** R
+verification.md:420	SKILL.md	**A general score depression is a mechanism, not a verdict.** Campylobacterota s
+verification.md:429	SKILL.md	**When known biology says a thing must be present and the data says absent, writ
+verification.md:435	SKILL.md	**An instrument-driven absence and a real absence are different states and must 
+verification.md:439	SKILL.md	Attack the results that CONFIRMED what you expected, not only the surprising one
+verification.md:481	SKILL.md	**Any tool with more than one output format may gate them differently.** Read th
+verification.md:485	SKILL.md	**Prefer the report whose UNIT matches your question.** A membership question ("
+verification.md:488	SKILL.md	**When two reports should agree, compute the difference and store it**, with a t
+verification.md:491	SKILL.md	**The symptom to watch for is a phylum, class or subgroup that looks "marginal" 

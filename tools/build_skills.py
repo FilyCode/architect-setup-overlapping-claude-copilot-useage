@@ -5,6 +5,8 @@ Each mapped item's span (its line up to the next item in the same file) is copie
 into the skill named by `skill:<name>` in docs/history/rule-map.tsv. A skill whose moved text
 exceeds PART bytes is split into reference/part-N.md files, listed in SKILL.md before the moved
 text. `body_text()` reverses the assembly; the tests use it to prove the bodies are verbatim.
+Provenance (source file:line of each span) is written to `<skill>/provenance.tsv`, a sidecar that
+SKILL.md does not reference, so it costs no context; the loaded files carry no provenance comments.
 """
 import argparse
 import sys
@@ -21,7 +23,7 @@ OLD_NAMES = ("Old file names in the moved text are retired: `subagent-dispatch.m
              "`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`\n"
              "and `scientific-evidence`; `scc.md` is `running-sge-jobs`.\n\n")
 MARK = "<!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->\n"
-PROV = "<!-- from "
+PROVENANCE = "provenance.tsv"
 
 
 @dataclass(frozen=True)
@@ -59,7 +61,11 @@ def _chunks(items: list[Span]) -> list[list[Span]]:
 
 
 def _render(items: list[Span]) -> str:
-    return "".join(f"{PROV}{s.file}:{s.line} -->\n{s.text}" for s in items)
+    return "".join(s.text for s in items)
+
+
+def _prov_rows(items: list[Span], dest: str) -> str:
+    return "".join(f"{s.file}:{s.line}\t{dest}\t{s.title[:80]}\n" for s in items)
 
 
 def build(name: str, hist: Path, tsv: Path, headers: Path, out: Path) -> None:
@@ -69,6 +75,7 @@ def build(name: str, hist: Path, tsv: Path, headers: Path, out: Path) -> None:
     (d / "reference").mkdir(parents=True, exist_ok=True)
     for old in (d / "reference").glob("part-*.md"):
         old.unlink()
+    prov = _prov_rows(parts[0] if parts else [], "SKILL.md")
     header = (headers / f"{name}.md").read_text().rstrip("\n") + "\n"
     if len(parts) > 1:
         header += "\n## Reference files (read the one you need)\n\n"
@@ -77,9 +84,11 @@ def build(name: str, hist: Path, tsv: Path, headers: Path, out: Path) -> None:
             header += f"- See [reference/part-{n}.md](reference/part-{n}.md) — {titles}\n"
             (d / "reference" / f"part-{n}.md").write_text(
                 f"# {name} — reference part {n}\n\n{OLD_NAMES}{MARK}{_render(part)}")
+            prov += _prov_rows(part, f"reference/part-{n}.md")
     else:
         (d / "reference").rmdir()
     (d / "SKILL.md").write_text(f"{header}\n{OLD_NAMES}{MARK}{_render(parts[0] if parts else [])}")
+    (d / PROVENANCE).write_text("source\tfile\ttitle\n" + prov)
 
 
 def build_all(hist: Path, tsv: Path, headers: Path, out: Path) -> None:
@@ -88,8 +97,7 @@ def build_all(hist: Path, tsv: Path, headers: Path, out: Path) -> None:
 
 
 def _moved(path: Path) -> str:
-    text = path.read_text().split(MARK, 1)[1]
-    return "".join(ln for ln in text.splitlines(keepends=True) if not ln.startswith(PROV))
+    return path.read_text().split(MARK, 1)[1]
 
 
 def body_text(skill_dir: Path) -> str:

@@ -1,0 +1,33 @@
+source	file	title
+subagent-dispatch.md:339	SKILL.md	Brainstorming: research-scout
+subagent-dispatch.md:361	SKILL.md	Plan writing: inventory-auditor
+subagent-dispatch.md:381	SKILL.md	Plan review before implementation
+subagent-dispatch.md:386	SKILL.md	plan-critique wave** against the plan and its spec. Same mechanics as wave-end r
+subagent-dispatch.md:391	SKILL.md	Reuse `critic-reviewer` (plan-shaped: feasibility, missing tasks, edge cases) an
+subagent-dispatch.md:395	SKILL.md	Scale the number of dispatches to the plan's size and complexity: **minimum 3**
+subagent-dispatch.md:404	SKILL.md	Tell each dispatch to verify cheap claims empirically, not just read the plan — 
+subagent-dispatch.md:409	SKILL.md	Blocking/Important findings against the plan get fixed in the plan doc directly,
+subagent-dispatch.md:412	SKILL.md	A reviewer may surface an unrelated pre-existing codebase defect while checking 
+subagent-dispatch.md:420	SKILL.md	Once the plan-critique wave's findings are in, dispatch `pragmatism-officer` ove
+subagent-dispatch.md:426	SKILL.md	The Calibration block — required before the critique wave
+subagent-dispatch.md:439	SKILL.md	**Vision context** — which layer or axis of the project's north-star this serves
+subagent-dispatch.md:442	SKILL.md	**Realistic target** — what this achieves when it works correctly. Not the aspir
+subagent-dispatch.md:443	SKILL.md	**General limits vs our limits** — every constraint named as either field-wide *
+subagent-dispatch.md:447	SKILL.md	**Standard** — the bar is *at least* current tool and literature standard, bette
+subagent-dispatch.md:449	SKILL.md	**Does the named standard already do this?** Check the tool you just named as th
+subagent-dispatch.md:457	SKILL.md	**Any threshold or cutoff: universal, dynamic, or declared dataset-specific.** A
+subagent-dispatch.md:465	SKILL.md	Hard gate when ANY of these hold** — the critique wave rejects a plan whose Cali
+subagent-dispatch.md:469	SKILL.md	introduces a new capability or layer (as opposed to extending one that already r
+subagent-dispatch.md:470	SKILL.md	has 5 or more tasks
+subagent-dispatch.md:471	SKILL.md	introduces an external tool, database, or data source
+subagent-dispatch.md:472	SKILL.md	asserts any accuracy, coverage, recall, or performance expectation
+subagent-dispatch.md:478	SKILL.md	Self fact-check before dispatching.** The caller verifies the Calibration block'
+subagent-dispatch.md:486	SKILL.md	Unsettled questions become a research task, during plan-writing.** Whatever the 
+subagent-dispatch.md:494	SKILL.md	Escalate to a research/review wave instead of continuing to guess
+subagent-dispatch.md:500	SKILL.md	**Known-heavy problem, before any attempt** — matches a pattern that's previousl
+subagent-dispatch.md:504	SKILL.md	**`systematic-debugging`'s own 3+-failed-fixes gate** (Phase 4.5: "discuss with 
+subagent-dispatch.md:511	SKILL.md	a **research** pass (`research-scout` or a web-search-capable dispatch) for prio
+subagent-dispatch.md:513	SKILL.md	a **review/audit** pass (`critic-reviewer`-shaped) that re-derives what's actual
+subagent-dispatch.md:516	reference/part-2.md	a **domain-role** reviewer if the problem is domain-shaped, same pattern as else
+subagent-dispatch.md:633	reference/part-2.md	Three-state is a plan-time checklist item, not a review-time catch
+subagent-dispatch.md:636	reference/part-2.md	during that wave to fix that class**: a check that could not express "deliberate

@@ -5,7 +5,6 @@ Old file names in the moved text are retired: `subagent-dispatch.md` is now the 
 and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
 
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
-<!-- from subagent-dispatch.md:183 -->
 **"The brief is wrong" is a first-class finding.** A retrospective on the MqnE_cofactor_finding
 project (2026-08-24) found reviewers repeatedly and correctly identifying that a plan or brief's
 *premise* — not the implementation — was wrong, then filing it as "plan-quality issue, not this
@@ -14,7 +13,6 @@ than a code change. When a reviewer flags that the brief itself is wrong, escala
 severity its content would warrant if it were an implementation bug, and route it back to
 whoever owns the plan — don't let the out-of-scope label itself close it out.
 
-<!-- from subagent-dispatch.md:191 -->
 ## Concurrent dispatches need declared file ownership
 
 Never dispatch two implementers that touch the same file. When several tasks queue behind one
@@ -37,7 +35,6 @@ An agent that waited while other commits landed is working from a stale read: te
 changed underneath it and instruct it to re-read before editing. Also tell it which currently
 failing checks are *not* its own, or it will start repairing someone else's work.
 
-<!-- from subagent-dispatch.md:528 -->
 ## Model and effort tiering for any subagent dispatch
 
 Claude Code subagents default to `model: inherit` — same model as the parent session —
@@ -70,20 +67,17 @@ A named agent under `.claude/agents/` already declares its own model/effort in i
 front matter — that is the actual source of truth. Read the agent file rather than
 keeping a duplicate lookup table here.
 
-<!-- from subagent-dispatch.md:593 -->
 ## Every dispatch carries the environment-invariants block
 
 W14 added each of these reactively, after the incident that motivated it. They belong in the
 template.
 
-<!-- from subagent-dispatch.md:607 -->
 - **Name the repo's own test-environment traps**: autouse fixtures in `conftest.py` that override
   what is deployed, and CI's real `-k`/`-m` filter expression. A W14 test was marked `slow` and
   would still have run on **every PR**, because this repo's convention pairs that marker with an
   env opt-in and the marker alone excludes nothing. The reviewer found it by running CI's actual
   filter with `--collect-only` rather than reasoning about it.
 
-<!-- from subagent-dispatch.md:613 -->
 ## Generate a task's brief at dispatch time, not up front
 
 W14 generated all eight briefs early, then reordered two waves for file-contention reasons. A brief
@@ -91,7 +85,6 @@ then instructed its implementer to run a script that a not-yet-dispatched task w
 The implementer did the right thing — skipped it and said so — but a brief that references another
 task's output is invalidated by any resequencing, silently.
 
-<!-- from subagent-dispatch.md:657 -->
 ## The review-dispatch template — because recall is the failure, not discipline
 
 W14's wave-end reviewer hit its turn limit having written **nothing**: 162,630 tokens, 44 tool calls,
@@ -141,7 +134,6 @@ Same shape applies to implementer dispatches, whose non-negotiable line is the c
 *"report anything in this brief that you found to be wrong."* W14 caught **fourteen** brief errors
 that way, nearly all the controller's.
 
-<!-- from subagent-dispatch.md:706 -->
 **Thirteenth: NEVER tell a reviewer the tree is clean. Tell it to check, at both ends.** A W2b-1
 review dispatch (2026-09-23) carried the line *"the working tree is clean and HEAD is frozen at
 `56993903`; no files are concurrently modified."* It was true when written and false within

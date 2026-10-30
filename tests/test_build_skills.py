@@ -51,3 +51,16 @@ def test_moved_text_says_where_old_file_names_went(tmp_path):
             for old, skill in (("subagent-dispatch.md", "dispatch-brief"), ("verification.md", "verification-patterns"),
                                ("scc.md", "running-sge-jobs")):
                 assert old in note and skill in note, (f, old)
+
+
+def test_loaded_files_carry_no_provenance_comments_and_sidecar_covers_every_span(tmp_path):
+    bs.build_all(HIST, MAP, ROOT / "skill-headers", tmp_path)
+    for name in bs.SKILLS:
+        d = tmp_path / name
+        for f in [d / "SKILL.md"] + sorted(d.glob("reference/*.md")):
+            assert "<!-- from " not in f.read_text(), f
+        rows = (d / bs.PROVENANCE).read_text().splitlines()[1:]
+        assert [r.split("\t")[0] for r in rows] == [f"{s.file}:{s.line}" for s in _spans_for(name)], name
+        for r in rows:
+            assert (d / r.split("\t")[1]).exists(), r
+        assert bs.PROVENANCE not in (d / "SKILL.md").read_text(), name  # sidecar must not be loaded via a link

@@ -1,0 +1,16 @@
+source	file	title
+subagent-dispatch.md:213	SKILL.md	Wave-end review (additive — the generic reviewer stays available)
+subagent-dispatch.md:222	SKILL.md	Self-verification is not independent review.** Don't skip dispatching a reviewer
+subagent-dispatch.md:237	SKILL.md	Minor-triage content test.** Before filing a review finding as Minor, answer in 
+subagent-dispatch.md:266	SKILL.md	Unenumerated-objection slot.** Every review dispatch — wave-end or ad hoc — ends
+subagent-dispatch.md:272	SKILL.md	Domain-role reviewer at wave end, not only after a crisis.** Alongside critic-re
+subagent-dispatch.md:286	SKILL.md	Anomaly-hunter at wave end — the only seat whose job is to REOPEN things.** Alon
+subagent-dispatch.md:306	SKILL.md	Inventory-auditor when a wave adds new capability.** Alongside critic-reviewer/
+subagent-dispatch.md:318	SKILL.md	Pragmatism-officer runs last, after findings exist.** Once critic-reviewer/align
+subagent-dispatch.md:560	SKILL.md	Run the fast gates per task, not at wave end
+subagent-dispatch.md:571	SKILL.md	So a task is not done until the repo's fast gates pass on it.** Put them in the 
+subagent-dispatch.md:576	SKILL.md	A suite run needs a quiet tree, and the wave owns keeping it quiet
+subagent-dispatch.md:581	SKILL.md	**The job raced its own repository.** `#$ -cwd` runs against the LIVE tree, and 
+subagent-dispatch.md:584	SKILL.md	**A reviewer's temporary test file was collected.** A review agent copied a test
+subagent-dispatch.md:620	SKILL.md	One integration seat, mid-wave
+subagent-dispatch.md:648	SKILL.md	A pragmatism seat is the lever for fewer rounds

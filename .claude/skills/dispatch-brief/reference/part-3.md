@@ -5,7 +5,6 @@ Old file names in the moved text are retired: `subagent-dispatch.md` is now the 
 and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
 
 <!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
-<!-- from subagent-dispatch.md:728 -->
 **Fifteenth: `cp` after a `--write` is a fifth shared-worktree hazard.** The four recorded ones are
 a bare `git commit`, `git commit -- <paths>`, `git stash push -- <paths>` and
 `git --work-tree=<dir> checkout`. Add: a reviewer that runs a **generator** in `--write` mode to
@@ -29,6 +28,5 @@ self-consistency (`live: path.py:LINE now reads X`), **say so explicitly in the 
 carry a standing row for one held-out evaluation with a stated denominator and a trivial baseline.
 A review wave that cannot be embarrassed by data has not been tested by data.
 
-<!-- from subagent-dispatch.md:751 -->
 **Twelfth item, and it belongs with the contradiction slot: say that your own summary is lossy, and point at the source.** A brief compresses each row's evidence into a line or a table cell. That compression drops exactly the load-bearing clause you did not know was load-bearing. In W2b-1 (2026-09-23) an implementer refused two rows **correctly**, and both refusals were only possible because it read the full per-row record instead of the controller's table: one row's fix site was a different file entirely, and another was blocked on a separate open finding — neither fact survived the compression. The line costs nothing: *"the table above is a compression of <source>; read the full row there before trusting it, and report any place the compression is wrong."* The same wave's headline count had already moved twice for the same reason — a per-group summary quoted as a per-row enumeration — so this is one failure mode wearing two hats, at two altitudes.
 

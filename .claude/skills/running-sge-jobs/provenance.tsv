@@ -1,0 +1,22 @@
+source	file	title
+scc.md:1	SKILL.md	BU SCC (liu-scc)
+scc.md:5	SKILL.md	Job defaults
+scc.md:6	SKILL.md	Cores: 1 non-parallel; 4 / 8 / 16 / 28 parallel (best scheduling efficiency at t
+scc.md:7	SKILL.md	Memory: `-l mem_per_core=8G`. Ceiling 512G; 1024G only for extreme workloads.
+scc.md:8	SKILL.md	Runtime: `-l h_rt` ≤12h preferred. Escalate to 24/48/72h only when justified.
+scc.md:9	SKILL.md	`#!/bin/bash -l` whenever the script uses `module load`.
+scc.md:10	SKILL.md	`-P liu-scc` when a project spec is required. Array jobs use `SGE_TASK_ID`.
+scc.md:11	SKILL.md	`export NCBI_EMAIL=phitro@bu.edu` before any job that hits NCBI.
+scc.md:19	SKILL.md	Verifying a job
+scc.md:27	SKILL.md	Waiting on a job without burning tokens
+scc.md:33	SKILL.md	Wrap the wait in one `Bash(run_in_background=true)` call, with a bail-out: `qsta
+scc.md:40	SKILL.md	A 30-60s sleep interval is fine and costs zero tokens per iteration — only the f
+scc.md:44	SKILL.md	Neither the loop exiting nor a `qacct` `exit_status 0` alone proves success — al
+scc.md:51	SKILL.md	**`qstat -j <jobid>` returns non-zero transiently** under qmaster load, so `whil
+scc.md:57	SKILL.md	`scc-monitor` is for diagnosing *why* a job failed or a reported success can't b
+scc.md:60	SKILL.md	Reading a job log
+scc.md:62	SKILL.md	SGE appends to `-o` logs, it does not truncate.** A log path reused across runs 
+scc.md:66	SKILL.md	check the log's mtime against the job's `end_time` from `qacct` before believing
+scc.md:67	SKILL.md	anchor on the LAST `=== ... started:` line, not the head of the file;
+scc.md:68	SKILL.md	remember a differently-named job writes a different log — a stale log at the pat
+scc.md:71	SKILL.md	Storage
