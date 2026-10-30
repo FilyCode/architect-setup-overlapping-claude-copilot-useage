@@ -23,7 +23,7 @@ def test_opus_without_reason_warns():
     rc, out = run(ev("\n\nImplement the parser\nthis is a contract change"))
     assert rc == 0
     o = json.loads(out)["hookSpecificOutput"]
-    assert o["hookEventName"] == "PreToolUse" and "DECISION-028" in o["additionalContext"]
+    assert o["hookEventName"] == "PreToolUse" and "DECISION-028/029" in o["additionalContext"]
     assert "permissionDecision" not in o
 
 

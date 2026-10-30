@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse(Agent): warn on an opus implementer whose brief's first line names no reason (DECISION-028).
+"""PreToolUse(Agent): warn on an opus implementer whose brief's first line names no reason (DECISION-028/029).
 
 Warns only; never denies. Any internal error stays silent.
 """
@@ -8,7 +8,7 @@ import re
 import sys
 
 REASON = re.compile(r"cross[- ]module|contract|retry", re.I)
-MSG = ("Opus implementer without a reason in the brief's first line (DECISION-028): name the "
+MSG = ("Opus implementer without a reason in the brief's first line (DECISION-028/029): name the "
        "cross-module/contract change or retry there, or drop model: opus.")
 
 

@@ -21,7 +21,8 @@ def test_links_every_seat_skill_hook_and_core(tmp_path):
     for s in ("dispatch-brief", "wave-review", "plan-critique", "verification-patterns", "scientific-evidence",
               "running-sge-jobs", "completion-check", "thermo-nuclear-code-quality-review"):
         assert (tmp_path / "skills" / s / "SKILL.md").is_file(), s
-    for h in ("bash_guard.py", "context_nudge.py", "large-change-check.py"):
+    for h in ("bash_guard.py", "context_nudge.py", "large-change-check.py", "ask_guard.py", "model_guard.py",
+              "aim_nudge.py"):
         assert (tmp_path / "hooks" / h).resolve().parent == (REPO / "workspace-config/hooks").resolve()
 
 

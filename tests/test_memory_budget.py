@@ -1,14 +1,17 @@
 import json
+import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 HOOK = Path(__file__).resolve().parents[1] / "workspace-config" / "hooks" / "memory_budget.py"
 
 
-def run(payload, raw=None):
+def run(payload, raw=None, env=None):
     stdin = raw if raw is not None else json.dumps(payload)
-    r = subprocess.run([sys.executable, str(HOOK)], input=stdin, capture_output=True, text=True)
+    r = subprocess.run([sys.executable, str(HOOK)], input=stdin, capture_output=True, text=True,
+                       env=None if env is None else {**os.environ, **env})
     return r.returncode, r.stdout
 
 
@@ -57,3 +60,33 @@ def test_malformed_stdin(tmp_path):
     assert run(None, raw="not json") == (0, "")
     assert run({"tool_input": None}) == (0, "")
     assert run(ev(tmp_path / ".claude/projects/x/memory/MEMORY.md")) == (0, "")  # missing file
+
+
+def bash(cmd):
+    return {"tool_name": "Bash", "tool_input": {"command": cmd}}
+
+
+def cfg_mem(tmp_path, text, age_s=0):
+    d = tmp_path / "cfg" / "projects" / "y" / "memory"
+    d.mkdir(parents=True)
+    p = d / "MEMORY.md"
+    p.write_text(text)
+    t = time.time() - age_s
+    os.utime(p, (t, t))
+    return p
+
+
+def test_bash_write_to_fresh_over_budget_memory_warns(tmp_path):
+    cfg_mem(tmp_path, "- [a](a.md) — " + "x" * 7000 + "\n")
+    rc, out = run(bash("cat >> ~/.claude/projects/y/memory/MEMORY.md <<EOF\n- [b]\nEOF"),
+                  env={"CLAUDE_CONFIG_DIR": str(tmp_path / "cfg")})
+    o = json.loads(out)["hookSpecificOutput"]
+    assert rc == 0 and o["hookEventName"] == "PostToolUse" and "over budget" in o["additionalContext"]
+
+
+def test_bash_stale_memory_or_unrelated_command_silent(tmp_path):
+    cfg_mem(tmp_path, "- [a](a.md) — " + "x" * 7000 + "\n", age_s=600)
+    env = {"CLAUDE_CONFIG_DIR": str(tmp_path / "cfg")}
+    assert run(bash("echo x >> MEMORY.md"), env=env) == (0, "")
+    os.utime(tmp_path / "cfg/projects/y/memory/MEMORY.md")
+    assert run(bash("ls -l"), env=env) == (0, "")
