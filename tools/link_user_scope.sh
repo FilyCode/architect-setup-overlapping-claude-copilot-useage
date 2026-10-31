@@ -27,7 +27,7 @@ link() {  # link <target> <link path>
 link "$REPO/workspace-config/rules/core.md" "$DEST/rules/core.md"
 for f in "$REPO"/workspace-config/agents/*.md; do link "$f" "$DEST/agents/$(basename "$f")"; done
 for s in $SKILLS; do link "$REPO/.claude/skills/$s" "$DEST/skills/$s"; done
-for h in bash_guard.py context_nudge.py large-change-check.py memory_budget.py dispatch_guard.py ask_guard.py model_guard.py aim_nudge.py; do
+for h in bash_guard.py context_nudge.py large-change-check.py memory_budget.py dispatch_guard.py ask_guard.py model_guard.py aim_nudge.py qsub_guard.py; do
   link "$REPO/workspace-config/hooks/$h" "$DEST/hooks/$h"
 done
 exit $rc
