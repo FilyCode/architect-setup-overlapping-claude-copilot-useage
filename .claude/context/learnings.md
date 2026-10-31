@@ -60,6 +60,11 @@ config mistake — confirmed by testing both an explicit and an omitted `model` 
 removed the same day (DECISION-016). It produced zero real evaluations, only visible error
 noise every turn — worse than the prose it replaced, which at least sometimes worked.
 
+A read skill is not an applied one when a template carries the value: 2026-10-31, the SGE skill
+was loaded before 424 of 435 joined jobs, yet 209 of 247 multi-slot jobs used under half their
+cores, because K was copied from `train_refiner.qsub` and `f1_reference_runs_qsub.sh` (14 days:
+9143 core-h reserved, 3242 used). Fix the template and gate the value (`qsub_guard`).
+
 **Revised rule:** prefer a command hook for invariants when the check can be scripted at
 all. Reach for a prompt hook only when the judgment genuinely needs a model, and verify it
 is actually succeeding (check `hookEvent` + `type` in transcript attachments) before trusting
@@ -158,3 +163,10 @@ to their projects; R-20261029-1..5 were issued twice by two entries (IDs not uni
 sub-line (above). DECISION-030: aim-keeper seat + aim_nudge, core rule 15 + ask_guard,
 model_guard, memory guard on Bash, provenance sidecars, transcript move script. Home 5.6 of 10 GB
 (transcripts 3.2 GB). Evidence: `.superpowers/findings/2026-10-30/investigator-*.md`.
+
+**2026-10-31 (SGE audit + fix-round check).** 14 d accounting: 35% of reserved cores used; one
+EC523 session 78% of the waste. `qsub_guard` hook + `tools/sge_efficiency.py`; running-sge-jobs
+cores block; templates dispatched in EC523 and EnzymeFinder. Fix rounds did not fall: EF fix
+commits per task 0.83 (P0, before 10-24) vs 0.67-1.62 after (n=5 waves; F1d had a fix repairing
+the previous fix twice). Applied R-20261030-1/-9 (wave-review) and -4 (verification-patterns).
+Evidence: `.superpowers/findings/2026-10-31/investigator-{sge-usage,fixrounds}.md`.
