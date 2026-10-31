@@ -27,8 +27,11 @@ findings only in its message, write them into its file, marked controller-writte
 so in the close and keep a standing row for one held-out evaluation. A branch that is not merged,
 or whose full suite could not run, carries the line "MERGE GATE: full suite on the merge commit,
 job spec written" in its ledger and plan status, with the job spec's path; the wave is not marked
-closed without that line. Status docs that say built, verified, merged or closed are written after
-the review and pragmatism triage, or marked DRAFT until then. A post-refresh test failure recorded
+closed without that line. Nothing that says built, verified, merged, closed, answered or resolved
+(status docs, findings, commit subjects) is written or pushed before the roster has run and the close
+line exists, or it is marked DRAFT; "push at wave end" means after that line, and a /compact
+keep-line says "push after review close" (R-20261030-1/-9: SenC and MeMES pushed claims hours before
+the review, one headline later retracted). A post-refresh test failure recorded
 in a handoff becomes a ledger item with an owner and the next refresh as its gate, never only a note.
 A CI check that is red with no job log (minutes exhausted) is recorded as not run; the PR carries
 the local equivalent's command and output.
