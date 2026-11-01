@@ -19,8 +19,11 @@ that passes a 99.97%-broken join is not a guard.
 3. Every failure gets a cause: a real bug is fixed in the PR; a test that passes only on SCC gets a
    skip marker for GitHub plus a register row; a flaky test gets at most one re-run, then quarantine
    plus a register row.
-4. A check that did not run (out of minutes, blocked) is unknown, not passed. Run the cluster suite
-   (`tools/scc_ci_status.py submit`) and cite its job id in the PR body.
+4. Every EF PR needs `scc-tests` = success on its head SHA: the full suite does not run on GitHub for
+   PRs, so run `tools/scc_ci_status.py submit` and cite its job id in the PR body. A new push needs a new
+   submit. A GitHub check that did not run (out of minutes, blocked) is unknown, not passed. For
+   `scc-tests`, `pending`, `error` and absent also mean unknown, not passed; only `success` counts.
+   `scc_ci_status.py sweep` turns a stuck `pending` into `error`.
 5. Red main is reverted or fixed the same day, with no other pushes on top.
 6. A third failed fix of the same check triggers the escalation section of plan-critique.
 

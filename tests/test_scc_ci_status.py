@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -37,11 +38,19 @@ def env(tmp_path, monkeypatch):
     bindir = tmp_path / "bin"
     bindir.mkdir()
     (bindir / "qsub").write_text(STUB % 'if [[ "$*" == *hold_jid* ]]; then echo 202; else echo 101; fi')
-    (bindir / "gh").write_text(STUB % "")
+    (bindir / "gh").write_text(STUB % '[[ "$*" == */commits/* ]] && cat "$STUB_DIR/statuses.json"; true')
+    (bindir / "qdel").write_text(STUB % "")
+    (bindir / "qstat").write_text(STUB % 'cat "$STUB_DIR/qstat.txt"')
+    (bindir / "qacct").write_text(STUB % 'cat "$STUB_DIR/qacct.txt"; exit $(cat "$STUB_DIR/qacct.rc")')
+    (tmp_path / "qstat.txt").write_text("")
+    (tmp_path / "statuses.json").write_text("[]")
+    (tmp_path / "qacct.rc").write_text("0")
     for f in bindir.iterdir():
         f.chmod(0o755)
     log = tmp_path / "stub.log"
     monkeypatch.setenv("STUB_LOG", str(log))
+    monkeypatch.setenv("STUB_DIR", str(tmp_path))
+    monkeypatch.setattr(ci, "QACCT_WAIT", 0)
     monkeypatch.setenv("PATH", f"{bindir}:{os.environ['PATH']}")
     monkeypatch.setattr(ci, "WORKTREES", tmp_path / "wt")
     return repo, log
@@ -69,9 +78,46 @@ def test_submit_posts_pending_then_qsubs_test_and_held_followup(env, capsys):
 
 
 def test_submit_reuses_existing_worktree(env):
-    repo, _ = env
+    repo, log = env
     ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
     ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
+    assert len(calls(log, "qsub")) == 4
+
+
+def test_submit_refuses_worktree_at_another_sha(env):
+    repo, log = env
+    sha1 = git(repo, "rev-parse", "HEAD")
+    (repo / "y").write_text("y")
+    git(repo, "add", "y")
+    git(repo, "commit", "-qm", "two")
+    git(repo, "push", "-q", "origin", "main")
+    sha2 = git(repo, "rev-parse", "HEAD")
+    stale = ci.WORKTREES / "proj" / sha2[:12]
+    stale.parent.mkdir(parents=True)
+    git(repo, "worktree", "add", "--detach", str(stale), sha1)
+    with pytest.raises(SystemExit, match="is not at"):
+        ci.main(["submit", "--repo", str(repo), "--sha", sha2, "--test-script", "run.sh"])
+    assert not calls(log, "qsub")
+
+
+def test_test_qsub_failure_posts_error_not_pending_forever(env, tmp_path):
+    repo, log = env
+    (tmp_path / "bin" / "qsub").write_text("#!/bin/bash\necho 'Unable to run job: bad project' >&2; exit 1\n")
+    with pytest.raises(SystemExit, match="bad project"):
+        ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
+    states = [ln for ln in calls(log, "gh") if "state=" in ln]
+    assert "state=pending" in states[0] and "state=error" in states[-1] and "bad project" in states[-1]
+
+
+def test_followup_qsub_failure_posts_error_and_deletes_test_job(env, tmp_path):
+    repo, log = env
+    (tmp_path / "bin" / "qsub").write_text(
+        STUB % 'if [[ "$*" == *hold_jid* ]]; then echo "queue full" >&2; exit 1; else echo 101; fi')
+    with pytest.raises(SystemExit, match="queue full"):
+        ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
+    assert calls(log, "qdel") == ["qdel 101"]
+    last = calls(log, "gh")[-1]
+    assert "state=error" in last and "follow-up not queued" in last
 
 
 def test_refuses_sha_not_on_remote(env):
@@ -106,30 +152,142 @@ def test_gh_failure_is_fatal(env, tmp_path):
         ci.main(["post", "--repo", str(repo), "--sha", "abc", "--state", "success", "--description", "d"])
 
 
-def finish_with(env, tmp_path, monkeypatch, rc, log_text):
+QACCT_OK = "qname all.q\nfailed       0\nexit_status  0\n"
+SUMMARY_OK = "noise\n===== 9701 passed, 3 skipped in 1534.12s (0:25:34) =====\n"
+
+
+def finish_with(env, tmp_path, qacct, log_text, rc=0):
+    """Run `finish` against a stubbed qacct record; return the single gh call."""
     repo, log = env
     wt = tmp_path / "wtdir"
     (wt / "logs").mkdir(parents=True)
     if log_text:
         (wt / "logs" / "pytest_full_7.log").write_text(log_text)
-    monkeypatch.setattr(ci, "exit_status", lambda job: rc)
+    (tmp_path / "qacct.txt").write_text(qacct)
+    (tmp_path / "qacct.rc").write_text(str(rc))
     ci.main(["finish", "--repo", str(repo), "--sha", "abc", "--job-id", "7", "--worktree", str(wt)])
     return calls(log, "gh")[0]
 
 
-def test_finish_success_carries_summary_and_job(env, tmp_path, monkeypatch):
-    gh = finish_with(env, tmp_path, monkeypatch, 0, "noise\n===== 9701 passed, 3 skipped in 1534.12s (0:25:34) =====\n")
+def test_finish_success_carries_summary_and_job(env, tmp_path):
+    gh = finish_with(env, tmp_path, QACCT_OK, SUMMARY_OK)
     assert "state=success" in gh and "9701 passed, 3 skipped in 1534.12s" in gh and "job 7" in gh
 
 
-def test_finish_failure_on_nonzero_exit(env, tmp_path, monkeypatch):
-    gh = finish_with(env, tmp_path, monkeypatch, 1, "2 failed, 9699 passed in 100.00s (0:01:40)\n")
-    assert "state=failure" in gh and "2 failed" in gh
+def test_finish_failure_on_nonzero_exit(env, tmp_path):
+    gh = finish_with(env, tmp_path, "failed 0\nexit_status 1\n", "2 failed, 9699 passed in 100.00s (0:01:40)\n")
+    assert "state=failure" in gh and "2 failed" in gh and "exit 1" in gh
 
 
-def test_finish_error_when_no_exit_status(env, tmp_path, monkeypatch):
-    gh = finish_with(env, tmp_path, monkeypatch, None, "")
+def test_finish_failure_on_nonzero_failed_even_with_exit_zero(env, tmp_path):
+    gh = finish_with(env, tmp_path, "failed 100\nexit_status 0\n", SUMMARY_OK)
+    assert "state=failure" in gh and "failed=100" in gh
+
+
+def test_finish_error_on_exit_zero_without_pytest_summary(env, tmp_path):
+    gh = finish_with(env, tmp_path, QACCT_OK, "")
+    assert "state=error" in gh and "no pytest summary" in gh
+
+
+def test_finish_failure_when_summary_reports_failed_despite_exit_zero(env, tmp_path):
+    gh = finish_with(env, tmp_path, QACCT_OK, "1 failed, 5 passed in 1.00s\n")
+    assert "state=failure" in gh
+
+
+def test_finish_error_when_qacct_has_no_record(env, tmp_path):
+    # rc 1 with a record-shaped stdout: only the returncode check can reject this
+    gh = finish_with(env, tmp_path, QACCT_OK, SUMMARY_OK, rc=1)
     assert "state=error" in gh and "job 7" in gh
+
+
+def test_finish_reads_the_exit_status_field_not_a_lookalike_line(env, tmp_path):
+    record = "category  -l exit_status 0\nfailed 0\nexit_status 1\n"
+    gh = finish_with(env, tmp_path, record, "1 failed in 1.00s\n")
+    assert "state=failure" in gh and "exit 1" in gh
+
+
+def record_for(env, tmp_path, test="101", follow="202", age_days=0.0, current="pending"):
+    """Submit through the real code, then set the GitHub status and queue the sweep will see."""
+    repo, log = env
+    ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
+    sha = git(repo, "rev-parse", "HEAD")
+    rec_file = ci.WORKTREES / "proj" / f"{sha[:12]}.json"
+    rec = json.loads(rec_file.read_text())
+    rec["submitted"] -= age_days * 86400
+    rec_file.write_text(json.dumps(rec))
+    (tmp_path / "statuses.json").write_text(json.dumps([{"context": "scc-tests", "state": current}]))
+    log.write_text("")
+    return rec, rec_file
+
+
+def test_submit_writes_record_for_sweep(env, tmp_path):
+    rec, _ = record_for(env, tmp_path)
+    assert (rec["test_job"], rec["follow_job"], rec["context"]) == ("101", "202", "scc-tests")
+    assert rec["sha"] == git(env[0], "rev-parse", "HEAD") and rec["repo"] == str(env[0])
+
+
+def test_sweep_errors_pending_when_test_job_in_eqw_and_deletes_followup(env, tmp_path):
+    repo, log = env
+    record_for(env, tmp_path)
+    (tmp_path / "qstat.txt").write_text(
+        "job-ID prior name user state submit\n---\n101 0.5 t u Eqw 11/01\n202 0.5 f u hqw 11/01\n")
+    ci.main(["sweep"])
+    [post] = [ln for ln in calls(log, "gh") if "state=" in ln]
+    assert "state=error" in post and "101" in post and "Eqw" in post
+    assert calls(log, "qdel") == ["qdel 202"]
+
+
+def test_sweep_errors_pending_when_both_jobs_vanished(env, tmp_path):
+    repo, log = env
+    record_for(env, tmp_path)
+    ci.main(["sweep"])
+    [post] = [ln for ln in calls(log, "gh") if "state=" in ln]
+    assert "state=error" in post and "neither job" in post
+    assert not calls(log, "qdel")
+
+
+def test_sweep_leaves_healthy_pending_alone(env, tmp_path):
+    repo, log = env
+    record_for(env, tmp_path)
+    (tmp_path / "qstat.txt").write_text("101 0.5 t u r 11/01\n202 0.5 f u hqw 11/01\n")
+    ci.main(["sweep"])
+    assert not [ln for ln in calls(log, "gh") if "state=" in ln] and not calls(log, "qdel")
+
+
+def test_sweep_leaves_final_status_alone(env, tmp_path):
+    repo, log = env
+    record_for(env, tmp_path, current="success")
+    ci.main(["sweep"])
+    assert not [ln for ln in calls(log, "gh") if "state=" in ln]
+
+
+def test_sweep_prune_removes_old_finished_worktree_via_git(env, tmp_path):
+    repo, log = env
+    rec, rec_file = record_for(env, tmp_path, age_days=10, current="success")
+    ci.main(["sweep", "--prune", "7"])
+    assert not Path(rec["worktree"]).exists() and not rec_file.exists()
+    assert rec["worktree"] not in git(repo, "worktree", "list")
+
+
+def test_sweep_prune_keeps_recent_and_unfinished_worktrees(env, tmp_path):
+    repo, _ = env
+    rec, rec_file = record_for(env, tmp_path, age_days=1, current="success")
+    ci.main(["sweep", "--prune", "7"])
+    assert Path(rec["worktree"]).exists()
+    (tmp_path / "statuses.json").write_text(json.dumps([{"context": "scc-tests", "state": "pending"}]))
+    (tmp_path / "qstat.txt").write_text("101 0.5 t u r 11/01\n")
+    rec["submitted"] -= 30 * 86400
+    rec_file.write_text(json.dumps(rec))
+    ci.main(["sweep", "--prune", "7"])
+    assert Path(rec["worktree"]).exists()
+
+
+def test_fetch_prunes_stale_remote_refs(env, tmp_path, monkeypatch):
+    repo, log = env
+    (tmp_path / "bin" / "git").write_text(STUB % 'exec /usr/bin/git "$@"')
+    (tmp_path / "bin" / "git").chmod(0o755)
+    ci.resolve_sha(repo, None)
+    assert any(" fetch " in ln and "--prune" in ln for ln in calls(log, "git"))
 
 
 def test_owner_repo_parses_https_and_ssh(env):
