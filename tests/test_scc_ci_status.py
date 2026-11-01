@@ -1,6 +1,8 @@
+import hashlib
 import json
 import os
 import subprocess
+import time
 import sys
 from pathlib import Path
 
@@ -29,7 +31,8 @@ def env(tmp_path, monkeypatch):
     for k, v in (("user.email", "a@b"), ("user.name", "t")):
         git(repo, "config", k, v)
     (repo / "run.sh").write_text("#!/bin/bash\n")
-    git(repo, "add", "run.sh")
+    (repo / "requirements-dev.lock").write_text("pillow==12.3.0\n")
+    git(repo, "add", "run.sh", "requirements-dev.lock")
     git(repo, "commit", "-qm", "one")
     git(repo, "remote", "add", "origin", str(origin))
     git(repo, "push", "-q", "origin", "main")
@@ -37,7 +40,7 @@ def env(tmp_path, monkeypatch):
     git(repo, "config", "url.%s.insteadOf" % origin, "git@github.com:FilyCode/EnzymeFinder.git")
     bindir = tmp_path / "bin"
     bindir.mkdir()
-    (bindir / "qsub").write_text(STUB % 'if [[ "$*" == *hold_jid* ]]; then echo 202; else echo 101; fi')
+    (bindir / "qsub").write_text(STUB % 'case "$*" in *scc_ci_post*) echo 202;; *scc_ci_venv*) echo 100;; *) echo 101;; esac')
     (bindir / "gh").write_text(STUB % '[[ "$*" == */commits/* ]] && cat "$STUB_DIR/statuses.json"; true')
     (bindir / "qdel").write_text(STUB % "")
     (bindir / "qstat").write_text(STUB % 'cat "$STUB_DIR/qstat.txt"')
@@ -53,6 +56,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(ci, "QACCT_WAIT", 0)
     monkeypatch.setenv("PATH", f"{bindir}:{os.environ['PATH']}")
     monkeypatch.setattr(ci, "WORKTREES", tmp_path / "wt")
+    monkeypatch.setattr(ci, "VENVS", tmp_path / "wt" / "venvs")
     return repo, log
 
 
@@ -62,26 +66,103 @@ def calls(log, name):
 
 def test_submit_posts_pending_then_qsubs_test_and_held_followup(env, capsys):
     repo, log = env
-    (repo / ".venv").mkdir()
-    ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
     sha = git(repo, "rev-parse", "HEAD")
     wt = ci.WORKTREES / "proj" / sha[:12]
+    venv = ci.VENVS / "proj" / hashlib.sha256(b"pillow==12.3.0\n").hexdigest()[:12]
+    (venv).mkdir(parents=True)
+    (venv / ci.MARKER).write_text("")
+    ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
     assert git(wt, "rev-parse", "HEAD") == sha
     [gh] = calls(log, "gh")
     assert f"repos/FilyCode/EnzymeFinder/statuses/{sha}" in gh and "state=pending" in gh
     assert "context=scc-tests" in gh and "submitted" in gh
     test_q, follow_q = calls(log, "qsub")
-    assert f"PROJECT_ROOT={wt}" in test_q and f"VENV_DIR={repo}/.venv" in test_q and test_q.endswith("run.sh")
+    assert f"PROJECT_ROOT={wt}" in test_q and f"VENV_DIR={venv}" in test_q and test_q.endswith("run.sh")
+    assert "hold_jid" not in test_q
     assert "-hold_jid 101" in follow_q and "-pe omp 1" in follow_q and "--job-id 101" in follow_q
     out = capsys.readouterr().out
     assert "101" in out and "202" in out and "pytest_qsub.101.out" in out
+
+
+def test_submit_builds_missing_venv_in_a_job_and_holds_test_on_it(env):
+    repo, log = env
+    ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
+    build_q, test_q, follow_q = calls(log, "qsub")
+    h = hashlib.sha256(b"pillow==12.3.0\n").hexdigest()[:12]
+    venv = ci.VENVS / "proj" / h
+    assert str(ci.BUILD_SCRIPT) in build_q and f"VENV_DIR={venv}" in build_q and "LOCKFILE=requirements-dev.lock" in build_q
+    assert "-pe omp 1" in build_q and "h_rt=1:00:00" in build_q and "mem_per_core=8G" in build_q
+    assert "-hold_jid 100" in test_q and f"VENV_DIR={venv}" in test_q
+    assert "-hold_jid 101" in follow_q
+
+
+def test_submit_keys_venv_on_lockfile_content_and_option(env):
+    repo, log = env
+    (repo / "other.lock").write_text("filelock==4.2.6\n")
+    git(repo, "add", "other.lock")
+    git(repo, "commit", "-qm", "two")
+    git(repo, "push", "-q", "origin", "main")
+    ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh", "--lockfile", "other.lock"])
+    build_q = calls(log, "qsub")[0]
+    assert f"VENV_DIR={ci.VENVS}/proj/{hashlib.sha256(b'filelock==4.2.6\n').hexdigest()[:12]}" in build_q
+    assert "LOCKFILE=other.lock" in build_q
+
+
+def test_submit_without_lockfile_stops_before_posting_or_qsub(env):
+    repo, log = env
+    with pytest.raises(SystemExit, match="nope.lock not found"):
+        ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh", "--lockfile", "nope.lock"])
+    assert not calls(log, "qsub") and not calls(log, "gh")
+
+
+def test_build_script_skips_when_marker_exists_and_builds_nothing(tmp_path):
+    """The flock-guarded build script exits 0 without touching an already-marked venv."""
+    venv = tmp_path / "v"
+    venv.mkdir()
+    (venv / ci.MARKER).write_text("")
+    (venv / "keep").write_text("x")
+    p = subprocess.run(["bash", str(ci.BUILD_SCRIPT)], capture_output=True, text=True,
+                       env={**os.environ, "PROJECT_ROOT": str(tmp_path), "VENV_DIR": str(venv), "PY311": "/nonexistent"})
+    assert p.returncode == 0 and "already built" in p.stdout and (venv / "keep").exists()
+
+
+def test_build_script_failure_leaves_no_marker(tmp_path):
+    venv = tmp_path / "v"
+    p = subprocess.run(["bash", str(ci.BUILD_SCRIPT)], capture_output=True, text=True,
+                       env={**os.environ, "PROJECT_ROOT": str(tmp_path), "VENV_DIR": str(venv), "PY311": "/nonexistent"})
+    assert p.returncode != 0 and not (venv / ci.MARKER).exists()
+
+
+def test_sweep_prune_removes_only_venvs_unused_for_more_than_days(env, tmp_path):
+    old, recent, used = (ci.VENVS / "proj" / n for n in ("old", "recent", "used"))
+    for v in (old, recent, used):
+        v.mkdir(parents=True)
+        (v / ci.MARKER).write_text("")
+    long_ago = time.time() - 30 * 86400
+    for v in (old, used):
+        os.utime(v / ci.MARKER, (long_ago, long_ago))
+    (ci.WORKTREES / "proj").mkdir(parents=True, exist_ok=True)
+    (ci.WORKTREES / "proj" / "abc.json").write_text(json.dumps(
+        {"sha": "abc", "repo": str(env[0]), "context": "scc-tests", "test_job": "1", "follow_job": "2",
+         "worktree": "w", "venv": str(used), "submitted": time.time() - 86400}))
+    (tmp_path / "statuses.json").write_text(json.dumps([{"context": "scc-tests", "state": "success"}]))
+    ci.main(["sweep", "--prune", "7"])
+    assert not old.exists() and recent.exists() and used.exists()
+
+
+def test_sweep_without_prune_keeps_old_venvs(env):
+    old = ci.VENVS / "proj" / "old"
+    old.mkdir(parents=True)
+    os.utime(old, (1, 1))
+    ci.main(["sweep"])
+    assert old.exists()
 
 
 def test_submit_reuses_existing_worktree(env):
     repo, log = env
     ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
     ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
-    assert len(calls(log, "qsub")) == 4
+    assert len(calls(log, "qsub")) == 6  # build + test + follow-up per run: the stub never writes the marker
 
 
 def test_submit_refuses_worktree_at_another_sha(env):
@@ -112,7 +193,7 @@ def test_test_qsub_failure_posts_error_not_pending_forever(env, tmp_path):
 def test_followup_qsub_failure_posts_error_and_deletes_test_job(env, tmp_path):
     repo, log = env
     (tmp_path / "bin" / "qsub").write_text(
-        STUB % 'if [[ "$*" == *hold_jid* ]]; then echo "queue full" >&2; exit 1; else echo 101; fi')
+        STUB % 'if [[ "$*" == *scc_ci_post* ]]; then echo "queue full" >&2; exit 1; else echo 101; fi')
     with pytest.raises(SystemExit, match="queue full"):
         ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
     assert calls(log, "qdel") == ["qdel 101"]
@@ -187,6 +268,13 @@ def test_finish_failure_on_nonzero_failed_even_with_exit_zero(env, tmp_path):
 def test_finish_error_on_exit_zero_without_pytest_summary(env, tmp_path):
     gh = finish_with(env, tmp_path, QACCT_OK, "")
     assert "state=error" in gh and "no pytest summary" in gh
+
+
+@pytest.mark.parametrize("qacct", ["failed 0\nexit_status 3\n", "failed 100\nexit_status 0\n"])
+def test_finish_error_not_failure_when_job_failed_before_pytest_ran(env, tmp_path, qacct):
+    # job 8388548: exit 3 from bootstrap_env.sh, log has no pytest output
+    gh = finish_with(env, tmp_path, qacct, "")
+    assert "state=error" in gh and "tests did not run" in gh
 
 
 def test_finish_failure_when_summary_reports_failed_despite_exit_zero(env, tmp_path):

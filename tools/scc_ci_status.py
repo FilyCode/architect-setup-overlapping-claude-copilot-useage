@@ -17,15 +17,22 @@ only the verdict goes to GitHub (owner decision, 2026-11-01).
   A submit whose qsub fails posts `error` (and qdels the test job if only the follow-up failed).
   `pending` and `error` mean unknown, never passed; only `success` counts.
 
-Environment of the test job: the script's bootstrap_env.sh honours `VENV_DIR`, so the job is
-given the main repo's `.venv` that way (a fresh worktree has none and would fall back to the
-workspace venv, a different Python). A script that ignores VENV_DIR just uses its own default.
+Environment of the test job: one venv per lockfile hash, VENVS/<repo>/<sha256(lock)[:12]>, passed as
+`VENV_DIR` (the script's bootstrap_env.sh honours it). The shared main-checkout .venv was rebuilt
+by other sessions mid-run (jobs 8388480, 8388548). If the venv has no `.scc_ci_ok` marker, submit
+qsubs tools/scc_ci_build_venv.sh as a build job (flock per hash, marker written last) and holds
+the test job on it (-hold_jid); the build never runs on the login node. If the build fails the
+test job still starts, finds no usable venv, never reaches pytest, and gets verdict `error`.
+Lockfile: --lockfile (default requirements-dev.lock). sweep --prune also removes venvs whose
+newest record (or marker) is older than DAYS.
 Stdlib only; needs `git`, `gh` (authenticated) and, for submit/finish, SGE's `qsub`/`qacct`.
 """
 import argparse
 import getpass
+import hashlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -34,6 +41,9 @@ from pathlib import Path
 QACCT_TRIES = 10
 QACCT_WAIT = 30  # seconds between qacct retries; accounting lags job end
 WORKTREES = Path("/projectnb/liu-scc/philipp/software/scc-ci")
+VENVS = WORKTREES / "venvs"
+MARKER = ".scc_ci_ok"
+BUILD_SCRIPT = Path(__file__).resolve().with_name("scc_ci_build_venv.sh")
 STATES = ("pending", "success", "failure", "error")
 SUMMARY_RE = re.compile(r"^=*\s*(\d+ (?:passed|failed|error|errors|skipped|xfailed|deselected)\b.*? in [\d.]+s.*?)\s*=*$")
 
@@ -97,12 +107,22 @@ def submit(args):
     repo = Path(args.repo).resolve()
     sha = resolve_sha(repo, args.sha)
     wt = ensure_worktree(repo, sha)
-    venv = repo / ".venv"
-    envs = f"PROJECT_ROOT={wt}" + (f",VENV_DIR={venv}" if venv.is_dir() else "")
+    lock = wt / args.lockfile
+    if not lock.is_file():
+        sys.exit(f"scc_ci_status: {args.lockfile} not found at {sha[:12]}; the venv is keyed on its hash (use --lockfile)")
+    venv = VENVS / repo.name / hashlib.sha256(lock.read_bytes()).hexdigest()[:12]
+    envs = f"PROJECT_ROOT={wt},VENV_DIR={venv}"
     post_status(repo, sha, "pending", f"submitted to SCC {time.strftime('%H:%M')}", args.context)
     script = args.test_script if Path(args.test_script).is_absolute() else str(wt / args.test_script)
+    hold = []
     try:
-        job = run(["qsub", "-terse", "-v", envs, script], cwd=wt)
+        if not (venv / MARKER).is_file():
+            venv.parent.mkdir(parents=True, exist_ok=True)
+            build = run(["qsub", "-terse", "-v", f"{envs},LOCKFILE={args.lockfile}", "-pe", "omp", "1",
+                         "-l", "h_rt=1:00:00", "-l", "mem_per_core=8G", "-P", "liu-scc", "-N", f"scc_ci_venv_{venv.name}",
+                         "-j", "y", "-o", str(venv.parent / f"build_{venv.name}.$JOB_ID.out"), str(BUILD_SCRIPT)], cwd=wt)
+            hold = ["-hold_jid", build]
+        job = run(["qsub", "-terse", *hold, "-v", envs, script], cwd=wt)
     except SystemExit as e:
         post_status(repo, sha, "error", f"submit failed, test job not queued: {why(e)}", args.context)
         raise
@@ -119,8 +139,9 @@ def submit(args):
         raise
     record_path(wt).write_text(json.dumps({
         "sha": sha, "repo": str(repo), "context": args.context, "test_job": job,
-        "follow_job": follow, "worktree": str(wt), "submitted": time.time()}))
-    print(f"test job {job}  follow-up job {follow}  sha {sha}\nworktree {wt}\n"
+        "follow_job": follow, "worktree": str(wt), "venv": str(venv), "submitted": time.time()}))
+    print(f"test job {job}  follow-up job {follow}  sha {sha}\nworktree {wt}  venv {venv}"
+          f"{f'  (build job {hold[1]})' if hold else '  (cached)'}\n"
           f"test log {repo}/logs/pytest_qsub.{job}.out  (pytest output: {wt}/logs/pytest_full_{job}.log)\n"
           f"follow-up log {out}")
 
@@ -154,16 +175,17 @@ def accounting(job):
 
 
 def verdict(acct, summ, job):
-    """(state, description). success needs exit 0, failed 0 and a pytest summary with no failed/error count."""
+    """(state, description). success needs exit 0, failed 0 and a pytest summary with no failed/error count.
+    No summary means pytest never ran to completion (env/bootstrap failure): `error`, never `failure`."""
     if acct is None:
         return "error", f"no accounting record for job {job} (never ran, deleted while queued, or accounting missing)"
     rc, failed = acct
-    if rc != 0:
-        return "failure", f"{summ or 'no pytest summary line in log'}; job {job} exit {rc}"
-    if failed != 0:
-        return "failure", f"{summ or 'no pytest summary line in log'}; job {job} SGE failed={failed}"
     if summ is None:
-        return "error", f"job {job} exited 0 but the log has no pytest summary line (log not copied?)"
+        return "error", f"tests did not run: no pytest summary line in log; job {job} exit {rc}, SGE failed={failed}"
+    if rc != 0:
+        return "failure", f"{summ}; job {job} exit {rc}"
+    if failed != 0:
+        return "failure", f"{summ}; job {job} SGE failed={failed}"
     if re.search(r"\b\d+ (?:failed|errors?)\b", summ):
         return "failure", f"{summ}; job {job} exited 0 but the summary reports failures"
     return "success", f"{summ}; job {job}"
@@ -219,6 +241,26 @@ def sweep(args):
             run(["git", "-C", rec["repo"], "worktree", "remove", "--force", rec["worktree"]])
             rec_file.unlink()
             print(f"{rec['sha'][:12]}: pruned worktree {rec['worktree']}")
+    if args.prune is not None:
+        prune_venvs(Path(args.repo).resolve().name if args.repo else None, args.prune)
+
+
+def prune_venvs(repo_name, days):
+    """Remove cached venvs of repo_name (None = all) whose newest record or marker/dir mtime is older than days."""
+    last = {}
+    for rec_file in WORKTREES.glob("*/*.json"):
+        rec = json.loads(rec_file.read_text())
+        if rec.get("venv"):
+            last[rec["venv"]] = max(last.get(rec["venv"], 0), rec["submitted"])
+    for venv in sorted(VENVS.glob(f"{repo_name or '*'}/*")):
+        if not venv.is_dir():
+            continue
+        marker = venv / MARKER
+        used = max(last.get(str(venv), 0), (marker if marker.exists() else venv).stat().st_mtime)
+        if time.time() - used > days * 86400:
+            shutil.rmtree(venv)
+            Path(f"{venv}.lock").unlink(missing_ok=True)
+            print(f"pruned venv {venv}")
 
 
 def main(argv=None):
@@ -231,6 +273,7 @@ def main(argv=None):
         return p
     s = common(sub.add_parser("submit"))
     s.add_argument("--sha")
+    s.add_argument("--lockfile", default="requirements-dev.lock", help="lock whose hash keys the venv")
     s.add_argument("--test-script", default="scripts/scc-submissions/run_pytest_qsub.sh")
     s.set_defaults(fn=submit)
     p = common(sub.add_parser("post"))
