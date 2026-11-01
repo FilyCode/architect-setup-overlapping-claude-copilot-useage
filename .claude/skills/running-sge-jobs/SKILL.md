@@ -41,6 +41,8 @@ torch CPU) request `-l avx2`: job 8171407 on a non-AVX2 host gave 6 false failur
 Claude runs inside an SGE job on a compute node (`$JOB_ID` set); the login-node limits below
 apply to work started from a login shell.
 
+**Full test suite for a PR (2026-11-01):** run it through `tools/scc_ci_status.py submit`, which posts the `scc-tests` status on the commit.
+
 The rules below are the original workspace text, moved verbatim.
 
 Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills

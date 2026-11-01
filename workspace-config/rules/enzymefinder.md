@@ -62,6 +62,12 @@ Branch gates: at the first commit of a branch and again before the PR, run
 (CI runs `--verify`, not `--check`). Run each gate as its own command, never piped into `| tail`,
 and quote its exit code, not trimmed output (R-20261022-10, R-20261024-5).
 
+## CI
+PR checks on GitHub are the cheap jobs only (Actions minutes run out monthly). The full suite runs on
+SCC via `tools/scc_ci_status.py submit` (config repo), which posts the `scc-tests` commit status.
+A weekly and a monthly GitHub run on main are the clean-machine check. Failures follow the CI rule
+in skill verification-patterns (red blocks merge; every failure gets a cause).
+
 ## Reference index (P0, DECISION-138)
 A run reaches the Swiss-Prot tier indexes only through the site file named by
 `ENZYMEFINDER_SITE_CONFIG` (`/projectnb/liu-scc/philipp/software/enzymefinder/site/enzymefinder.toml`;
