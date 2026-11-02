@@ -22,7 +22,7 @@ its own ticked checkboxes until the wave-end review caught it.)
 ## Cache location
 One function picks a run's cache store: `cache/resolve.py::resolve_cache_store`. It is the only constructor of a
 cache store outside `enzymefinder.cache`, guarded by an AST test
-(`tests/test_cdb_resolve_store.py::test_all_cache_constructions_use_resolver`) — do not build a store anywhere else.
+(`tests/unit/test_cdb_resolve_store.py::test_all_cache_constructions_use_resolver`) — do not build a store anywhere else.
 Set `cdb.root` to an absolute path (`ENZYMEFINDER_CDB__ROOT`, or `[cdb] root` in the project / user / site
 `enzymefinder.toml`) to use the shared DuckDB shard store; the owner-only root is
 `/projectnb/liu-scc/philipp/software/enzymefinder/cdb/`. Unset, each run caches in
@@ -42,13 +42,15 @@ the nested-key convention), it is outranked by an explicit `--cache-dir`, and it
 deliberately not by every subcommand (`cli/main.py:383-387`, precedence at `:2352-2368`).
 
 ## Tests
-Full suite is ~11 min — always via `qsub`, never on the login node.
+Full suite is ~35 min (job 8399626: 2,130 s) — always via `qsub`, never on the login node.
+Tests live in `tests/{unit,governance,dormant,live,integration}`; `tests/dormant/` is skipped by default
+(`EF_INCLUDE_DORMANT=1` adds it back). Every run prints the 40 slowest tests. CI's coverage floor is 90% (DECISION-162).
 
 ```bash
 mkdir -p logs
 qsub scripts/scc-submissions/run_pytest_qsub.sh                              # full suite
-qsub -v PYTEST_ARGS="tests/test_foo.py" scripts/scc-submissions/run_pytest_qsub.sh
-qsub -v PYTEST_FILTER="not 019f" scripts/scc-submissions/run_pytest_qsub.sh
+qsub -v PYTEST_ARGS="tests/unit/test_foo.py" scripts/scc-submissions/run_pytest_qsub.sh
+qsub -v PYTEST_FILTER="not slow" scripts/scc-submissions/run_pytest_qsub.sh
 qsub -v PYTEST_LASTFAILED=1 scripts/scc-submissions/run_pytest_qsub.sh       # --last-failed
 ```
 
