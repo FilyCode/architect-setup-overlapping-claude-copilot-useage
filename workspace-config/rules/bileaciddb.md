@@ -20,3 +20,9 @@ and the dev environment: idempotency, real error handling, evidence records, por
 table without a `raw_payload_json` column, a skipped optional API field, error handling
 that would break at larger scale — raise it as a follow-up task or migration. Do not
 silently accept it because the task passed.
+
+**Register.** The project's register of known limitations is `docs/plans/2026-10-07-v031-open-items.md`. Comprehensive
+applies to what is harvested and stored, not to what is labelled correct: a label needs evidence or it is a typed
+unknown. Lean applies to code and process. A flagged shortcut gets exactly one of OPEN (naming the release it blocks),
+PARKED (owner-accepted, with a revisit trigger) or WONTFIX (owner-accepted, with the reason); the status vocabulary is
+enforced by a check (DECISIONS D039).
