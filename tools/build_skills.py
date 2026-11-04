@@ -19,7 +19,7 @@ import rule_map as rm  # noqa: E402
 SKILLS = ("dispatch-brief", "wave-review", "plan-critique", "verification-patterns",
           "scientific-evidence", "running-sge-jobs")
 PART = 12_000
-PART_BY_SKILL = {"dispatch-brief": 11_400}  # header grew with retro rules; keeps the body under its ceiling
+PART_BY_SKILL = {"dispatch-brief": 11_400, "plan-critique": 11_000}  # headers grew with retro rules; keeps each body under its ceiling
 OLD_NAMES = ("Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills\n"
              "`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`\n"
              "and `scientific-evidence`; `scc.md` is `running-sge-jobs`.\n\n")

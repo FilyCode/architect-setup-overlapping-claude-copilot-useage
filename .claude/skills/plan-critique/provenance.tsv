@@ -24,10 +24,10 @@ subagent-dispatch.md:472	SKILL.md	asserts any accuracy, coverage, recall, or per
 subagent-dispatch.md:478	SKILL.md	Self fact-check before dispatching.** The caller verifies the Calibration block'
 subagent-dispatch.md:486	SKILL.md	Unsettled questions become a research task, during plan-writing.** Whatever the 
 subagent-dispatch.md:494	SKILL.md	Escalate to a research/review wave instead of continuing to guess
-subagent-dispatch.md:500	SKILL.md	**Known-heavy problem, before any attempt** — matches a pattern that's previousl
-subagent-dispatch.md:504	SKILL.md	**`systematic-debugging`'s own 3+-failed-fixes gate** (Phase 4.5: "discuss with 
-subagent-dispatch.md:511	SKILL.md	a **research** pass (`research-scout` or a web-search-capable dispatch) for prio
-subagent-dispatch.md:513	SKILL.md	a **review/audit** pass (`critic-reviewer`-shaped) that re-derives what's actual
+subagent-dispatch.md:500	reference/part-2.md	**Known-heavy problem, before any attempt** — matches a pattern that's previousl
+subagent-dispatch.md:504	reference/part-2.md	**`systematic-debugging`'s own 3+-failed-fixes gate** (Phase 4.5: "discuss with 
+subagent-dispatch.md:511	reference/part-2.md	a **research** pass (`research-scout` or a web-search-capable dispatch) for prio
+subagent-dispatch.md:513	reference/part-2.md	a **review/audit** pass (`critic-reviewer`-shaped) that re-derives what's actual
 subagent-dispatch.md:516	reference/part-2.md	a **domain-role** reviewer if the problem is domain-shaped, same pattern as else
 subagent-dispatch.md:633	reference/part-2.md	Three-state is a plan-time checklist item, not a review-time catch
 subagent-dispatch.md:636	reference/part-2.md	during that wave to fix that class**: a check that could not express "deliberate

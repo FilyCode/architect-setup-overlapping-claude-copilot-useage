@@ -14,6 +14,9 @@ wave (minimum 3 seats, batched under the concurrency cap; lean-critic, always, i
 them: which tasks, files and abstractions the plan can drop or reuse) → pragmatism-officer → fix the plan
 before Task 1. Ask of every new check: what is its third state, and how does it say so?
 
+Exit: every "run X before/at T" in the critique's required changes is copied into the plan as a numbered task row before the plan is marked ready; the controller greps the critique for it.
+Calibration: a plan whose acceptance is a count of self-agreement names one independent check (a different tool, or hand-picked cases) in the task row.
+
 **Retirement check (R-20261103-1, owner-approved 2026-11-03). One grep, and it blocks Task 1.**
 For every set the plan proposes to analyse, `command grep` the project's `DECISIONS.md` and
 `FINDINGS.md` for that set's **defining marker and its cut value**, together with
@@ -46,7 +49,7 @@ The rules below are the original workspace text, moved verbatim.
 
 ## Reference files (read the one you need)
 
-- See [reference/part-2.md](reference/part-2.md) — a **domain-role** reviewer if the problem is domain-shaped, ; Three-state is a plan-time checklist item, not a review-time; during that wave to fix that class**: a check that could not
+- See [reference/part-2.md](reference/part-2.md) — **Known-heavy problem, before any attempt** — matches a patt; **`systematic-debugging`'s own 3+-failed-fixes gate** (Phase; a **research** pass (`research-scout` or a web-search-capabl; a **review/audit** pass (`critic-reviewer`-shaped) that re-d; a **domain-role** reviewer if the problem is domain-shaped, ; Three-state is a plan-time checklist item, not a review-time; during that wave to fix that
 
 Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
 `dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
@@ -206,19 +209,3 @@ Two triggers replace further ad hoc trial-and-error with a dispatched wave. Eith
 sufficient on its own — recognizing a problem as heavy up front is a valid trigger by
 itself, not just a fallback after burning several failed attempts:
 
-- **Known-heavy problem, before any attempt** — matches a pattern that's previously eaten a
-  lot of time/tokens (a recurring class of issue, something flagged in project history or
-  memory as hard, or an area you can already tell is architecturally uncertain). Trigger
-  this immediately, don't spend the 3 attempts first just to "earn" the escalation.
-- **`systematic-debugging`'s own 3+-failed-fixes gate** (Phase 4.5: "discuss with your human
-  partner before attempting more fixes"). In this workspace, that discussion is this wave,
-  not just a chat exchange.
-
-When triggered: stop attempting more fixes in-thread. Dispatch, scaled like the plan-review
-wave above (minimum ~2-3, more for a genuinely hard problem, concurrency cap applies):
-
-- a **research** pass (`research-scout` or a web-search-capable dispatch) for prior art /
-  known issues with this exact failure mode, library, or pattern;
-- a **review/audit** pass (`critic-reviewer`-shaped) that re-derives what's actually
-  happening from current real source — fresh eyes, not the accumulated hypothesis trail
-  already stuck in this conversation;

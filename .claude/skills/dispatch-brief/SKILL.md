@@ -14,7 +14,7 @@ ranges over with its contribution (UNRESOLVED/UNKNOWN as their own row); a commi
 overstated waits for a second seat to re-derive it. Also: files the agent owns and must not touch, the environment block from
 the agent file, the job-spec handoff (it never waits on SGE), and the closing line *"report
 anything in this brief that you found to be wrong."* Review briefs add the template below:
-findings file created first (findings dir, never scratchpad), at most 4 ranked areas with a drop
+findings file created first (findings dir, never scratchpad; scripts you write for evidence go in `<findings dir>/probes/<seat>/`, never the scratchpad), at most 4 ranked areas with a drop
 order, `git log -1 --format=%h` re-run before each finding's evidence line (cited file
 changed: mark it `RE-DERIVE`; the controller edits no file a running seat reads), the minor-triage question, and the
 unenumerated-objection slot. A multi-seat brief names one owner (file or seat) per shared fact

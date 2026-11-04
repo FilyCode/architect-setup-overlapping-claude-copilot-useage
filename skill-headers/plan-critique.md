@@ -14,6 +14,9 @@ wave (minimum 3 seats, batched under the concurrency cap; lean-critic, always, i
 them: which tasks, files and abstractions the plan can drop or reuse) → pragmatism-officer → fix the plan
 before Task 1. Ask of every new check: what is its third state, and how does it say so?
 
+Exit: every "run X before/at T" in the critique's required changes is copied into the plan as a numbered task row before the plan is marked ready; the controller greps the critique for it.
+Calibration: a plan whose acceptance is a count of self-agreement names one independent check (a different tool, or hand-picked cases) in the task row.
+
 **Retirement check (R-20261103-1, owner-approved 2026-11-03). One grep, and it blocks Task 1.**
 For every set the plan proposes to analyse, `command grep` the project's `DECISIONS.md` and
 `FINDINGS.md` for that set's **defining marker and its cut value**, together with
