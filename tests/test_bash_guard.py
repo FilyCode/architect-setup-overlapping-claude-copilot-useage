@@ -1,7 +1,9 @@
 # REPO/tests/test_bash_guard.py
+import subprocess
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "workspace-config" / "hooks"))
+import pytest
 from bash_guard import decide
 
 P = "/projectnb/liu-scc/philipp/projects/EnzymeFinder"
@@ -109,3 +111,63 @@ def test_unbounded_find_from_root_or_home_warns():
     assert d("find / -maxdepth 3 -name x") == "allow"
     assert d("find . -name '*.py'") == "allow"
     assert d("find /projectnb/liu-scc/philipp/projects -name x") == "allow"
+
+
+# R-20261104-1: a branch switch that silently deletes git-ignored files tracked in HEAD
+def _git(repo, *args):
+    subprocess.run(["git", "-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t", *args],
+                   check=True, capture_output=True)
+
+
+@pytest.fixture
+def ignored_loss_repo(tmp_path):
+    """Commit A force-adds big.csv (ignored by .gitignore) plus keep.txt and plain.txt; B untracks big.csv and drops plain.txt."""
+    r = tmp_path / "repo"
+    r.mkdir()
+    _git(r, "init", "-q", "-b", "main")
+    for n in ("big.csv", "keep.txt", "plain.txt"):
+        (r / n).write_text("x\n")
+    (r / ".gitignore").write_text("big.csv\n")
+    _git(r, "add", ".")
+    _git(r, "add", "-f", "big.csv")
+    _git(r, "commit", "-qm", "A")
+    _git(r, "branch", "A")
+    _git(r, "rm", "-q", "--cached", "big.csv")
+    _git(r, "rm", "-q", "plain.txt")
+    _git(r, "commit", "-qm", "B")
+    _git(r, "branch", "B")
+    _git(r, "checkout", "-q", "A")  # HEAD=A, working tree has big.csv
+    return r
+
+
+def test_switch_deleting_ignored_file_denied(ignored_loss_repo):
+    r = str(ignored_loss_repo)
+    for cmd, cwd in (("git checkout B", r), ("git switch B", r), (f"git -C {r} checkout B", "/"),
+                     (f"cd {r} && git checkout B", "/")):
+        verdict, reason = decide(cmd, cwd, JOB)
+        assert verdict == "deny", cmd
+        assert "big.csv" in reason and "1 " in reason, reason
+
+
+def test_switch_override_allowed(ignored_loss_repo):
+    r = str(ignored_loss_repo)
+    assert d("ALLOW_IGNORED_DELETE=1 git checkout B", cwd=r) == "allow"
+
+
+def test_checkout_paths_and_new_branch_allowed(ignored_loss_repo):
+    r = str(ignored_loss_repo)
+    assert d("git checkout -- keep.txt", cwd=r) == "allow"
+    assert d("git checkout B -- keep.txt", cwd=r) == "allow"
+    assert d("git checkout -b new", cwd=r) == "allow"
+    assert d("git switch -c new2", cwd=r) == "allow"
+
+
+def test_switch_deleting_only_unignored_files_allowed(ignored_loss_repo):
+    r = ignored_loss_repo
+    (r / "big.csv").unlink()  # the ignored file is gone; B still deletes tracked, non-ignored plain.txt
+    assert d("git checkout B", cwd=str(r)) == "allow"
+
+
+def test_unresolvable_target_fails_open(ignored_loss_repo, tmp_path):
+    assert d("git checkout no-such-ref", cwd=str(ignored_loss_repo)) == "allow"
+    assert d("git checkout B", cwd=str(tmp_path)) == "allow"  # not a git repo

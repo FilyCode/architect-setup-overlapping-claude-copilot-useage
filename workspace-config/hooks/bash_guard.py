@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shlex
+import subprocess
 import sys
 
 PROJECTS = "/projectnb/liu-scc/philipp/projects"
@@ -68,9 +69,53 @@ def _strip(seg):
     return seg
 
 
-def _git(seg):
-    i, work_tree = 1, False
+OVERRIDE = "ALLOW_IGNORED_DELETE"  # `ALLOW_IGNORED_DELETE=1 git checkout <ref>` after backing the files up
+NEW_BRANCH = {"-b", "-B", "-c", "-C", "--orphan", "--create", "--force-create"}
+
+
+def _git_out(repo, *args):
+    r = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, timeout=10)
+    return r.stdout if r.returncode == 0 else None
+
+
+def _ignored_losses(repo_dir, target):
+    """Paths tracked in HEAD, absent from `target`, still on disk and git-ignored: a switch deletes them silently.
+    Fails open: an unresolvable ref, a non-repo or any git error returns []."""
+    try:
+        top = (_git_out(repo_dir, "rev-parse", "--show-toplevel") or "").strip()
+        if not top or _git_out(top, "rev-parse", "--verify", "-q", target + "^{commit}") is None:
+            return []
+        out = _git_out(top, "diff", "--name-only", "-z", "--diff-filter=D", "HEAD", target)
+        gone = [p for p in (out or "").split("\0") if p and os.path.lexists(os.path.join(top, p))]
+        if not gone:
+            return []
+        # --no-index: check-ignore otherwise skips paths that are tracked in the index
+        r = subprocess.run(["git", "-C", top, "check-ignore", "--no-index", "-z", "--stdin"],
+                           input="\0".join(gone), capture_output=True, text=True, timeout=10)
+        return [p for p in r.stdout.split("\0") if p]
+    except (OSError, subprocess.SubprocessError):
+        return []
+
+
+def _switch_hazard(sub, rest, repo_dir):
+    if repo_dir is None or "--" in rest or NEW_BRANCH & set(rest) or any(a in ("-p", "--patch") for a in rest):
+        return None
+    refs = [a for a in rest if not a.startswith("-")]
+    if not refs:
+        return None
+    lost = _ignored_losses(repo_dir, refs[0])
+    if not lost:
+        return None
+    shown = ", ".join(lost[:10]) + (f", ... (+{len(lost) - 10} more)" if len(lost) > 10 else "")
+    return ("deny", f"git {sub} {refs[0]} would silently delete {len(lost)} git-ignored file(s) tracked in HEAD: {shown}. "
+            f"Back them up first, then rerun as `{OVERRIDE}=1 git {sub} {refs[0]}`.")
+
+
+def _git(seg, cwd=None, shvars=None):
+    i, work_tree, repo_dir = 1, False, cwd
     while i < len(seg) and seg[i].startswith("-"):
+        if seg[i] == "-C" and i + 1 < len(seg) and repo_dir:
+            repo_dir = os.path.normpath(os.path.join(repo_dir, seg[i + 1]))
         if seg[i] in ("-C", "-c", "--git-dir", "--work-tree"):
             work_tree |= seg[i] == "--work-tree"
             i += 2
@@ -83,6 +128,11 @@ def _git(seg):
         return "deny", "git stash mutates the shared index; copy the pre-fix file with `git show HEAD:<path>` instead."
     if sub == "checkout" and work_tree:
         return "deny", "git --work-tree checkout stages into the real index; read past commits with `git show <c>:<path>`."
+    if sub in ("checkout", "switch") and not (shvars or {}).get(OVERRIDE):
+        try:
+            return _switch_hazard(sub, rest, repo_dir) or ("allow", "")
+        except Exception:  # a broken guard must not block
+            return "allow", ""
     return "allow", ""
 
 
@@ -190,7 +240,7 @@ def decide(command: str, cwd: str, env: dict):
                     shvars["PWD"] = cwd
                 continue
             if cmd == "git":
-                v = _git(seg)
+                v = _git(seg, cwd, shvars)
             elif cmd == "rm":
                 v = _rm(seg, cwd, shvars)
             elif cmd in ("pytest", "py.test") or (cmd.startswith("python") and seg[1:3] == ["-m", "pytest"]):
