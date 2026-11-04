@@ -69,7 +69,7 @@ def _strip(seg):
     return seg
 
 
-OVERRIDE = "ALLOW_IGNORED_DELETE"  # `ALLOW_IGNORED_DELETE=1 git checkout <ref>` after backing the files up
+OVERRIDE = "ALLOW_IGNORED_OVERWRITE"  # `ALLOW_IGNORED_OVERWRITE=1 git checkout <ref>` after backing the files up
 NEW_BRANCH = {"-b", "-B", "-c", "-C", "--orphan", "--create", "--force-create"}
 
 
@@ -78,37 +78,44 @@ def _git_out(repo, *args):
     return r.stdout if r.returncode == 0 else None
 
 
-def _ignored_losses(repo_dir, target):
-    """Paths tracked in HEAD, absent from `target`, still on disk and git-ignored: a switch deletes them silently.
+def _ignored_overwrites(repo_dir, target, merge=False):
+    """Paths the target tracks that HEAD does not, present on disk and git-ignored by the current tree's rules:
+    git writes the tracked version over them without a warning (it refuses only for untracked, non-ignored files).
+    Paths deleted by the switch are not a loss: tracked in HEAD means recoverable from git.
     Fails open: an unresolvable ref, a non-repo or any git error returns []."""
     try:
         top = (_git_out(repo_dir, "rev-parse", "--show-toplevel") or "").strip()
         if not top or _git_out(top, "rev-parse", "--verify", "-q", target + "^{commit}") is None:
             return []
-        out = _git_out(top, "diff", "--name-only", "-z", "--diff-filter=D", "HEAD", target)
-        gone = [p for p in (out or "").split("\0") if p and os.path.lexists(os.path.join(top, p))]
-        if not gone:
+        base = "HEAD"
+        if merge:  # a merge writes only what `target` added since the merge base
+            base = (_git_out(top, "merge-base", "HEAD", target) or "").strip()
+            if not base:
+                return []
+        out = _git_out(top, "diff", "--name-only", "-z", "--diff-filter=A", base, target)
+        added = [p for p in (out or "").split("\0") if p and os.path.lexists(os.path.join(top, p))]
+        if not added:
             return []
-        # --no-index: check-ignore otherwise skips paths that are tracked in the index
         r = subprocess.run(["git", "-C", top, "check-ignore", "--no-index", "-z", "--stdin"],
-                           input="\0".join(gone), capture_output=True, text=True, timeout=10)
+                           input="\0".join(added), capture_output=True, text=True, timeout=10)
         return [p for p in r.stdout.split("\0") if p]
     except (OSError, subprocess.SubprocessError):
         return []
 
 
 def _switch_hazard(sub, rest, repo_dir):
-    if repo_dir is None or "--" in rest or NEW_BRANCH & set(rest) or any(a in ("-p", "--patch") for a in rest):
+    merge = sub == "merge"
+    if repo_dir is None or "--" in rest or NEW_BRANCH & set(rest) or any(a in ("-p", "--patch", "--abort", "--quit") for a in rest):
         return None
     refs = [a for a in rest if not a.startswith("-")]
     if not refs:
         return None
-    lost = _ignored_losses(repo_dir, refs[0])
+    lost = _ignored_overwrites(repo_dir, refs[0], merge)
     if not lost:
         return None
     shown = ", ".join(lost[:10]) + (f", ... (+{len(lost) - 10} more)" if len(lost) > 10 else "")
-    return ("deny", f"git {sub} {refs[0]} would silently delete {len(lost)} git-ignored file(s) tracked in HEAD: {shown}. "
-            f"Back them up first, then rerun as `{OVERRIDE}=1 git {sub} {refs[0]}`.")
+    return ("deny", f"git {sub} {refs[0]} would silently OVERWRITE {len(lost)} git-ignored file(s) on disk with the "
+            f"target's tracked version: {shown}. Back them up first, then rerun as `{OVERRIDE}=1 git {sub} {refs[0]}`.")
 
 
 def _git(seg, cwd=None, shvars=None):
@@ -128,7 +135,7 @@ def _git(seg, cwd=None, shvars=None):
         return "deny", "git stash mutates the shared index; copy the pre-fix file with `git show HEAD:<path>` instead."
     if sub == "checkout" and work_tree:
         return "deny", "git --work-tree checkout stages into the real index; read past commits with `git show <c>:<path>`."
-    if sub in ("checkout", "switch") and not (shvars or {}).get(OVERRIDE):
+    if sub in ("checkout", "switch", "merge") and not (shvars or {}).get(OVERRIDE):
         try:
             return _switch_hazard(sub, rest, repo_dir) or ("allow", "")
         except Exception:  # a broken guard must not block
