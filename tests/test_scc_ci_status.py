@@ -79,6 +79,7 @@ def test_submit_posts_pending_then_qsubs_test_and_held_followup(env, capsys):
     test_q, follow_q = calls(log, "qsub")
     assert f"PROJECT_ROOT={wt}" in test_q and f"VENV_DIR={venv}" in test_q and test_q.endswith("run.sh")
     assert "hold_jid" not in test_q
+    assert "-l h_rt=2:00:00" in test_q
     assert "-hold_jid 101" in follow_q and "-pe omp 1" in follow_q and "--job-id 101" in follow_q
     out = capsys.readouterr().out
     assert "101" in out and "202" in out and "pytest_qsub.101.out" in out

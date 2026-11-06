@@ -122,7 +122,7 @@ def submit(args):
                          "-l", "h_rt=1:00:00", "-l", "mem_per_core=8G", "-P", "liu-scc", "-N", f"scc_ci_venv_{venv.name}",
                          "-j", "y", "-o", str(venv.parent / f"build_{venv.name}.$JOB_ID.out"), str(BUILD_SCRIPT)], cwd=wt)
             hold = ["-hold_jid", build]
-        job = run(["qsub", "-terse", *hold, "-v", envs, script], cwd=wt)
+        job = run(["qsub", "-terse", *hold, "-l", f"h_rt={args.h_rt}", "-v", envs, script], cwd=wt)
     except SystemExit as e:
         post_status(repo, sha, "error", f"submit failed, test job not queued: {why(e)}", args.context)
         raise
@@ -275,6 +275,8 @@ def main(argv=None):
     s.add_argument("--sha")
     s.add_argument("--lockfile", default="requirements-dev.lock", help="lock whose hash keys the venv")
     s.add_argument("--test-script", default="scripts/scc-submissions/run_pytest_qsub.sh")
+    s.add_argument("--h-rt", default="2:00:00",
+                   help="test job run-time limit; overrides the script (EF suite took 33-37 min, job 8453221 hit 1h)")
     s.set_defaults(fn=submit)
     p = common(sub.add_parser("post"))
     p.add_argument("--sha", required=True)
