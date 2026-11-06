@@ -810,3 +810,59 @@ Range Bile_acid_database ae2665d..de5ef77 (9 commits; gate 77c6d2d, closure f961
 - [x] R-20261104-5 (done 2568dc4) skill-headers/plan-critique.md (Calibration, 1 line): a plan whose acceptance is a count of self-agreement names one independent check (different tool or hand-picked cases) in the task row — evidence: 249,720/249,720 was the headline; RDKit check found ring-N 227 and 4 residue cells only at review — expected: independent evidence arrives at T-time, not at wave end.
 
 Objection (unasked): the wave shipped a retyping whose defining metric was self-agreement and whose `none`/`not_read` classes (about 15k and 10k cells) were unsized until after merge; the work was merged on tests that could not see the defect, and 60% of the wave's tokens went to finding it afterwards.
+
+## 2026-11-05 EnzymeFinder F3 truth-and-calibration
+Source: ledger `.superpowers/sdd/2026-11-02-f3-truth-calibration-plan/progress.md` (424 lines), findings 2026-11-04 (f3-close-*, f3-c3/c4-review, f3-c8-*), `git log 9e118f14..0bdf0be7` (96 commits).
+
+- **Scope**: F3 "truth and calibration": b10 rebuild at 2026_03, N1-N3 baselines, class-aware calibration map shipped with population label, close batch C1-C8 (2026-11-04/05). 96 commits; 6 owner AskUserQuestion rulings at close alone (Q1-Q6) plus 2 on 2026-11-05.
+- **Cost** (`wave_stats.py --since 2026-11-02`, main transcript): main 930 calls, 261.3M summed context, max 537k, 4 compactions, 8.3% of calls above 500k. Subagents (summed context): implementer x43 208.8M, critic-reviewer x44 65.9M, domain-reviewer x3 16.8M, anomaly-hunter 4.6M, alignment 3.8M. Review seats 101.0M of 316.3M subagent tokens (31.9%). 3 turn-limit hits (aa2331e2, a59eeb6e, a5e1ceeb).
+
+**Worked**
+- Implementer "report anything wrong" slot: `grep -c 'brief error'` on the ledger = 13 hits (Task 5 BLOCKED before code; Task 12a no tier function; Task 9d truth source; Task 7 Pyright :162/:193 not reproduced; C7r routing). Each was fixed in a line instead of building to a wrong brief.
+- Mutant-RED discipline (Tasks 4, 5a, 9, 12a, C3: 6-15 mutants RED) plus review finding real defects: Task 5a I1 "dropping self-exclusion moves 11,771/14,750 scores, tests green"; C3-M1 test gap closed by 11a5b00b.
+- Pre-registration amended and committed before any number (d9979a6f, b41a02e3): the withdrawal of the suppression rule was a dated amendment, not a silent change; MA-328 gate closed at ec3 +0.0120 on a pre-set arm.
+- Aim check 2026-11-03 stopped polish loops (owner: Task 9 first, 5b one review round); Task 5a round 3 went to a fresh implementer when the first ran out of turns, with a remainder list.
+- Wave-end seats found real wrong claims: critic I3 + domain F1 showed "well calibrated" false (A5 low-coverage n 230 mean p 0.859 vs obs 0.813 [0.758,0.858]); figure F1 Blocking on "well calibrated" panel.
+
+**Did not work**
+- Controller wrote the owner Q3 re-ask with an unverified premise (ledger line: "my Q3 re-ask text asserted 'well calibrated' without the printed p"). The owner withdrew the suppression rule on it (2026-11-04), DECISION-170 stated it, and it was corrected only 2026-11-05 after two seats re-derived. Cost: C3+C4+C4r+refit v3+C5 rerun (~3 rounds, FIT-v2 8438558 and C5 8438803 wasted), ~2 docs fix batches. The measurement existed (job 8438803) but the question was built from the summary, not from printed p vs observed.
+- C3 shipped with a red test (test_f3_baselines read_join 3-arg); found two tasks later in C4r (fix c66cbd7a). The implementer's "tests 197 passed" ran a subset; the full file set was not run.
+- Sonnet trailer on subagent commits: 12 commits in the range carry `Co-Authored-By.*Sonnet` (e.g. a049c59e, 52bd540f, ef9311e4, 2b8db8d8); each wave needs a backup-branch rewrite before the PR. Memory rule exists and did not stop it at the source.
+- Turn/context exhaustion: Task 5a round 2 partial (out of turn budget), critic closing seat resumed after 60 turns, 3 limit hits. Recurs (see 2026-10-15, 2026-10-16: R-20261016-1 raised maxTurns; hits continue).
+- Close ran 11+ fix items per seat batch and a refit (Q6, non-recommended) on top of 9 seats; 4 compactions. Owner stop rule only arrived 2026-11-05 ("pre-public: move on when working and not misleading, mark it").
+
+**Proposals**
+- [ ] R-20261105-1 skill-headers/owner-question.md (or dispatch skill): an AskUserQuestion that characterises a measured population must quote the number pair (printed p vs observed, n, CI) copied from a named artifact path; a question without one is not sent — evidence: Q3 re-ask "well calibrated" wrong, 3 rounds + rerun — expected: no rule withdrawn on an unmeasured premise.
+- [ ] R-20261105-2 tools/hooks (commit-msg or implementer SubagentStop): reject/auto-fix `Co-Authored-By` naming a model other than the session line — evidence: 12 Sonnet-trailer commits in range, memory rule did not fire — expected: zero rewrite step before PR.
+- [ ] R-20261105-3 skill-headers/dispatch-brief.md: implementer DONE line must name the exact test command and count; controller runs the touched module's whole test dir before accepting — evidence: C3 red test found at C4r — expected: breakage found in its own task.
+- [ ] R-20261105-4 projects/EnzymeFinder CLAUDE.md (one line, replacing the per-task polish language): pre-public stop rule from owner 2026-11-05; plus a counter in the ledger (round n/5 already exists) that triggers an owner-ask at round 3 for polish-only items — evidence: Task 5a rounds 1-3, C4 rounds 1-2, C8 two batches — expected: fewer polish rounds.
+- [ ] R-20261105-5 tools/wave_stats.py: report implementer turn-limit hits by task id — evidence: 3 hits unattributed in output; recurs (see 2026-10-16) — expected: a budget set from data, not guessed.
+
+## 2026-11-05 BileAcidDB P0-4 release staging
+Source: plan-critique ledger + critic/domain/lean/pragmatism/inventory findings, wave-review findings (6 seats), `git log 8f2f17f..008bdc0` in the p0-4-staging worktree (29 commits, 39 files, +2762/-384), main transcript.
+
+- **Scope**: P0-4 release staging (stage, gate, promote, verify chain; absence census built late). Plan critique of a 198-line plan at 8f2f17f (critic F1-F3 BLOCKING, F4-F13/F16 Important), 3 owner AskUserQuestion rounds before build, 3 during build, 4 at wave review. Forced-failure run 2 (job 8457904) was still running when this was written; no result is claimed.
+- **Cost** (`wave_stats.py --since 2026-11-05`; the window also holds the earlier D040/PR #12 work of the same day, so it overstates): main 138 calls, 30.7M summed context, max 347k, 0 compactions. Subagents (summed context): implementer x12 32.2M, critic-reviewer x2 5.6M, domain x1 3.1M, lean x2 1.4M, alignment 1.1M, inventory x2 0.46M, docs-sync 0.34M, pragmatism x2 0.33M. Review seats 12.3M of 44.5M subagent tokens (27.7%). 1 turn-limit hit (a8e11af2ca06d0d33).
+
+### Worked
+- Plan critique before Task 1: critic F1-F3 (promote dir collides with .gitignore at line 86; symlink deletes tracked manifests; staged manifest records staging paths) would each have failed the first promote. All fixed in plan v3 as plan edits, not build rounds (seat tokens for the critique alone not separated in wave_stats). Ledger O1-O5 records the owner rulings.
+- Owner questions with a recommendation and a plain-words option let the owner override twice on purpose (refuse #17; census now); both are in the ledger with the recommended option noted, so the override was not lost.
+- Wave review caught critic F1 with a runnable probe (`critic_scratch/probe_post_rename.py`, OSError forced after rename #2: promoted dir exists, post.ok exists, ledger absent). Unit tests had no case after rename #2. Fixed 122f7e6 (exit 3), 74b1658 (verify after exit 3).
+- Review fixes landed as lettered single commits (A-E), each with test_chain.py additions; the findings map to commits 1:1.
+- Controller-found issue (A13 rehearsal reclassifies, post-only stamps A13 on A12 rows) was put to the owner before build.
+
+### Did not work
+- Merge gate 8454848 failed on the controller's own ROOT fix: the test helper parsed a `ROOT=` line the submitter no longer had (fe1b242, 5-line fix). The fix was committed without running the test file that reads that line; cost one gate job and a resubmit.
+- Forced-failure run 1 (job 8454957) could not show the injected-test clause: R1 stopped the chain first. The spec was written from the plan's acceptance wording, not run in miniature. Cost: one job, an owner question, commits 3353812 + cabbdef, then run 2. Critic F8 on the plan had said "forced failure is not forceable as written"; v3 repaired the mechanism but not this ordering. Then 83ca9d2/cdfd5b9 fixed a PUBLIC_VERSION spec bug (0.0.0-A00-r001), i.e. the spec was still unrun after run 1.
+- Inventory and docs-sync seats put findings only in their final message; the controller transcribed them (inventory.md header: "Controller-written ... transcribed"). Recurs in kind (see 2026-11-04 R-20261104-4, which fixed scripts, not message-only findings). The transcription is unverifiable by the retro.
+- AskUserQuestion hook false alarms on explained codes: the brief counted 3 resubmits; transcript shows the hook error on D040/D021 in a question that did explain them. Each costs one controller round.
+- F1 class (a failure after the last mutation reported as "previous build") passed plan critique, build and all unit tests; only a seat with a monkeypatch probe found it at wave end. Review fixes A-D then ran 5 more commits after the census, with the census itself (1df51e1, 4f29b61) added after review opened: the review ran against cabbdef while 14 commits followed.
+
+### Proposals
+- [x] R-20261105-1 (done, owner-approved 2026-11-05) skill-headers/dispatch-brief.md (seat brief block, 1 line): "write findings to `<findings dir>/<seat>.md` with your own Write/heredoc; a seat whose file is absent is re-run, not transcribed" — evidence: inventory.md and docs-sync.md are controller-written; recurs in kind (see 2026-11-04) — expected: findings are the seat's own text.
+- [x] R-20261105-2 (done, owner-approved 2026-11-05) skill-headers/plan-critique.md (exit step, 1 line): a task whose acceptance is a forced failure names the miniature run (stub chain, seconds) that proves each injected clause is reachable, as a numbered task row, before the real job — evidence: run 1 8454957 stopped at R1, spec fixes 3353812, cabbdef, 83ca9d2, cdfd5b9 — expected: one job instead of two.
+- [x] R-20261105-3 (done, owner-approved 2026-11-05) skill-headers/verification.md (replace the "run tests" line if present): after editing a helper any test parses (ROOT, paths, log lines), run `pytest <that test file>` before commit — evidence: fe1b242 after gate 8454848 failed — expected: no merge-gate job spent on a one-line helper.
+- [x] R-20261105-4 (done, owner-approved 2026-11-05) skill-headers/wave-review.md (Order, 1 line): the review commit is frozen; features the owner adds at review (census) go to a second, short review, not appended to the same range — evidence: review HEAD cabbdef, 14 commits after it incl. census 1df51e1 — expected: the released tip has been reviewed.
+- [x] R-20261105-5 (done, owner-approved 2026-11-05) skill-headers/plan-critique.md (Calibration, 1 line): for any step that mutates in sequence, the critique seat lists the state after each step's failure and which test covers it — evidence: critic F1 (failure after rename #2), no test beforehand — expected: F1-class gaps found at plan time.
+
+Objection (unasked): the owner chose to build the census at review, enlarging a staging wave that was already 29 commits, and its report-only result gates nothing, so the wave grew in the one place that cannot change a promote decision.

@@ -18,12 +18,12 @@ reports), the commit range per repo and the main transcript path
 Dispatch in batches under the concurrency cap (2 on the smaller account, 3 on the larger),
 science seats first (domain-reviewer, anomaly-hunter), then critic-reviewer and
 alignment-officer, then docs-sync, inventory-auditor and lean-critic, so governance text is
-drafted after the findings it must not contradict. A
+drafted after the findings it must not contradict. The review is pinned to one commit (its HEAD is named in the close); commits after it, such as features the owner adds at review, get a short second critic pass before merge. A
 spawn refused at the cap is not queued: re-dispatch it when a slot frees. The close lists every
 seat as ran or not-ran, with the reason. Findings files go in the findings dir (`.superpowers/findings/<date>/` in the config repo,
 persistent), never the scratchpad, which dies with the job. A seat is not "ran" until its
 findings file has its closing section (`command grep -q '^## CLOSING' <file>`); if a seat put
-findings only in its message, write them into its file, marked controller-written, before closing. When the wave's evidence is only self-consistency, say
+findings only in its message, re-run it; only as a last resort write them into its file, marked controller-written, before closing. When the wave's evidence is only self-consistency, say
 so in the close and keep a standing row for one held-out evaluation. A branch that is not merged,
 or whose full suite could not run, carries the line "MERGE GATE: full suite on the merge commit,
 job spec written" in its ledger and plan status, with the job spec's path; the wave is not marked
