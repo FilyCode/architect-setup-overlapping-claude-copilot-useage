@@ -13,7 +13,7 @@ gate or guard is verified by removing it and watching its test fail.
 SenC and MeMES): a probe that prints a count and writes a verdict asserts the two agree, and a guard
 that passes a 99.97%-broken join is not a guard.
 
-After editing a helper or script that a test parses as text (ROOT lines, paths, log lines), run that test file before commit (R-20261105-3; fe1b242).
+After editing a helper or script that a test parses as text (ROOT lines, paths, log lines), run that test file before commit (R-20261105-B3; fe1b242).
 
 **CI and PR checks** (2026-11-01; owner approved):
 1. A red check blocks the merge.
