@@ -39,7 +39,7 @@ Setting `-wd /projectnb/liu-scc/philipp/projects/EnzymeFinder` in qsub scripts i
 project-scoped Tier-2 entries key on the resolved project directory, not because the cache follows the CWD.
 There is no `ENZYMEFINDER_CACHE_DIR`; the environment name is `ENZYMEFINDER_CACHE__CACHE_DIR` (double underscore,
 the nested-key convention), it is outranked by an explicit `--cache-dir`, and it is read by `enzymefinder run` but
-deliberately not by every subcommand (`cli/main.py:383-387`, precedence at `:2352-2368`).
+deliberately not by every subcommand (precedence in `pipeline/run.py::run_cache_root`; the adopt-from-settings rule in `models/run_config.py::resolve_run_config`; `cache-prune` reads only the flag).
 
 ## Tests
 Full suite is ~35 min (job 8399626: 2,130 s) — always via `qsub`, never on the login node.
