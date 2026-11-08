@@ -21,7 +21,7 @@ from pathlib import Path
 
 from measure_context import _entries, agent_type
 
-TURN_LIMIT = re.compile(r"<task-id>(\w+)</task-id>(?:(?!</task-notification>).)*?stopped at its \d+-turn limit", re.S)
+TURN_LIMIT = re.compile(r"<task-id>(\w+)</task-id>(?:(?!</task-notification>).)*?stopped at its (\d+)-turn limit", re.S)
 
 REVIEW_SEATS = frozenset({
     "critic-reviewer", "domain-reviewer", "alignment-officer", "anomaly-hunter", "docs-sync",
@@ -104,15 +104,23 @@ def _calls(path: Path, since: datetime | None):
 def summarize(main: Path, since: str | None = None) -> dict:
     bound = _parse_since(since)
     ctx = list(_calls(main, bound))
-    compactions, limited = 0, []
-    for e in _entries(main):
-        if not _after(e, bound):
-            continue
-        if e.get("subtype") == "compact_boundary":
-            compactions += 1
+    compactions, first_seen = 0, {}  # turn-limit id -> (limit, counted): decided at its FIRST notice,
+    for e in _entries(main):          # so a notice re-injected after --since is not a new hit
         text = _text_of(e.get("message"))
-        if text:
-            limited += [t for t in TURN_LIMIT.findall(text) if t not in limited]
+        for tid, lim in TURN_LIMIT.findall(text) if text else ():
+            first_seen.setdefault(tid, (int(lim), _after(e, bound)))
+        if _after(e, bound) and e.get("subtype") == "compact_boundary":
+            compactions += 1
+    limited = [t for t, (_, counted) in first_seen.items() if counted]
+    by_seat: dict[str, list] = {}
+    for t in limited:
+        meta = main.parent / main.stem / "subagents" / f"agent-{t}.meta.json"
+        try:
+            m = json.loads(meta.read_text())
+        except (OSError, ValueError):
+            m = {}
+        by_seat.setdefault(m.get("agentType") or "unknown", []).append(
+            {"id": t, "limit": first_seen[t][0], "task": m.get("description", "")})
     subs: dict[str, dict] = {}
     for p in sorted((main.parent / main.stem / "subagents").glob("agent-*.jsonl")):
         c = list(_calls(p, bound))
@@ -130,7 +138,7 @@ def summarize(main: Path, since: str | None = None) -> dict:
                      # cost-weighted share (cache write/read and output priced) was ≈ 0.67, n = 15;
                      # compare this number only with itself across waves.
                      "share_above_500k": round(sum(c for c in ctx if c >= 500_000) / sum(ctx), 3) if ctx else 0.0},
-            "subagents": subs, "turn_limit_hits": limited,
+            "subagents": subs, "turn_limit_hits": limited, "turn_limit_by_seat": by_seat,
             "review_seats": {"context_tokens": review, "subagent_tokens": total,
                              "share": round(review / total, 3) if total else 0.0}}
 

@@ -54,7 +54,7 @@ def test_turn_limit_does_not_span_notifications():
     done = "<task-notification><task-id>ok1</task-id><status>completed</status><summary>done</summary></task-notification>"
     hit = ("<task-notification><task-id>hit2</task-id><status>completed</status><summary>Agent \"x\" "
            "stopped at its 60-turn limit</summary></task-notification>")
-    assert ws.TURN_LIMIT.findall(done + "\n" + hit) == ["hit2"]
+    assert ws.TURN_LIMIT.findall(done + "\n" + hit) == [("hit2", "60")]
 
 
 # --- regressions found by the 2026-10-29 MeMES retro ------------------------------------
@@ -187,3 +187,26 @@ def test_cli_repo_range_register_prints_both_sections(tmp_path, capsys):
     out = json.loads(capsys.readouterr().out)
     assert out["review_seats"]["share"] == round(42_000 / 55_000, 3)
     assert out["register"]["rows_added"] == 2
+
+
+def test_turn_limit_hits_attributed_to_seat_type_limit_and_task(tmp_path):
+    """R-20261030-5, R-20261101-5, R-20261102-5, R-20261105-5, R-20261106-5: ids alone were unattributable."""
+    main = _session(tmp_path)
+    meta = tmp_path / "s1" / "subagents" / "agent-aaa.meta.json"
+    meta.write_text(json.dumps({"agentType": "critic-reviewer", "description": "Wave F8a critic"}))
+    s = ws.summarize(main)
+    assert s["turn_limit_by_seat"] == {"critic-reviewer": [{"id": "aaa", "limit": 40, "task": "Wave F8a critic"}]}
+
+
+def test_turn_limit_first_seen_before_since_is_not_counted_again(tmp_path):
+    """The same notice re-appearing after --since (resume, re-injection) gave the same 8 ids for two windows."""
+    main = tmp_path / "s2.jsonl"
+    note = ("<task-notification><task-id>old</task-id><summary>Agent \"x\" stopped at its 20-turn limit"
+            "</summary></task-notification>")
+    lines = [{"timestamp": "2026-10-13T00:00:00Z", "message": {"role": "user", "content": note}},
+             {"timestamp": "2026-10-15T00:00:00Z", "message": {"role": "user", "content": note}},
+             _call(1, 10, "2026-10-15T00:00:00Z")]
+    main.write_text("\n".join(json.dumps(x) for x in lines))
+    assert ws.summarize(main, "2026-10-14T00:00:00Z")["turn_limit_hits"] == []
+    assert ws.summarize(main)["turn_limit_hits"] == ["old"]
+    assert ws.summarize(main)["turn_limit_by_seat"] == {"unknown": [{"id": "old", "limit": 20, "task": ""}]}
