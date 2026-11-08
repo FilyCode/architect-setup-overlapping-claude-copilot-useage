@@ -922,6 +922,39 @@ not fall.
 
 ---
 
+### [2026-11-08] [DECISION-031]: Retro loop throughput, analysis-wave roster trial, commit trailers
+
+**What** (owner, AskUserQuestion 2026-11-08, all four recommended options):
+1. retro-officer writes at most 3 proposals per entry, each quoting the line it replaces after a
+   grep (or naming a new mechanism); a project-scoped change becomes a row in that project's
+   register, not a retro-log proposal; a commit applying a proposal ticks it in the same commit.
+2. Four consolidated skill edits clearing 11 proposals (wave-review pre-review sentence covers
+   headline prose and owner replies; dispatch-brief implementer DONE line, TARGET sentence,
+   premise re-measurement on close; plan-critique pre-registration/acceptance line). ed0eebe.
+3. Analysis-wave roster trial for 3 waves: domain + anomaly + pragmatism; critic only when a gate
+   or test changed; lean, inventory, docs-sync only at a doc-heavy close.
+4. A commit's Co-Authored-By names the model that wrote it; the controller no longer rewrites
+   implementer trailers.
+
+**Why**: 51 open proposals after 9 days (~5 per wave), of which 4 were applied but unticked, ~6
+restated existing text, and 9 targeted project files: 0 of 9 done, 6 untracked (investigator,
+`.superpowers/findings/2026-11-08/workspace-audit/investigator-project-proposals.md`). The
+trailer rewrite used reset --hard + cherry-pick and nearly lost a fix wave (memory note).
+Roster saving estimate ~3M of 16M seat context per analysis wave is UNMEASURED; hence a trial.
+
+**Alternatives rejected**: routing only the project items (backlog keeps growing); adopting the
+roster cut permanently (unmeasured miss rate); a commit-msg hook forcing the session model
+(attribution names a model that did not write the code).
+
+**Best-practice reference**: learnings.md "Prose rules do not hold; hooks do"; core rule 13
+(every limitation is a register row in its own project).
+
+**Revisit trigger**: next integration counts open proposals (target: under 15) and project rows
+created by retro-officer; after the 3rd trial analysis wave, compare seat context and any
+post-close finding a dropped seat would have caught, then adopt or revert.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design

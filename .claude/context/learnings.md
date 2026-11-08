@@ -123,6 +123,17 @@ acceptance harnesses and parity gates signed off without a planted fault. 4 entr
 **Fix:** the cheap form is to re-run the gate over an old artifact with one planted bad row and
 quote the non-zero exit (core.md rule 1; verification-patterns).
 
+## A fix filed where its owner never looks does not happen
+
+**Recurred:** 9 retro proposals (2026-10-30..11-08) targeted project files in SenC-SelD-GNcheck,
+MeMES_OvoA_search and EnzymeFinder but lived only in the config repo's retro log. On 2026-11-08,
+0 of 9 were done and 6 were tracked nowhere in their project (investigator,
+`.superpowers/findings/2026-11-08/workspace-audit/investigator-project-proposals.md`). Separately
+4 config proposals were applied but never ticked, so the log over-stated the backlog.
+
+**Fix:** a change belongs in the backlog its owner's sessions read: project items become rows in
+the project's register (retro-officer, DECISION-031); a commit that applies a proposal ticks it.
+
 ## Audit trail
 
 - **2026-07-23:** full workspace audit. Plugin versions checked against primary manifests (not changelog summaries): superpowers 6.1.1 = latest, example-skills and research-skills current. Found and fixed `planning-with-files` stale hand-copy (see entry above). No skill has sat provably unused 30+ days yet (too early to tell — this is the first audit). Added `permissions.deny` hardening to shared `settings.json`, wired `continuous-improvement.md` into `CLAUDE.md`, wired `.claude/settings.json` pointer files into 4 previously-unwired projects. Evaluated `research-ops-skills` and `K-Dense-AI/scientific-agent-skills` — both real, both skipped, no concrete active need yet.
@@ -170,3 +181,18 @@ cores block; templates dispatched in EC523 and EnzymeFinder. Fix rounds did not 
 commits per task 0.83 (P0, before 10-24) vs 0.67-1.62 after (n=5 waves; F1d had a fix repairing
 the previous fix twice). Applied R-20261030-1/-9 (wave-review) and -4 (verification-patterns).
 Evidence: `.superpowers/findings/2026-10-31/investigator-{sge-usage,fixrounds}.md`.
+
+**2026-11-08 (workspace-audit steps 0-5, 7; step 6 not run).** Retro: 51 open -> 0 (20 applied:
+code 60a070a qsub_guard node-local deny, 211c346 wave_stats turn_limit_by_seat (5 duplicate
+proposals), 42b6909 dispatch_guard message; skills ed0eebe; 4 found applied but unticked; 9 routed
+to projects: MeMES R-112..114 committed, 5 EF/SenC rows handed to the owner; 12 rejected as
+covered; 10 deferred with triggers). DECISION-031 (retro-officer cap and project routing,
+analysis-wave roster trial, trailer = writing model). Session scan (`session_scan.json`, transcripts
+since 10-25, 12 main sessions): subagent turn-limit hits 10.7% (19% in 10-14..10-24), implementer
+hits 53 -> 7, critic-reviewer now the most-truncated seat (22); 5 sessions over 800 calls carry 90%
+of main context; 32% of implementers dispatched with an opus override. Skill invocations since
+10-14: dispatch-brief 172 ... verification-patterns 0 (preloaded via `skills:` in implementer,
+critic, investigator, lean-critic, so not dead). Home 6.9 of 10 GB, transcripts 4.0 GB
+(cleanupPeriodDays 90); deleting CLI 2.1.317/318 was refused by the auto-mode classifier, left to
+the owner. Step 4 is obsolete (planning-with-files no longer installed). Evidence:
+`.superpowers/findings/2026-11-08/workspace-audit/`.
