@@ -8,8 +8,9 @@ import re
 import sys
 
 REASON = re.compile(r"cross[- ]module|contract|retry", re.I)
-MSG = ("Opus implementer without a reason in the brief's first line (DECISION-028/029): name the "
-       "cross-module/contract change or retry there, or drop model: opus.")
+MSG = ("Opus implementer without a reason in the brief's first line (DECISION-028/029). The check "
+       'passes when the first non-blank line contains "cross-module" (or "cross module"), "contract" '
+       'or "retry". Put the reason there in those words, or drop model: opus.')
 
 
 def main():

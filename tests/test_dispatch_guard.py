@@ -48,3 +48,10 @@ def test_malformed_stdin():
     assert run(None, raw="{{") == (0, "")
     assert run({"tool_name": "Agent", "tool_input": "str"}) == (0, "")
     assert run(ev(prompt=None)) [0] == 0
+
+
+def test_warning_names_the_accepted_words():
+    """R-20261103-4: 3 of 5 warned dispatches had real reasons outside the vocabulary; the message must say what passes."""
+    msg = json.loads(run(ev("writes the wave's published prose"))[1])["hookSpecificOutput"]["additionalContext"]
+    for w in ("cross-module", "contract", "retry"):
+        assert f'"{w}"' in msg
