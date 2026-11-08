@@ -14,6 +14,11 @@ retro-officer, always, as the final step: give it the ledger path, the findings 
 reports), the commit range per repo and the main transcript path
 (`~/.claude/projects/<project>/<session id>.jsonl`). It appends one entry to
 `docs/retros/retro-log.md` in the config repo.
+**Analysis-wave trial (owner 2026-11-08, next 3 analysis waves, then decide):** a wave whose output
+is a measurement or finding, not code, runs domain-reviewer, anomaly-hunter and pragmatism-officer;
+critic-reviewer only when the wave changed a gate or test; lean-critic, inventory-auditor and
+docs-sync only at a doc-heavy close; retro-officer as always, recording "trial n/3" and any later
+finding a dropped seat would have caught. Code waves keep the roster above.
 
 Dispatch in batches under the concurrency cap (2 on the smaller account, 3 on the larger),
 science seats first (domain-reviewer, anomaly-hunter), then critic-reviewer and
@@ -28,8 +33,9 @@ so in the close and keep a standing row for one held-out evaluation. A branch th
 or whose full suite could not run, carries the line "MERGE GATE: full suite on the merge commit,
 job spec written" in its ledger and plan status, with the job spec's path; the wave is not marked
 closed without that line. Nothing that says built, verified, merged, closed, answered or resolved
-(status docs, findings, commit subjects) is written or pushed before the roster has run and the close
-line exists, or it is marked DRAFT; "push at wave end" means after that line, and a /compact
+(status docs, findings, commit subjects, headline prose in FINDINGS, replies to the owner) is written
+or pushed before the roster has run and the close line exists; before that it says "candidate" with
+its measurement, or is marked DRAFT (a headline is not a status doc, so this failed 4 times); "push at wave end" means after that line, and a /compact
 keep-line says "push after review close" (R-20261030-1/-9: SenC and MeMES pushed claims hours before
 the review, one headline later retracted). A post-refresh test failure recorded
 in a handoff becomes a ledger item with an owner and the next refresh as its gate, never only a note.

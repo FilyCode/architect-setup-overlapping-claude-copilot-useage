@@ -17,7 +17,10 @@ anything in this brief that you found to be wrong."* Review briefs add the templ
 findings file created first and written by the seat itself with its own Write/heredoc (a missing file, or one without `## CLOSING`, means re-run the seat; controller transcription is the last resort and is marked) (findings dir, never scratchpad; scripts you write for evidence go in `<findings dir>/probes/<seat>/`, never the scratchpad), at most 4 ranked areas with a drop
 order, `git log -1 --format=%h` re-run before each finding's evidence line (cited file
 changed: mark it `RE-DERIVE`; the controller edits no file a running seat reads), the minor-triage question, and the
-unenumerated-objection slot. A multi-seat brief names one owner (file or seat) per shared fact
+unenumerated-objection slot. An analysis brief opens with a TARGET sentence and what a result would have to show to answer it;
+the domain seat checks the headline against it. A review that closes a register row re-measures the
+row's premise against the real source (live call, fixture vs claim), not only the diff.
+A multi-seat brief names one owner (file or seat) per shared fact
 (a count, a register row); other seats cite it rather than re-derive it.
 
 **Which seat.** Code tasks (SDD included) go to `implementer` on its default sonnet; `model:
@@ -33,7 +36,10 @@ with a Bash heredoc; a seat that answers only in its message has not followed it
 
 **Turn budget, first line of every implementer brief:** *"Commit your finished work and write
 your report by turn 70 of 100; leave the rest as a listed remainder."* A task that still hits
-100 is too big: split it. A plan box is ticked only against the promise's quoted wording, else
+100 is too big: split it. **DONE line:** the exact test command and its pass count; for a changed
+return contract or cache producer, the pasted callers grep and the digest/namespace bumped; the
+project's governance tests (its CLAUDE.md or CI list) run; the report written to
+`<findings dir>/<task>-implementer.md` before the reply, so a restart does not lose it. A plan box is ticked only against the promise's quoted wording, else
 `partial: <what is missing>`. Before each implementer dispatch, re-read the session's
 done-condition and the wave's Goal line. Every review brief ends with: *"Append each finding to your findings
 file as you find it; the file is your report. Before your last turn, append `## CLOSING`:

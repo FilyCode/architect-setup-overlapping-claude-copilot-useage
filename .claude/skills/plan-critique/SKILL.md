@@ -17,6 +17,7 @@ before Task 1. Ask of every new check: what is its third state, and how does it 
 Exit: every "run X before/at T" in the critique's required changes is copied into the plan as a numbered task row before the plan is marked ready; the controller greps the critique for it.
 Calibration: a plan whose acceptance is a count of self-agreement names one independent check (a different tool, or hand-picked cases) in the task row.
 A forced-failure (or other negative-path) acceptance gets a miniature reachability run (stub chain, seconds) as a task row before the real run.
+Pre-registration and acceptance: expected values are committed before the first run; each acceptance metric has a planted-defect case that makes it fail (else it is labelled "reproduction", never PASS); the pre-registration lists every confound the project's known-limitations and earlier pre-registrations name, each controlled, measured or out of scope.
 A sequential multi-step mutation (rename, swap, ledger) lists the state after each step's failure and the test covering it.
 
 **Retirement check (R-20261103-1, owner-approved 2026-11-03). One grep, and it blocks Task 1.**
