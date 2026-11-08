@@ -1,5 +1,7 @@
 import json
 import subprocess
+
+import pytest
 import sys
 from pathlib import Path
 
@@ -12,6 +14,13 @@ from sge_efficiency import parse_line, suggest, summarize  # noqa: E402
 HIST = {"rs_screenboot": {"n": 117, "slots": 4, "cores_used": 1.07, "eff": 0.27, "gpu": False},
         "aligner": {"n": 5, "slots": 8, "cores_used": 7.4, "eff": 0.92, "gpu": False},
         "once": {"n": 1, "slots": 8, "cores_used": 1.0, "eff": 0.12, "gpu": False}}
+
+
+@pytest.fixture(autouse=True)
+def _tmp_is_not_node_local(monkeypatch):
+    """pytest's tmp_path is under /scratch here; only the node-local test turns the check on."""
+    import qsub_guard
+    monkeypatch.setattr(qsub_guard, "NODE_LOCAL", ("/nonexistent-node-local/",))
 
 
 def d(cmd, cwd="/tmp", hist=HIST, sub=False):
@@ -96,7 +105,8 @@ def test_hook_end_to_end_deny_once_then_pass(tmp_path):
     s = script(tmp_path, "#$ -N rs_screenboot\n#$ -pe omp 4  # cores: torch\n")
     inp = json.dumps({"tool_name": "Bash", "session_id": "t1", "cwd": "/tmp",
                       "tool_input": {"command": f"qsub {s}"}})
-    env = {"PATH": "/usr/bin:/bin", "TMPDIR": str(tmp_path), "SGE_EFF_CACHE": str(cache)}
+    env = {"PATH": "/usr/bin:/bin", "TMPDIR": str(tmp_path), "SGE_EFF_CACHE": str(cache),
+           "QSUB_GUARD_NODE_LOCAL": "/nonexistent-node-local/"}
     hook = REPO / "workspace-config" / "hooks" / "qsub_guard.py"
     first = subprocess.run([sys.executable, str(hook)], input=inp, capture_output=True, text=True, env=env)
     assert json.loads(first.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
@@ -136,3 +146,15 @@ def test_unmeasured_big_array_gets_a_probe_first(tmp_path):
     assert d(f"qsub {small}") == "allow"
     measured = script(tmp_path, "#$ -N aligner\n#$ -t 1-74\n#$ -pe omp 8  # cores: bowtie2\n", "m.sh")
     assert d(f"qsub {measured}") == "allow"
+
+
+def test_node_local_script_path_denied(tmp_path, monkeypatch):
+    """R-20261102-3 (SenC w5, EF F5): jobs 8393676 and 8393908 failed to start from /scratch scripts."""
+    import qsub_guard
+    s = script(tmp_path, "#$ -N x\npython x.py\n")
+    monkeypatch.setattr(qsub_guard, "NODE_LOCAL", (str(tmp_path) + "/",))
+    assert d(f"qsub {s}") == "deny"
+    assert d("qsub job.sh", cwd=str(tmp_path)) == "deny"
+    assert "node-local" in decide(f"qsub {s}", "/", HIST)[1]
+    monkeypatch.setattr(qsub_guard, "NODE_LOCAL", ("/elsewhere/",))
+    assert d(f"qsub {s}") == "allow"

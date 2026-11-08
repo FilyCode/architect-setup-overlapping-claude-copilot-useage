@@ -34,6 +34,10 @@ SUBMIT = {"qsub", "qrsh", "qlogin", "qalter"}
 NOARG = {"-cwd", "-V", "-terse", "-notify", "-clear", "-h", "-help", "-verify"}
 MARK = "# cores:"
 PROBE_MIN_TASKS = 10  # an unmeasured multi-slot array this large gets a probe first
+# Node-local dirs: the execution host cannot read a job script kept there (R-20261102-3).
+# QSUB_GUARD_NODE_LOCAL (":"-separated prefixes) overrides it; the tests use that, since pytest's tmp is node-local.
+NODE_LOCAL = tuple(x for x in os.environ.get("QSUB_GUARD_NODE_LOCAL", "").split(":") if x) or tuple(
+    sorted({"/scratch/", "/tmp/", os.path.join(os.environ.get("TMPDIR") or "/tmp", "")}))
 
 
 def _options(tokens):
@@ -148,6 +152,9 @@ def submissions(command, cwd):
                 text = next(bodies, "")
             elif verb == "qsub" and script and opts.get("-b", [["n"]])[-1][:1] != ["y"]:
                 p = Path(script) if os.path.isabs(script) else Path(cwd or ".") / script
+                if os.path.normpath(str(p)).startswith(NODE_LOCAL):
+                    yield verb, ("node-local", str(p)), None, MARK in command, 1
+                    continue
                 try:
                     text = p.read_text(errors="replace")[:200_000]
                 except OSError:
@@ -170,6 +177,10 @@ def decide(command, cwd, summary, is_subagent=False):
         if is_subagent and verb in ("qsub", "qrsh", "qlogin"):
             return "deny", ("The caller owns every qsub (core rule 5): write the job spec (script, resources, "
                             "expected artifact) into your report and stop.")
+        if isinstance(k, tuple) and k[0] == "node-local":
+            return "deny", (f"qsub: the job script {k[1]} is on a node-local path; the execution host "
+                            "cannot read it (jobs 8393676, 8393908). Write the script under /projectnb "
+                            "(e.g. the project's jobs/ or the findings dir) and submit that path.")
         if isinstance(k, tuple):
             return "warn", (f"qsub: could not read {k[1]} to check its `#$ -pe` slots. Make sure K matches "
                             "the threads the job really uses (skill running-sge-jobs).")
