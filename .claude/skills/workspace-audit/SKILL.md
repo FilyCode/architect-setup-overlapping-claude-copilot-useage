@@ -8,7 +8,7 @@ allowed-tools: Read Grep Glob WebFetch WebSearch Bash(du *) Bash(ls *) Bash(clau
 # Workspace audit
 
 Explicit invocation only. Step 0 runs weekly (the `context_nudge` hook reminds when it is due);
-steps 1-7 run at most monthly. Neither is a per-session check.
+steps 1-6 run at most monthly. Neither is a per-session check.
 
 ## When it is worth running
 
@@ -70,18 +70,11 @@ du -sh ~/.claude/projects                 # session transcripts; cleanupPeriodDa
 
 Anything large that is not the current version belongs under `software/` or deleted.
 
-**4. Non-English planning-with-files skills.** The plugin ships 10 non-English skill and
-command entries that reappear after every plugin update. Re-run:
-
-```bash
-/projectnb/liu-scc/philipp/software/bin/strip_pwf_translations.sh
-```
-
-**5. Promotion.** Compare recurring patterns against the bar in
+**4. Promotion.** Compare recurring patterns against the bar in
 `.claude/context/learnings.md`: the same pattern must recur 3+ times across 2+ distinct
 tasks or projects. Promote what clears it; leave the rest in session memory.
 
-**6. External scan (optional, run at most monthly, separate from steps 1-5).** Steps 1-5
+**5. External scan (optional, run at most monthly, separate from steps 1-4).** Steps 1-4
 only look inward. This step looks outward: has anything changed upstream that this
 workspace should adopt or react to?
 
@@ -108,7 +101,7 @@ workspace should adopt or react to?
   in that directory. Only implement something from this step immediately if it's a strict,
   low-risk improvement with no design tradeoff (a stale reference, a confirmed-real feature
   with an obvious fit); anything bigger goes in the file for a deliberate decision later,
-  same as steps 1-5 feed `learnings.md` rather than auto-applying.
+  same as steps 1-4 feed `learnings.md` rather than auto-applying.
 
-**7. Log it.** Append the audit date and outcome to the bottom of `learnings.md`, even when
+**6. Log it.** Append the audit date and outcome to the bottom of `learnings.md`, even when
 nothing changed. An audit with no trail did not happen.
