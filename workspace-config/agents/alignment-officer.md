@@ -3,7 +3,7 @@ name: alignment-officer
 description: Checks that an implementation actually delivers what the plan or phase promised — scope conformance, not code correctness. Use before closing a phase or after a multi-task effort, when you need to know whether anything was quietly dropped, deferred, or substituted.
 tools: Read, Grep, Glob, Bash
 model: sonnet
-memory: project
+memory: local
 effort: medium
 maxTurns: 45
 omitClaudeMd: true

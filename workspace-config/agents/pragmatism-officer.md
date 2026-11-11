@@ -3,7 +3,7 @@ name: pragmatism-officer
 description: Triages a critique wave's own findings for proportionality and strategic fit — separates what must be fixed now from what can be documented and deferred, and pushes back on scope creep. Use after critic-reviewer/domain-role/alignment-officer/docs-sync have already produced findings, never standalone. Does not change severity or correctness verdicts.
 tools: Read, Grep, Glob, Bash
 model: sonnet
-memory: project
+memory: local
 effort: medium
 maxTurns: 20
 omitClaudeMd: true

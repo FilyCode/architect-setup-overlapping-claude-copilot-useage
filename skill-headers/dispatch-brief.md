@@ -14,7 +14,7 @@ ranges over with its contribution (UNRESOLVED/UNKNOWN as their own row); a commi
 overstated waits for a second seat to re-derive it. Also: files the agent owns and must not touch, the environment block from
 the agent file, the job-spec handoff (it never waits on SGE), and the closing line *"report
 anything in this brief that you found to be wrong."* Review briefs add the template below:
-findings file created first and written by the seat itself with its own Write/heredoc (a missing file, or one without `## CLOSING`, means re-run the seat; controller transcription is the last resort and is marked) (findings dir, never scratchpad; scripts you write for evidence go in `<findings dir>/probes/<seat>/`, never the scratchpad), at most 4 ranked areas with a drop
+findings file created first and written by the seat itself with its own Write/heredoc (a missing file, or one without `## CLOSING`, means re-run the seat; controller transcription is the last resort and is marked) (findings dir, never scratchpad; scripts you write for evidence go in `<findings dir>/probes/<seat>/`, never the scratchpad; no other writes, nothing under the project tree, its `.claude/agent-memory/` included: R-20261110-2, a seat's memory write nearly failed a running build's tree guard), at most 4 ranked areas with a drop
 order, `git log -1 --format=%h` re-run before each finding's evidence line (cited file
 changed: mark it `RE-DERIVE`; the controller edits no file a running seat reads), the minor-triage question, and the
 unenumerated-objection slot. An analysis brief opens with a TARGET sentence and what a result would have to show to answer it;
