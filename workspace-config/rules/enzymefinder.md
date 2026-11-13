@@ -73,7 +73,7 @@ in skill verification-patterns (red blocks merge; every failure gets a cause).
 ## Reference index (P0, DECISION-138)
 A run reaches the Swiss-Prot tier indexes through the site file named by
 `ENZYMEFINDER_SITE_CONFIG` (`/projectnb/liu-scc/philipp/software/enzymefinder/site/enzymefinder.toml`;
-no default) or, in S1a (candidate until merge), through the user settings that `enzymefinder setup` writes
+no default) or, since S1a (merged 2026-11-13, PR #122), through the user settings that `enzymefinder setup` writes
 (`~/.config/enzymefinder/enzymefinder.toml`, release 2026_04). Every SCC job script still exports the site
 file; one that omits it and has no user settings runs with both tiers unresolved and exits 2
 (`SetupRequired`). `[databases.uniprot]` carries no `release` on purpose: the run records the
