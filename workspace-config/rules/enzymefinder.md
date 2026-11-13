@@ -71,10 +71,12 @@ A weekly and a monthly GitHub run on main are the clean-machine check. Failures 
 in skill verification-patterns (red blocks merge; every failure gets a cause).
 
 ## Reference index (P0, DECISION-138)
-A run reaches the Swiss-Prot tier indexes only through the site file named by
+A run reaches the Swiss-Prot tier indexes through the site file named by
 `ENZYMEFINDER_SITE_CONFIG` (`/projectnb/liu-scc/philipp/software/enzymefinder/site/enzymefinder.toml`;
-no default). Every job script exports it; one that omits the export runs with both tiers
-unresolved. `[databases.uniprot]` carries no `release` on purpose: the run records the
+no default) or, in S1a (candidate until merge), through the user settings that `enzymefinder setup` writes
+(`~/.config/enzymefinder/enzymefinder.toml`, release 2026_04). Every SCC job script still exports the site
+file; one that omits it and has no user settings runs with both tiers unresolved and exits 2
+(`SetupRequired`). `[databases.uniprot]` carries no `release` on purpose: the run records the
 `X-UniProt-Release` header it observed.
 
 ## Known limitations and optimization register (core.md 12-13)
