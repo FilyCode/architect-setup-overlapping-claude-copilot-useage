@@ -1,101 +1,92 @@
 # Documentation convention + SenC pilot (2026-11-18)
 
-**Goal:** status and register docs stop being hand-rewritten: every count, status word and table
-that a script can derive is generated with a `--check` gate, each fact has one home, and every
-path/script/flag a doc cites is checked to exist. Pilot in SenC-SelD-GNcheck, then roll out.
+**Goal:** status docs stop drifting from their source: counts and tables a script can derive are
+generated between markers with a `--check` gate, each fact has one home, and cited paths, scripts
+and flags are checked to exist. Pilot in SenC-SelD-GNcheck (staged), then the owner decides rollout.
 **Serves:** the owner's audit aim (2026-11-18): docs "always get stale and so often need to be
 rewritten and checked and updated"; and "more efficient, less error prone and more token
 efficient, while keeping or increasing quality" (2026-11-08).
-**Owner ruling:** 2026-11-18, AskUserQuestion "Doc program" → "Convention + SenC pilot".
+**Owner rulings (AskUserQuestion 2026-11-18):** "Doc program" → convention + SenC pilot; "SenC
+pilot" → staged, S2 + S4 first; "Rollout bar" → no preset threshold: "lets just wait for next
+review and then check the result and then lets decide what to do".
+**Order:** D3 runs after the skill-consolidation plan's T9 (both edit wave-review) [F3, L8].
+**Critique:** `.superpowers/findings/2026-11-18/plan-critique/` (rows applied; ids in brackets).
 
 ## Calibration (evidence: `.superpowers/findings/2026-11-18/workspace-audit/`)
 
-- Churn since 2026-10-04 (`investigator-doc-churn.md`, re-derived by the controller for two rows):
-  SenC `docs/NEXT_TASKS.md` 205 commits, 1,885 lines, hand-maintained, ungated; EF
-  `phases/W9-BACKLOG.md` 172; BileAcidDB open-items plan 139; MeMES `docs/REGISTER.md` 118,
-  `FINDINGS.md` 110. PROJECT_STATE is rewritten in place in all four big repos (24-92% of changed
-  lines are deletions; EF +208/-2,504). DECISIONS files are append-only (3-4% deletions).
-- Only EF `phases/OPEN_TASKS.md` is generated and CI-checked. SenC `135_gates.sh` checks
-  SURVEY_MAP and the decisions index only; MeMES `gates.sh --check-docs` checks numbers in FINDINGS
-  and PROJECT_STATE but has no CI; BileAcidDB and the config repo check no Markdown.
-- Retro log: 40 stale/drift lines; PROJECT_STATE the most named (6). "Closed before review" prose
-  rule failed 5 times (R-20261109-3).
-- External practice (`investigator-doc-best-practice.md`): one home per fact; generated blocks +
-  `--check` (cog model); claim-dereferencing check (Tan et al. arXiv 2307.04291: ≥25% of top
-  projects have an outdated code reference); append-only decisions; short CLAUDE.md (Claude Code
-  memory docs; arXiv 2602.11988, 2610.30571 — preprints). Freshness dates and CODEOWNERS judged low
-  fit (agents maintain these docs).
-- Existing doc gates also include SenC `scripts/105_doc_preflight.py` (withdrawn claims in
-  group-facing docs; NEXT_TASKS rows D-67, D-89 note its coverage gaps). SenC NEXT_TASKS line 3
-  says "Not a generated file" — the pilot changes that convention for its status parts.
-- Retirement check: SenC DECISIONS has no ruling against generating NEXT_TASKS or PROJECT_STATE
-  (`command grep -nE -i "NEXT_TASKS.*generat|PROJECT_STATE.*generat" docs/DECISIONS.md`: 0 hits;
-  the first draft quoted this pattern without -E, inventory F5). Supporting: SenC DECISIONS.md:2305
-  (a claim lived in CLAUDE.md "outside every check ... no generator rewrites"). Constraining: SenC
-  DECISION-043 (`DECISIONS.md:430`) "extend existing generators rather than add a fourth/new one":
-  S2 extends `scripts/186_decisions_index.py`'s BEGIN/END splice and `--check`, or names why not.
-- Vision: the documentation layer of every project. Not responsible for prose truth, for the
-  science, or for DECISIONS (already append-only and healthy).
-- Realistic target: generated parts cannot drift (a `--check` fails); dangling references are found
-  at wave end; status re-edit commits fall. Expected: fewer docs-sync drift findings; size of the
-  fall UNMEASURED until S4.
-- Limits: field-wide, no tool verifies that prose is true (Tan et al. check references only);
-  everything else listed here (ungated status, many copies) is ours.
-- Standard: cog-style generated blocks with `--check`; lychee for links. Does it already exist
-  here? Yes in parts: EF OPEN_TASKS is generated+CI; SenC 183/186 and MeMES --check-docs are
-  generated/checked; D0 inventories them before D2 builds anything.
-- Thresholds: "≤ 60 lines" for PROJECT_STATE and "≤ 10-line doc map" are declared choices.
-- Commit counts measure edits, not harm (churn seat's objection): the pilot measures drift
-  findings and re-edit rate, not only commits.
+- Churn since 2026-10-04 (`investigator-doc-churn.md`; two rows re-derived by the controller):
+  SenC `docs/NEXT_TASKS.md` 205 commits, 1,885 lines, hand-maintained ("Not a generated file",
+  line 3), ungated; EF `phases/W9-BACKLOG.md` 172; BileAcidDB open-items plan 139; MeMES
+  `docs/REGISTER.md` 118. PROJECT_STATE is rewritten in place in the four big repos (24-92% of
+  changed lines deleted). DECISIONS files are append-only (3-4%).
+- Existing generators/checks [F1, L9]: EF `phases/OPEN_TASKS.md` generated + CI; EF
+  `scripts/check_citations.py` checks backticked paths and `--flag` attribution (EF-hardcoded,
+  report-only; flags never fail [C6]); SenC `183_survey_map.py --check`, `186_decisions_index.py
+  --check` (the only BEGIN/END splice), `105_doc_preflight.py` (dangling `results/*` citations,
+  `135_gates.sh:62`); MeMES `70_summary.py --check-docs`. EF `build_open_tasks.py --verify-live` is
+  a staleness probe, not a reference checker.
+- Retirement: SenC DECISIONS has no ruling against generating NEXT_TASKS or PROJECT_STATE
+  (`command grep -nE -i "NEXT_TASKS.*generat|PROJECT_STATE.*generat" docs/DECISIONS.md`: 0 hits).
+  Supporting: SenC DECISIONS.md:2305 (a claim lived in CLAUDE.md "outside every check ... no
+  generator rewrites"). Constraining: SenC DECISION-043 (`DECISIONS.md:430`) "extend existing
+  generators rather than add a fourth/new one" [F5].
+- What this does NOT fix [D5]: a generated block guarantees block == register, not register ==
+  world. A premature "closed" typed into the register renders faithfully and `--check` stays
+  green, so the pilot does not address R-20261109-3 ("closed" before review, 5 failures).
+- External practice (`investigator-doc-best-practice.md`, `plan-critique/domain.md`): one home per
+  fact; generated blocks + `--check`; reference checking (outdated code references in docs:
+  arXiv 2212.01479 primary [D6]); append-only decisions; keep always-loaded files short (Claude
+  Code memory docs; arXiv 2602.11988: context files add > 20% cost) — hence no doc map in CLAUDE.md
+  [D4, L5]. Agents follow stale instruction files (arXiv 2610.30571, preprint) — the reason for D2.
+- Vision: the documentation layer. Not responsible for prose truth or the science.
+- Thresholds: declared, none derived.
 
-## Phase 1 — workspace (config repo)
+## Phase 1 — workspace
 
-**D0 inventory (inventory-auditor):** EF `scripts/check_citations.py`, EF `build_open_tasks.py
---verify-live`, SenC `183`/`186 --check`, MeMES `70_summary.py --check-docs`: what each checks,
-what is reusable workspace-wide.
-**D1 doc map:** each project CLAUDE.md gets a ≤10-line "Doc map": file → class, one of
-`generated (<script> --check, gate <name>)`, `append-only`, `register (single home of status)`,
-`prose (hand-written, no counts or status words)`. Template in `.claude/context/doc-convention.md`
-(not auto-loaded). Project CLAUDE.md edits need the owner's approval per project.
-**D2 reference checker:** `tools/doc_refs.py <repo>`: backticked paths, script names and
-`--flags` of named scripts in tracked .md must exist (offline, no network). It extends EF
-`scripts/check_citations.py` (already does backticked paths and `--flag` attribution, hardcoded to
-the EF repo, report-only; inventory F1): move the repo-agnostic core to the config repo, EF keeps a
-thin entry point. In SenC it complements `scripts/105_doc_preflight.py` (gates dangling
-`results/*` citations, `135_gates.sh:62`): no check runs twice. Exit 1 on a dangling reference; an
-allowlist for historical docs (`docs/history/`, archives).
-**D3 gates** (after the skill-consolidation plan's T7, since both edit the same skill lines;
-inventory F3): docs-sync runs `doc_refs.py` and every `--check` named in the doc map at wave end;
-wave-review lists it; each project's gate script calls its own checks.
+**D1 convention [D4, L5, F6].** Template `.claude/context/doc-convention.md` (config repo, not
+auto-loaded): four doc classes — generated (marker text names script and gate), append-only,
+register (single home of status), prose (hand-written; no counts the generator owns). In the pilot
+only: one path-scoped rule `.claude/rules/docs.md` in SenC (owner approval) pointing at
+`docs/GATES.md` for gate names. Other projects get theirs at their rollout wave.
+**D2 reference check [F1, L6, C5, C6].** No move to the config repo (EF CI imports the script).
+EF `scripts/check_citations.py` gains `--repo-root` and a prefix list, through an EF PR with its
+governance test updated. Run from SenC at wave end, report-only. Before any gate use: measure n
+references and n unresolved on SenC HEAD; gate only with a ratchet baseline or 0 unresolved; flag
+attribution stays report-only. The allowlist never exempts CLAUDE.md or `.claude/rules`.
+**D3 wave end [C13, L8].** One line in the curated wave-review (after the consolidation T9):
+docs-sync runs `check_citations.py --repo-root` and the project's gate script; "gate not run" is a
+distinct output state.
 
-## Phase 2 — SenC pilot (run in a SenC session, after its current wave closes; that tree is live)
+## Phase 2 — SenC pilot, staged (in a SenC session after its current wave closes; live tree)
 
-**S1** register single home: the A-sexvicies deferred table moves to a structured register
-(one table, one row per item, a Status column with a fixed vocabulary); DONE/CORRECTED history
-leaves the cells for an append-only history file.
-**S2** generated status: a script renders NEXT_TASKS' status summary and the PROJECT_STATE status
-block (counts by status, open items with triggers, last gate run, last commits) between
-BEGIN/END GENERATED markers; `--check` in `135_gates.sh`. Status words (closed, resolved, done)
-appear only in generated text or the register's Status column.
-**S3** PROJECT_STATE hand-written part shrinks to a dated focus/next paragraph (≤ 60 lines total).
-**S4** measure: for 4 waves before and after — hand-edit hunks outside the GENERATED markers per
-wave in NEXT_TASKS and PROJECT_STATE (regeneration commits are not edits; inventory objection),
-docs-sync drift findings per wave, retro stale/drift lines naming SenC docs.
+**S2 generated status [C7, F5].** Copy `186_decisions_index.py`'s BEGIN/END splice and `--check`
+(DECISION-043: extend, not a new generator family) to render NEXT_TASKS' status summary from the
+committed rows of the A-sexvicies table (input named in the marker). Only values derived from those
+rows go inside the markers; "last commits" and "last gate run" stay outside. `--check` in
+`135_gates.sh`. Status words in the register are not enforced (unenforced; see D5).
+**S4 measure [C8, D5].** Arms declared now: before = the 4 SenC retro-log entries preceding the
+pilot commit; after = the next 4. Per arm: hand-edit hunks in regions that stay hand-written in both
+arms, docs-sync drift findings, and a truth sample of 10 random register rows whose evidence cell is
+re-derived. n and spread printed.
+**S1, S3 conditional:** the register move (S1) and the PROJECT_STATE shrink (S3) only if the
+owner, reading S4 at the next review, says so.
 
 ## Phase 3 — rollout
 
-MeMES (extend `--check-docs` to the REGISTER summary), BileAcidDB (open-items plan → register +
-generated summary), EnzymeFinder (PROJECT_STATE status block from OPEN_TASKS generator). One
-project per wave, each after its own current wave; skipped if S4 shows no reduction.
+Owner decides after reading S4 (no preset threshold). Candidates: MeMES, BileAcidDB, EnzymeFinder.
 
 ## Acceptance
 
-Phase 1: doc_refs.py seen failing on a planted dangling path; doc maps in the 4 big repos
-(owner-approved); docs-sync brief names the checks. Phase 2: S2's `--check` seen failing on a
-hand-edited count; S4 table recorded with its n.
+Phase 1: D2's measurement table (n refs, n unresolved) on SenC HEAD; EF PR green with its
+governance test; D3 line present. Phase 2: S2 `--check` seen failing on a hand-edited count inside
+the markers and passing on a committed tree; S4 table recorded with n.
 
 ## Known limitations
 
-- Prose truth (a sentence that is wrong but references existing things) is not checked by any
-  mechanism here; review seats remain the only check.
-- The two agent-behaviour studies are preprints on synthetic or SWE-bench tasks.
+- Prose truth and register truth are unchecked by any mechanism; review seats and S4's truth
+  sample are the only checks.
+- [A4] The R-20261109-3 commit-msg hook (reject "closed" in DECISIONS or a commit subject unless
+  the roster close line exists) is not built. Trigger: S4 truth sample finds a closed row without a
+  re-derivable evidence cell, or a sixth "closed before review" retro line. Owner: SenC session.
+- S4 has n = 4 waves per arm, and D3 changes the docs-sync instrument between arms (domain
+  objection); drift-finding counts are compared with that caveat.
