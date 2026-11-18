@@ -955,6 +955,38 @@ post-close finding a dropped seat would have caught, then adopt or revert.
 
 ---
 
+### [2026-11-18] [DECISION-032]: Skill consolidation and documentation convention (planned)
+
+**What** (owner, AskUserQuestion 2026-11-18): (1) the six process skills are rewritten as curated
+single texts in a staging worktree, `tools/build_skills.py` stays on disk but dormant, a coverage
+script (`tools/skill_coverage.py`) checks every old rule's disposition, a full 7-seat review runs,
+and the owner signs off before the swap commit; supersedes the verbatim-move part of DECISION-026
+and the provenance sidecars of DECISION-030 item 5. (2) Documentation convention: four doc classes
+(generated with `--check`, append-only, register, prose); reference checking by extending EF
+`scripts/check_citations.py` with `--repo-root` (no move: EF CI imports it); SenC pilot staged as a
+generated status block + a 4-wave before/after measurement; rollout decided by the owner at the
+next review, no preset threshold. (3) Retro batch of 15 proposals applied (36f2a5e); retro-officer
+lists project rows and the controller appends them (the 2026-11-08 routing never ran because seats
+may not write in project trees).
+
+**Why**: four skills over the 15,360 B ceiling with nothing running the gate; layering prevents
+merging or deleting old text; skills over ~5,000 tokens are truncated after compaction. Status and
+register docs carry the churn (SenC NEXT_TASKS 205 commits in 45 days) and only one doc is
+generated and CI-checked. Evidence: `.superpowers/findings/2026-11-18/{workspace-audit,plan-critique}/`.
+
+**Alternatives rejected**: raising the ceiling; splitting more old text into rarely-read reference
+parts; a full SenC restructure up front; a doc map in every CLAUDE.md (always-loaded cost);
+moving check_citations.py into the config repo.
+
+**Best-practice reference**: Claude Code skills and memory docs (concise SKILL.md, progressive
+disclosure, compaction keeps the first 5,000 tokens); cog-style generated blocks with `--check`;
+arXiv 2212.01479 (outdated code references in docs), 2602.11988 (context-file cost).
+
+**Revisit trigger**: consolidation: eval after arm (a scenario down ≥ 3 of 5 reverts the swap);
+doc convention: the S4 table at the next SenC review.
+
+---
+
 ## Related Documents
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System design

@@ -119,6 +119,10 @@ pasted `command grep -rln` file list (dispatch-brief, 2026-10-24). See verificat
 
 **Recurred:** R-20261022-2 (MeMES), R-20261022-6, R-20261023-4, R-20261024-1 (EnzymeFinder):
 acceptance harnesses and parity gates signed off without a planted fault. 4 entries, 2 projects.
+Again 2026-11-09..17: R-20261109-2 (SenC control arm), R-20261109-8 (EC523 cited rule),
+R-20261114-2, R-20261117-1 (EnzymeFinder liveness 801 false / 0 true), R-20261029-1b (BileAcidDB
+oracle): 5 more entries, 4 projects; the prose rule existed each time. Fix extended 2026-11-18:
+a fail proof per check/arm/oracle, liveness positive control (36f2a5e).
 
 **Fix:** the cheap form is to re-run the gate over an old artifact with one planted bad row and
 quote the non-zero exit (core.md rule 1; verification-patterns).
@@ -196,3 +200,13 @@ critic, investigator, lean-critic, so not dead). Home 6.9 of 10 GB, transcripts 
 (cleanupPeriodDays 90); deleting CLI 2.1.317/318 was refused by the auto-mode classifier, left to
 the owner. Step 4 is obsolete (planning-with-files no longer installed). Evidence:
 `.superpowers/findings/2026-11-08/workspace-audit/`.
+
+**2026-11-18 (workspace-audit steps 0-4, 6; step 5 not run) + doc-staleness research wave.**
+Retro: 25 open (the nudge counted 12: indented bullets; fixed 14cd4b9) -> 0: 15 applied in one
+owner-approved batch (36f2a5e), 3 done/merged, 2 routed, 4 deferred, 2 rejected. Found: the
+2026-11-08 project-row routing never ran (collides with "seats write nothing in project trees");
+retro-officer now lists rows for the caller. context_budget.py failed silently (4 skills over
+15,360 B; nothing runs it). bash_guard treated `~` as cwd-relative (fixed 8b70696). Home 8.3 of 10 GB; CLI 2.1.325/326 deleted with the owner's OK.
+Research: 2 investigator seats (best practice, internal churn) -> two plans critiqued by inventory,
+critic, lean, domain, pragmatism (35 findings, 30 FIX-NOW): docs/superpowers/plans/2026-11-18-*.md;
+DECISION-032. Evidence: `.superpowers/findings/2026-11-18/`.
