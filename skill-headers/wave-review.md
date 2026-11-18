@@ -27,7 +27,9 @@ drafted after the findings it must not contradict. The review is pinned to one c
 spawn refused at the cap is not queued: re-dispatch it when a slot frees. The close lists every
 seat as ran or not-ran, with the reason. Findings files go in the findings dir (`.superpowers/findings/<date>/` in the config repo,
 persistent), never the scratchpad, which dies with the job. A seat is not "ran" until its
-findings file has its closing section (`command grep -q '^## CLOSING' <file>`); if a seat put
+findings file has its closing section (`command grep -q '^## CLOSING' <file>`) and `wave_stats.py`
+lists it under no `turn_limit_by_seat`; a truncated seat or a `Not covered` entry is re-dispatched
+on those areas, not accepted; if a seat put
 findings only in its message, re-run it; only as a last resort write them into its file, marked controller-written, before closing. When the wave's evidence is only self-consistency, say
 so in the close and keep a standing row for one held-out evaluation. A branch that is not merged,
 or whose full suite could not run, carries the line "MERGE GATE: full suite on the merge commit,
@@ -39,6 +41,8 @@ its measurement, or is marked DRAFT (a headline is not a status doc, so this fai
 keep-line says "push after review close" (R-20261030-1/-9: SenC and MeMES pushed claims hours before
 the review, one headline later retracted). A post-refresh test failure recorded
 in a handoff becomes a ledger item with an owner and the next refresh as its gate, never only a note.
+A ledger deferral saying a gate, guard or fixture "passes on" a default, "has no true case" or is
+unvalidated is not deferrable: it becomes a register row or a re-open, and the step is not GREEN.
 A CI check that is red with no job log (minutes exhausted) is recorded as not run; the PR carries
 the local equivalent's command and output.
 

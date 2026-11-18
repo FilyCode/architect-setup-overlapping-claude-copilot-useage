@@ -6,7 +6,8 @@ description: Builds the brief for an implementer or review seat in this workspac
 # Dispatch brief
 
 Every brief carries: claims as pasted command output (source, n, denominator) or `UNVERIFIED —
-check before relying on it`, absences and external facts too; a state line is pasted `git log -1
+check before relying on it`, absences and external facts too; every signature, exit code, path or
+flag it cites is copied from a grep run in this turn, with file:line; a state line is pasted `git log -1
 --format=%h; git status --porcelain` output, never typed; a file list for a changed symbol is
 pasted `command grep -rln <symbol> scripts/ src/ tests/` output; the implementer runs its
 importing tests first. A re-derivation that contradicts a seat lists every category the number
@@ -27,10 +28,14 @@ A multi-seat brief names one owner (file or seat) per shared fact
 opus` only for a cross-module or contract change or a retry, with that reason in the brief's
 first line (DECISION-028). Ad hoc questions go to `investigator`; "where is X" to Explore with
 `model: haiku`. Never general-purpose. The implementer runs only its own tests and the linter,
-and stops instead of asking: this overrides the SDD template. Name the project: seats omit
-CLAUDE.md. At most 2 subagents at once (3 on the larger account); queue the rest.
+and stops instead of asking: this overrides the SDD template. Name the project and paste the path
+of its domain-context file(s); seats omit CLAUDE.md. At most 2 subagents at once (3 on the larger account); queue the rest.
 Every implementer brief also carries: *"Lean checks before commit: no pass-through wrappers, no
-assert that cannot fail, no test that re-implements the code under test, and each error message
+assert, gate, control arm or oracle that cannot fail: each ships a fail proof (one input that changes
+only the field it reads, where it differs from the passing value, reaching the failing verdict; both
+values pasted) or is labelled 'cannot fail' and never prints PASS/ok; an oracle lists the inputs it
+shares with the code; a docstring naming a published rule has a toy test where rule and variant
+differ, or says 'variant of'; no test that re-implements the code under test, and each error message
 says what the check does."* Review seats other than research-scout can write their findings file
 with a Bash heredoc; a seat that answers only in its message has not followed its brief.
 
@@ -39,7 +44,9 @@ your report by turn 70 of 100; leave the rest as a listed remainder."* A task th
 100 is too big: split it. **DONE line:** the exact test command and its pass count; for a changed
 return contract or cache producer, the pasted callers grep and the digest/namespace bumped; the
 project's governance tests (its CLAUDE.md or CI list) run; the report written to
-`<findings dir>/<task>-implementer.md` before the reply, so a restart does not lose it. A plan box is ticked only against the promise's quoted wording, else
+`<findings dir>/<task>-implementer.md` before the reply, so a restart does not lose it; a
+`RESULT:` line per headline number, unrounded (3 significant figures) with its n, which the
+controller quotes verbatim and recounts from the artifact before writing it into a doc. A plan box is ticked only against the promise's quoted wording, else
 `partial: <what is missing>`. Before each implementer dispatch, re-read the session's
 done-condition and the wave's Goal line. Every review brief ends with: *"Append each finding to your findings
 file as you find it; the file is your report. Before your last turn, append `## CLOSING`:

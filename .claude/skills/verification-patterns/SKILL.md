@@ -7,11 +7,16 @@ description: Catalogue of verification failures seen in this workspace — stale
 
 Each entry is a failure that actually happened here, with the check that catches it. Before
 claiming a fix works, find the entries that match what you changed and apply their checks. A
-gate or guard is verified by removing it and watching its test fail.
+gate or guard is verified by removing it and watching its test fail. A liveness or "unit ran"
+predicate also needs a positive control: the value it accepts is one only the unit's own output can
+produce (never a column default, an empty result or a zero), else it is typed ROWS-ONLY and prints no
+"ok" (EnzymeFinder WF1a: 801 false / 0 true accepted as live).
 
 **A zero from a join is accepted only with the pre-join count printed beside it** (R-20261030-4;
 SenC and MeMES): a probe that prints a count and writes a verdict asserts the two agree, and a guard
-that passes a 99.97%-broken join is not a guard.
+that passes a 99.97%-broken join is not a guard. A scan's zero (secrets, leaks) names the input
+scanned and whether the producer ever held the secret; if it never did, the zero is "not exposed",
+not "clean".
 
 **A published zero names the denominator that could have carried the signal, with the
 rate-implied expectation and P(0) beside it; and "X is kept out of Y" is accepted only after one

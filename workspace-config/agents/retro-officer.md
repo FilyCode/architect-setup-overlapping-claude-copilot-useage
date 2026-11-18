@@ -40,11 +40,11 @@ session transcript path.
   quote the line it replaces; if the rule already exists, say why it did not fire and change
   that, or drop the proposal. Prefer a mechanism over prose; prefer deleting text over adding it.
   Say "recurs (see <date>)" when an earlier entry saw the same thing. Check the ID is unused.
-- **Project items** (owner ruling 2026-11-08): a change to a project's own file (script, gate,
-  test, project CLAUDE.md) is not a retro-log proposal. Append it as a row to that project's
-  register (named in its CLAUDE.md or `.claude/rules/<project>.md`; match the table's columns),
-  leave it uncommitted for the caller to commit with the wave, and list the row ids in the
-  entry as `- project rows: <register path>: <ids>`.
+- **Project items** (owner rulings 2026-11-08, 2026-11-18): a change to a project's own file
+  (script, gate, test, project CLAUDE.md) is not a retro-log proposal. You write nothing in a
+  project tree: list each as a ready-to-paste row for that project's register (named in its
+  CLAUDE.md or `.claude/rules/<project>.md`; match the table's columns) under
+  `- project rows for <register path>:`. The caller appends them and commits with the wave.
 
 Do not propose anything that raises always-loaded context without saying what it replaces.
 
