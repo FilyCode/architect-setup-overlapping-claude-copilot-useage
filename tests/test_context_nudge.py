@@ -162,3 +162,11 @@ def test_boundary_ignores_commit_text_inside_a_heredoc(tmp_path):
     msg = "git commit -q -F - <<'EOF'\nsubject\nEOF\ngit show --stat HEAD"
     p = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash(msg, "2026-10-22T11:58:00Z")])
     assert cn.boundary(p, now) == "commit"
+
+
+def test_retro_hint_counts_indented_proposals(tmp_path):
+    """2026-11-18 audit: entries since 11-10 write `  - [ ] R-...`; the hint said 12 open when 25 were."""
+    p = tmp_path / "retro-log.md"
+    p.write_text("Last integrated: 2026-10-01\n- [ ] R-1 a\n  - [ ] R-2 b\n  - [x] R-3 c\n")
+    import datetime
+    assert "2 open" in cn.retro_hint(p, datetime.date(2026, 11, 18))

@@ -78,7 +78,7 @@ def retro_hint(log: Path, today: dt.date):
     if not log.is_file():
         return None
     text = log.read_text()
-    n = len(re.findall(r"^- \[ \] R-", text, re.M))
+    n = len(re.findall(r"^\s*- \[ \] R-", text, re.M))  # entries may indent their proposal bullets
     m = re.search(r"^Last integrated: (\d{4}-\d{2}-\d{2})", text, re.M)
     if not n or (m and (today - dt.date.fromisoformat(m.group(1))).days <= 7):
         return None
