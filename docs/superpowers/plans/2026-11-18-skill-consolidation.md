@@ -51,8 +51,14 @@ section title cited from agents, rules, hooks or other skills. Output into the l
 `CURATED` set; their `.claude/skills/<name>/` files become the source); tests updated so the
 verbatim test covers only the two remaining built skills; new test
 `tests/test_context_budget.py::test_real_tree_within_budget` runs `context_budget.check()` on the
-real tree and fails on any OVER line (seen failing first on today's tree); provenance sidecars of
-the four skills removed. Rule-map stays as history.
+real tree's skill bodies and fails on any OVER line (seen failing first on today's tree), added to
+the existing `tests/test_context_budget.py` and limited to skills, because MEMORY.md and home paths
+are node-local (inventory F2); provenance sidecars of the four skills removed. Rule-map stays as
+history. `tests/test_agents.py:23,86-89` reads `skill-headers/{wave-review,plan-critique}.md`:
+repoint it to the curated SKILL.md and see it fail on a SKILL.md without "lean-critic" (inventory
+F2). `skill-headers/` files for the four skills are deleted; retro-officer's proposal format and
+the workspace-audit skill name `.claude/skills/<name>/SKILL.md` as the target (inventory F3; agent
+file edit, owner-approved scope of this plan).
 
 **T2-T5 one implementer per skill (model: opus — contract: every session's process text).** Input:
 current SKILL.md + references + header. Output: one SKILL.md (body ≤ 12,288 B) with this shape:
@@ -63,7 +69,9 @@ file only for material a reader needs rarely (verification-patterns incident det
 when to open it. Plus a disposition map `docs/history/consolidation-2026-11/<skill>.tsv`: every
 rule-map item and every header line → `kept <section>` | `merged into <section>` | `dropped:
 <reason: superseded by X / duplicate of Y / obsolete because Z>`. No new rules; wording may change,
-meaning may not.
+meaning may not. Headings cited from elsewhere survive by name (inventory F3): dispatch-brief
+"Concurrent dispatches need declared file ownership" (`rules/python.md:21`); plan-critique's
+"escalation section" (`core.md` rule 8, `verification-patterns/SKILL.md:46`); T0 lists the rest.
 
 **T6 build and gates (controller).** `context_budget.py` exit 0; full config test suite as an SGE
 job; `tools/link_user_scope.sh` links unchanged.

@@ -29,8 +29,11 @@ efficient, while keeping or increasing quality" (2026-11-08).
   group-facing docs; NEXT_TASKS rows D-67, D-89 note its coverage gaps). SenC NEXT_TASKS line 3
   says "Not a generated file" — the pilot changes that convention for its status parts.
 - Retirement check: SenC DECISIONS has no ruling against generating NEXT_TASKS or PROJECT_STATE
-  (`command grep -n -i "NEXT_TASKS.*generat|PROJECT_STATE.*generat"`: 0 hits); config DECISIONS
-  none either.
+  (`command grep -nE -i "NEXT_TASKS.*generat|PROJECT_STATE.*generat" docs/DECISIONS.md`: 0 hits;
+  the first draft quoted this pattern without -E, inventory F5). Supporting: SenC DECISIONS.md:2305
+  (a claim lived in CLAUDE.md "outside every check ... no generator rewrites"). Constraining: SenC
+  DECISION-043 (`DECISIONS.md:430`) "extend existing generators rather than add a fourth/new one":
+  S2 extends `scripts/186_decisions_index.py`'s BEGIN/END splice and `--check`, or names why not.
 - Vision: the documentation layer of every project. Not responsible for prose truth, for the
   science, or for DECISIONS (already append-only and healthy).
 - Realistic target: generated parts cannot drift (a `--check` fails); dangling references are found
@@ -55,10 +58,14 @@ what is reusable workspace-wide.
 `prose (hand-written, no counts or status words)`. Template in `.claude/context/doc-convention.md`
 (not auto-loaded). Project CLAUDE.md edits need the owner's approval per project.
 **D2 reference checker:** `tools/doc_refs.py <repo>`: backticked paths, script names and
-`--flags` of named scripts in tracked .md must exist (offline, no network); generalised from
-check_citations.py if D0 says it fits, else new and small. Exit 1 on a dangling reference; an
+`--flags` of named scripts in tracked .md must exist (offline, no network). It extends EF
+`scripts/check_citations.py` (already does backticked paths and `--flag` attribution, hardcoded to
+the EF repo, report-only; inventory F1): move the repo-agnostic core to the config repo, EF keeps a
+thin entry point. In SenC it complements `scripts/105_doc_preflight.py` (gates dangling
+`results/*` citations, `135_gates.sh:62`): no check runs twice. Exit 1 on a dangling reference; an
 allowlist for historical docs (`docs/history/`, archives).
-**D3 gates:** docs-sync runs `doc_refs.py` and every `--check` named in the doc map at wave end;
+**D3 gates** (after the skill-consolidation plan's T7, since both edit the same skill lines;
+inventory F3): docs-sync runs `doc_refs.py` and every `--check` named in the doc map at wave end;
 wave-review lists it; each project's gate script calls its own checks.
 
 ## Phase 2 — SenC pilot (run in a SenC session, after its current wave closes; that tree is live)
@@ -71,7 +78,8 @@ block (counts by status, open items with triggers, last gate run, last commits) 
 BEGIN/END GENERATED markers; `--check` in `135_gates.sh`. Status words (closed, resolved, done)
 appear only in generated text or the register's Status column.
 **S3** PROJECT_STATE hand-written part shrinks to a dated focus/next paragraph (≤ 60 lines total).
-**S4** measure: for 4 waves before and after — commits per wave to NEXT_TASKS and PROJECT_STATE,
+**S4** measure: for 4 waves before and after — hand-edit hunks outside the GENERATED markers per
+wave in NEXT_TASKS and PROJECT_STATE (regeneration commits are not edits; inventory objection),
 docs-sync drift findings per wave, retro stale/drift lines naming SenC docs.
 
 ## Phase 3 — rollout
