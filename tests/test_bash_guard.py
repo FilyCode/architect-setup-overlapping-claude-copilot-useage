@@ -183,3 +183,10 @@ def test_switch_not_touching_ignored_file_allowed(overwrite_repo):
 def test_unresolvable_target_fails_open(overwrite_repo, tmp_path):
     assert d("git checkout no-such-ref", cwd=str(overwrite_repo)) == "allow"
     assert d("git checkout stale", cwd=str(tmp_path)) == "allow"  # not a git repo
+
+
+def test_rm_recursive_tilde_is_home_not_cwd():
+    """2026-11-18: `rm -rf ~/.local/share/claude/versions/X` from cwd projects/ was denied as inside projects/."""
+    assert d("\\rm -rf ~/.local/share/claude/versions/2.1.325") == "allow"
+    assert d("rm -r ~") == "allow"
+    assert d("rm -rf ./~/x") == "deny"  # a real directory named ~ under projects/ is still projects/

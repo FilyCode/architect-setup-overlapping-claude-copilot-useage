@@ -38,6 +38,8 @@ def _lines(command: str):
 def _expand(arg: str, env: dict):
     """Substitute $NAME/${NAME} from assignments seen so far; None if anything stays unresolved."""
     val = VAR.sub(lambda m: env.get(m.group(1), m.group(0)), arg)
+    if (val == "~" or val.startswith("~/")) and env.get("HOME"):  # the shell expands a leading ~
+        val = env["HOME"] + val[1:]
     return None if "$" in val or "`" in val else val
 
 
