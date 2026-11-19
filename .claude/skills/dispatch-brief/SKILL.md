@@ -5,215 +5,172 @@ description: Builds the brief for an implementer or review seat in this workspac
 
 # Dispatch brief
 
-Every brief carries: claims as pasted command output (source, n, denominator) or `UNVERIFIED —
-check before relying on it`, absences and external facts too; every signature, exit code, path or
-flag it cites is copied from a grep run in this turn, with file:line; a state line is pasted `git log -1
---format=%h; git status --porcelain` output, never typed; a file list for a changed symbol is
-pasted `command grep -rln <symbol> scripts/ src/ tests/` output; the implementer runs its
-importing tests first. A re-derivation that contradicts a seat lists every category the number
-ranges over with its contribution (UNRESOLVED/UNKNOWN as their own row); a commit saying a seat
-overstated waits for a second seat to re-derive it. Also: files the agent owns and must not touch, the environment block from
-the agent file, the job-spec handoff (it never waits on SGE), and the closing line *"report
-anything in this brief that you found to be wrong."* Review briefs add the template below:
-findings file created first and written by the seat itself with its own Write/heredoc (a missing file, or one without `## CLOSING`, means re-run the seat; controller transcription is the last resort and is marked) (findings dir, never scratchpad; scripts you write for evidence go in `<findings dir>/probes/<seat>/`, never the scratchpad; no other writes, nothing under the project tree, its `.claude/agent-memory/` included: R-20261110-2, a seat's memory write nearly failed a running build's tree guard), at most 4 ranked areas with a drop
-order, `git log -1 --format=%h` re-run before each finding's evidence line (cited file
-changed: mark it `RE-DERIVE`; the controller edits no file a running seat reads), the minor-triage question, and the
-unenumerated-objection slot. An analysis brief opens with a TARGET sentence and what a result would have to show to answer it;
-the domain seat checks the headline against it. A review that closes a register row re-measures the
-row's premise against the real source (live call, fixture vs claim), not only the diff.
-A multi-seat brief names one owner (file or seat) per shared fact
-(a count, a register row); other seats cite it rather than re-derive it.
+Use when writing the brief for an implementer, review or analysis seat. The checklists come first;
+the rules below them say why each line is there. Worked incidents:
+[reference/incidents.md](reference/incidents.md). Old-rule index: config repo `docs/history/rule-index.md`.
 
-**Which seat.** Code tasks (SDD included) go to `implementer` on its default sonnet; `model:
-opus` only for a cross-module or contract change or a retry, with that reason in the brief's
-first line (DECISION-028). Ad hoc questions go to `investigator`; "where is X" to Explore with
-`model: haiku`. Never general-purpose. The implementer runs only its own tests and the linter,
-and stops instead of asking: this overrides the SDD template. Name the project and paste the path
-of its domain-context file(s); seats omit CLAUDE.md. At most 2 subagents at once (3 on the larger account); queue the rest.
-Every implementer brief also carries: *"Lean checks before commit: no pass-through wrappers, no
-assert, gate, control arm or oracle that cannot fail: each ships a fail proof (one input that changes
-only the field it reads, where it differs from the passing value, reaching the failing verdict; both
-values pasted) or is labelled 'cannot fail' and never prints PASS/ok; an oracle lists the inputs it
-shares with the code; a docstring naming a published rule has a toy test where rule and variant
-differ, or says 'variant of'; no test that re-implements the code under test, and each error message
-says what the check does."* Review seats other than research-scout can write their findings file
-with a Bash heredoc; a seat that answers only in its message has not followed its brief.
+## Every brief carries
 
-**Turn budget, first line of every implementer brief:** *"Commit your finished work and write
-your report by turn 70 of 100; leave the rest as a listed remainder."* A task that still hits
-100 is too big: split it. **DONE line:** the exact test command and its pass count; for a changed
-return contract or cache producer, the pasted callers grep and the digest/namespace bumped; the
-project's governance tests (its CLAUDE.md or CI list) run; the report written to
-`<findings dir>/<task>-implementer.md` before the reply, so a restart does not lose it; a
-`RESULT:` line per headline number, unrounded (3 significant figures) with its n, which the
-controller quotes verbatim and recounts from the artifact before writing it into a doc. A plan box is ticked only against the promise's quoted wording, else
-`partial: <what is missing>`. Before each implementer dispatch, re-read the session's
-done-condition and the wave's Goal line. Every review brief ends with: *"Append each finding to your findings
-file as you find it; the file is your report. Before your last turn, append `## CLOSING`:
-objection, errors in this brief, what you did not cover. Your final message is at most 10 lines:
-verdict, counts, the file path."*
+- Claims as pasted command output (source, n, denominator) or `UNVERIFIED — check before relying
+  on it`, absences and external facts too. Every signature, exit code, path or flag it cites is
+  copied from a grep run in this turn, with file:line.
+- A state line pasted from `git log -1 --format=%h; git status --porcelain`, never typed; a file
+  list for a changed symbol pasted from `command grep -rln <symbol> scripts/ src/ tests/`.
+- Files the agent owns, and files it must not touch because another agent holds them.
+- The environment block from the agent file, and the job-spec handoff (it never waits on SGE).
+- The project name and the pasted path of its domain-context file(s); seats omit CLAUDE.md.
+- The closing line *"report anything in this brief that you found to be wrong."*
+- A re-derivation that contradicts a seat lists every category the number ranges over with its
+  contribution (UNRESOLVED/UNKNOWN as their own row); a commit saying a seat overstated waits for a
+  second seat to re-derive it.
+- A multi-seat brief names one owner (file or seat) per shared fact (a count, a register row);
+  other seats cite it rather than re-derive it.
+- An analysis brief opens with a TARGET sentence and what a result would have to show to answer
+  it; the domain seat checks the headline against it.
 
-The rules below are the original workspace text, moved verbatim. Old-rule index: config repo
-`docs/history/rule-index.md`.
+## Implementer briefs
 
-## Reference files (read the one you need)
+- **Turn budget, first line:** *"Commit your finished work and write your report by turn 70 of
+  100; leave the rest as a listed remainder."* A task that still hits 100 is too big: split it.
+- The implementer runs its importing tests first, then only its own tests and the linter, and
+  stops instead of asking: this overrides the SDD template.
+- *"Lean checks before commit: no pass-through wrappers, no assert, gate, control arm or oracle
+  that cannot fail: each ships a fail proof (one input that changes only the field it reads, where
+  it differs from the passing value, reaching the failing verdict; both values pasted) or is
+  labelled 'cannot fail' and never prints PASS/ok; an oracle lists the inputs it shares with the
+  code; a docstring naming a published rule has a toy test where rule and variant differ, or says
+  'variant of'; no test that re-implements the code under test, and each error message says what
+  the check does."*
+- **DONE line:** the exact test command and its pass count; for a changed return contract or
+  cache producer, the pasted callers grep and the digest/namespace bumped; the project's
+  governance tests (its CLAUDE.md or CI list) run; the report written to
+  `<findings dir>/<task>-implementer.md` before the reply, so a restart does not lose it; a
+  `RESULT:` line per headline number, unrounded (3 significant figures) with its n, which the
+  controller quotes verbatim and recounts from the artifact before writing it into a doc.
+- A plan box is ticked only against the promise's quoted wording, else `partial: <what is missing>`.
+  Before each implementer dispatch, re-read the session's done-condition and the wave's Goal line.
 
-- See [reference/part-2.md](reference/part-2.md) — Reviewers write findings down as they confirm them, not at t; "The brief is wrong" is a first-class finding.** A retrospec; Concurrent dispatches need declared file ownership; Model and effort tiering for any subagent dispatch; Every dispatch carries the environment-invariants block; **Name the repo's own test-environment traps**: autouse fixt; Generate a task's brief at dispatch time, not up fron
-- See [reference/part-3.md](reference/part-3.md) — Thirteenth: NEVER tell a reviewer the tree is clean. Tell it; Fifteenth: `cp` after a `--write` is a fifth shared-worktree; Twelfth item, and it belongs with the contradiction slot: sa
+## Review briefs
 
-Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
-`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
-and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+The seat's literal first action, before it reads the rest of the brief, is creating its findings
+file (findings dir, never the scratchpad), written by the seat itself with Write or a Bash heredoc
+(every seat but research-scout can). A missing file, or one without `## CLOSING`, means re-run the
+seat; controller transcription is the last resort and is marked. A seat that answers only in its
+message has not followed its brief. Also:
 
-<!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
-## Never dispatch "wait and report" as a subagent's task
+1. Evidence scripts go in `<findings dir>/probes/<seat>/`, never the scratchpad; no other writes,
+   nothing under the project tree, its `.claude/agent-memory/` included (R-20261110-2: a seat's
+   memory write nearly failed a running build's tree guard). Any tool with a `--write` mode is
+   off-limits in a shared worktree: render to scratch and diff there.
+2. At most 4 ranked areas with a drop order; prefer executing a small script over reading more source.
+3. HEAD moves during review: never tell a seat the tree is clean. It runs `git log -1` and
+   `git status --porcelain` at start and end, and re-runs `git log -1 --format=%h` before each
+   finding's evidence line (cited file changed: mark it `RE-DERIVE`). The controller edits no file
+   a running seat reads; name which files are concurrently modified, and by whom.
+4. `command grep` for absence claims; exit codes checked outside a pipe (`| tail` masks them).
+5. A guard, gate or check under review is verified by removing it and watching its test fail.
+6. The minor-triage question, answered in writing; what is already known and accepted.
+7. The unenumerated-objection slot: *"list the strongest objection to this work that I did not ask
+   you about."*
+8. A review that closes a register row re-measures the row's premise against the real source
+   (live call, fixture vs claim), not only the diff.
 
-A dispatched subagent's context is expensive to reload — every "still waiting, check
-again" round-trip re-pays its full accumulated history. A real incident burned 1M+ tokens
-this way: an implementer subagent was told to wait for an SGE job and report back, and
-polled `qstat`/`qacct` across ~4 separate round-trips at ~230k tokens each.
+Every review brief ends with: *"Append each finding to your findings file as you find it; the file
+is your report. Before your last turn, append `## CLOSING`: objection, errors in this brief, what
+you did not cover. Your final message is at most 10 lines: verdict, counts, the file path."*
 
-Do not dispatch a subagent whose task is, or includes as a multi-turn loop, "wait for
-job/agent X to finish, then report." Instead:
+## Which seat
 
-- **A subagent that submits an SGE job does not wait for it.** It submits, reports the job
-  id and what artifact it expects, and stops. The caller waits (one backgrounded loop, per
-  `scc.md`) and resumes the subagent with the result. Observed 2026-08-29: four subagents in
-  one session each ended their turn mid-wait anyway — one after 350k tokens and 171 tool
-  calls, another after 555k — and the caller had to check the job regardless. The
-  backgrounded-loop bullet below was written for exactly this case and did not hold, because
-  **a loop inside a subagent still ends when that subagent's turn ends.** Making the handoff
-  explicit costs one message; leaving it implicit costs a stalled agent *plus* the check.
-- If a *non-SGE* wait genuinely must happen inside a subagent as one internal step, it must
-  do so inside a single `Bash(run_in_background=true)` shell-level loop — never repeated
-  foreground status-check calls across turns. Note that `scc.md`'s "Waiting on a job without
-  burning tokens" is **entirely SGE-specific** (`qstat`/`qacct`, `Eqw`/`hqw` states,
-  `h_rt`-derived deadlines); only its shape generalises — one backgrounded loop, a deadline,
-  and no repeated foreground polling. Do not follow its `qstat` mechanics for a non-SGE wait.
-- If the wait is the *entire* reason for dispatch, don't dispatch at all — the caller
-  (main session or a fork) checks directly instead; it is near-free there since it is not
-  reloading a subagent's accumulated history each time, and only dispatches the real
-  downstream-processing subagent once the artifact exists.
-- The same applies to waiting on another dispatched subagent/fork: never re-message or
-  nudge it on a timer to ask if it is done — either it delivers a task notification on
-  completion, or (for `/loop` dynamic pacing) use `ScheduleWakeup` with a delay sized to
-  the actual expected duration, never a short fixed interval "just in case."
-
-**An instruction is not a backstop — the caller must own every `qsub`.** On 2026-09-05 two
-agents stalled mid-wait at **176k and 285k tokens**, each having been told verbatim in its
-brief *"submit, report the job id, and STOP — a wait loop inside a subagent dies when your
-turn ends"*, with the same rule already written here and in `scc.md`. That is three written
-statements of the rule and two violations in one wave. The instruction is not the problem;
-relying on one is. An agent that cannot finish inside its turn does the locally reasonable
-thing, exactly as the comment-instead-of-task failure below predicts.
-
-So: **the dispatching side submits every job.** An agent that needs one writes the job spec
-(the script, the resources, the artifact it expects) into its report and stops; the caller
-submits, waits in one backgrounded loop, and resumes the agent with the result. Waiting then
-is not expressible rather than merely forbidden. Cost of the old way, measured: two stalled
-agents, two resume cycles, and one dirty tree that raced a suite run.
-
-## A follow-up note is a task, not a comment
-
-When an agent finds that the fix belongs in a file it does not own, that finding becomes a
-**dispatched task with declared ownership in the same wave**. It does not become a comment.
-
-The evidence is uncomfortable. In one wave `pipeline/stages.py` gained **94 lines: 81 comment,
-1 blank, 12 code** — and two of the twelve were `_confidence_config_snapshot = None` in
-branches differing only by the comment above them. The three-state distinction the task existed
-to create lived **in the prose and not in the program**. A 55-line comment stated the defect,
-named the fix, named the parameter to add, and cited the rule it violated; it was a better bug
-report than most bug reports, **and that is precisely why it survived four agents and a
-review** — a defect documented that thoroughly is nearly indistinguishable from a defect fixed.
-
-The reviewer's diagnosis, adopted here: one-file-per-agent ownership prevents index collisions
-and *systematically manufactures unowned seams*. The next agent reads the comment as context
-rather than as an open work item.
-
-**Corollary: a chain of N tasks over N files needs an N+1st whose only job is to `command grep`
-for who actually *calls* the new thing.** A four-task chain built a manifest field, wired two
-call sites, added a typed enum — and nobody passed the value. Its own test passed the argument
-directly and stayed green.
-
-## Every relayed figure carries its column, not only its n
-
-The rule that a stratified figure carries its `n` is necessary and **not sufficient**. Two
-agents measured the same wire on the same corpus and reported **1,577 (10.79%)** and
-**1,459 (9.98%)** — both correct, on `top_hit_identity` and `identity_to_donor` respectively.
-Separately, two artifacts disagreed on 87 rows because one `fuse()` call silently omitted a
-signal, and each was quoted as "the b10 corpus".
-
-An `n` without the column it was measured on is how **one number acquires two
-independent-looking sources**. State the artifact, the column, and the arm.
+Code tasks (SDD included) go to `implementer` on its default sonnet; `model: opus` only for a
+cross-module or contract change or a retry, with that reason in the brief's first line
+(DECISION-028). Ad hoc questions go to `investigator`; "where is X" to Explore with `model: haiku`.
+Never general-purpose. A named seat's front matter is the source of truth for its model and
+effort; a dispatch that overrides it rounds up when unsure (a small task on a security-sensitive
+path still warrants a higher tier). At most 2 subagents at once (3 on the larger account); queue
+the rest.
 
 ## A dispatch's factual claims become code
 
-**A figure relayed from a SUBAGENT'S REPORT is UNVERIFIED, exactly like a figure from a plan.**
-This section's rule was being read as binding the controller's own assertions only. It is not.
-W2 (2026-09-21) produced **six wrong citations in one wave, every one the controller's, none
-self-caught**: three relayed from a subagent's report into a brief without re-derivation, two
-from the controller's own grep where a parser was needed, and one — the worst — a SHA
-attributed to the wrong action **and pre-labelled** *"if these are identical that is a
-copy-paste defect"*, which would have sent a reviewer to file a Critical against correct code.
-A relayed figure FEELS verified because somebody measured it. It is not, because the person
-putting it in front of an implementer did not.
+A subagent cannot tell which of your assertions were verified and will write a wrong count, file
+list or dependency claim into commits (2026-08-24: one became the final review's only Critical).
+Verify every claim or label it `UNVERIFIED`; counts, site enumerations and dependency claims are
+the high-risk classes. **A figure relayed from a subagent's report is unverified too**, and one
+carrying a defect hypothesis is the highest-risk form: re-derive it before writing it (W2
+2026-09-21: six wrong citations, all the controller's). An item whose figure you have not
+re-derived with a parser, or that a report disputes, ends with: *"if your measurement disagrees
+with mine, stop and report — do not reconcile toward mine."* Mechanical backstop: EnzymeFinder
+`scripts/check_citations.py` preflights `path:line`, paths, arithmetic, sha pins and `--flag`
+attribution, not counts. When a subagent challenges a claim, check the artifact before overruling.
 
-**A relayed figure carrying a DEFECT HYPOTHESIS is the highest-risk form.** Re-derive it before
-writing it, never after: the hypothesis is what makes it actionable, so a wrong one is acted on.
+- **Every relayed figure carries its column, not only its n:** state the artifact, the column and
+  the arm; a stratified or conditional figure carries its n in the brief and in the finding
+  (1,577 vs 1,459 on two identity columns; `0.0717` was 16/223).
+- **Prefer a short brief of verified claims to a long brief of relayed ones** (2026-09-01: eleven
+  of twelve implementers found a factual error in the controller's brief; the shortest brief had none).
+- **Say your summary is lossy and point at the source:** *"the table above is a compression of
+  <source>; read the full row there before trusting it, and report any place the compression is
+  wrong."* (W2b-1 2026-09-23.)
 
-**The stop rule, one sentence, and the only thing that caught an error before publication in
-that wave.** When a brief carries a figure the author has not re-derived with a parser, or that
-a prior report disputes, end that item with: *"if your measurement disagrees with mine, stop and
-report — do not reconcile toward mine."* The implementer that received it resolved every
-indirection across 71 shell scripts, found the controller's number inverted, and **wrote
-nothing**. The other five errors were all caught after the fact.
+## Concurrent dispatches need declared file ownership
 
-**Mechanical backstop: `scripts/check_citations.py`** (EnzymeFinder) preflights a brief, plan or
-report — `path:line` citations (printing the cited line, because existence is not correctness),
-paths, arithmetic including prose decompositions, `owner/repo@sha` pins, and `--flag`
-attribution. It cannot verify a **count**; two of the six were counts, and that is what the stop
-rule is for. Validated in both directions: it catches a verbatim reconstruction of all six, and
-reports 3 findings across the 9 documents that wave produced.
+Never dispatch two implementers that touch the same file; when tasks queue behind one shared file,
+each brief names the files it owns and those another agent holds. Every dispatch that may commit
+ends with: stage files individually by name (`git add <dir>/` sweeps a neighbour's new files), then
+run `git show --stat` after each commit and confirm it touched only your files (2026-09-01: two
+index collisions, both caught this way). Recovery: `git reset --soft HEAD~1`, `git reset -- <the
+other agent's files>`, re-commit. Shared-worktree hazards: a bare `git commit` with others' staged
+files, `git commit -- <paths>`, `git stash push -- <paths>`, `git --work-tree=<dir> checkout`, and
+`cp` restoring a file after a generator's `--write` (W2b-1). Give every generator a `--stdout` mode
+and say so in `--help`. An agent that waited while commits landed is told what changed and to
+re-read before editing, and which failing checks are not its own.
 
-A subagent cannot tell which of the caller's assertions were verified. It will faithfully
-write a wrong count, file list or dependency claim into the repo and into prose. On
-2026-08-24 three of the caller's unchecked claims reached commits this way; one ("stage 7c
-depends only on stage 1 and stage 7a") became the final review's only Critical finding.
+## Never dispatch "wait and report" as a subagent's task
 
-Every factual claim in a dispatch is either verified before sending, or explicitly labelled
-`UNVERIFIED — check this before relying on it`. The high-risk classes are counts ("hardcoded
-in five files"), enumerations of sites to change, and dependency claims. Verifying costs one
-grep; not verifying costs a review round and a commit that has to be undone.
+The dispatching side submits every SGE job: an agent that needs one writes the job spec (script,
+resources, expected artifact) into its report and stops; the caller submits, waits in one
+backgrounded loop, and resumes the subagent with the result. An instruction is not a backstop: a
+loop inside a subagent ends when its turn ends (2026-08-29, 2026-09-05: agents stalled at
+176k-555k tokens despite the rule in their brief). A non-SGE wait inside a subagent is one
+`Bash(run_in_background=true)` loop with a deadline, never repeated foreground checks. If the wait
+is the entire reason for a dispatch, do not dispatch: the caller checks directly. Never re-message
+a dispatched agent on a timer; wait for its notification, or `ScheduleWakeup` sized to the
+expected duration.
 
-The same applies in reverse: when a subagent challenges one of your claims, check the artifact
-before overruling it. On the same day a subagent correctly disputed a stale-exemption claim and
-the caller's doubt was the thing that was wrong.
+## A follow-up note is a task, not a comment
 
-**Every stratified or conditional figure carries its n, in the brief and in the finding.** A
-rate without a denominator propagates and cannot be checked by the agent receiving it. This
-failed **three times in one wave** on 2026-09-01 — twice *after* the same correction had already
-been made and committed. `0.0717` travelled through a plan, a task brief and a backlog entry
-before anyone established it was 16/223 with a 48-row comparator.
+A fix that belongs in a file the agent does not own becomes a dispatched task with declared
+ownership in the same wave, never a comment: a thoroughly documented defect reads as a fixed one
+(`stages.py`: 81 comment lines, 12 code). A chain of N tasks over N files needs an N+1st whose
+only job is to `command grep` for who actually calls the new thing.
 
-**Prefer a short brief of verified claims to a long brief of relayed ones.** In that same wave,
-**eleven of twelve implementers found at least one factual error in the controller's brief**.
-The single agent that found none had the shortest brief: entirely verified against source
-beforehand, naming one specific prior error rather than restating a dozen measurements.
-Relaying a reviewer's number without checking it makes it the repo's number — the classes that
-failed most were figures without their n, line-number citations (which drift as a wave adds
-lines), and *mechanism* descriptions, where being right that something failed does not make you
-right about why.
+## "The brief is wrong" is a first-class finding
 
-**Contradiction slot — every dispatch, not just reviews.** Reviewers get an
-unenumerated-objection slot (see the wave-end section below); implementers had no equivalent,
-and they are the ones who read a brief closely enough to catch it being wrong. End every
-implementer dispatch with: *"report anything in this brief that you found to be wrong."* On
-2026-08-29 that slot caught five false claims in one session before any reached the repo: a
-benchmark's CLI flags (the run *did* pass `--annotation-tools diamond`; the real mechanism was
-no-op degradation), an over-broad "cannot reach the service" claim that was true of only one of
-two code paths, an accession asserted to be RefSeq that was EMBL/GenBank, a "permanently
-dormant" contradiction that dissolved once commit dates were checked against manifest dates,
-and a corpus size understated by half. Each would otherwise have been written in verbatim. The
-verify-or-label rule above is the primary defence; this is the backstop for when it slips, and
-it costs one sentence.
+When a seat flags that the brief or plan premise is wrong, escalate it at the severity its content
+would warrant as an implementation bug and route it to the plan's owner; the out-of-scope label
+does not close it (MqnE_cofactor_finding retrospective, 2026-08-24). This is why every implementer
+brief has the contradiction slot (2026-08-29: five false claims caught; W14: fourteen).
 
+## Reviewers write findings down as they confirm them
+
+A seat that keeps findings in its head until the end hits its turn limit with nothing written
+(162,646 and 162,630 tokens, one sentence each; 144,164 with the append instruction but no file).
+A file created before investigation is the deliverable when turns run out (W2b-1: report lost,
+file held three findings, one Blocking).
+
+## A review wave has no negative control
+
+Seats ask whether the code does what it says, not whether the system does its job. When a wave's
+evidence is entirely self-consistency, say so in its close and carry a standing row for one
+held-out evaluation with a stated denominator and a trivial baseline (W2b-1 2026-09-23).
+
+## Every dispatch carries the environment-invariants block
+
+Scratchpad path, no `rm -rf` in the tree, never create a file under `tests/`, output directories
+read-only. **Name the repo's own test-environment traps**: autouse fixtures in `conftest.py` that
+override what is deployed, and CI's real `-k`/`-m` filter, checked with `--collect-only`
+(W14: a `slow` marker excluded nothing without its env opt-in).
+
+## Generate a task's brief at dispatch time, not up front
+
+A brief that references another task's output is silently invalidated by any resequencing (W14:
+a brief told its implementer to run a script a later task would create).
