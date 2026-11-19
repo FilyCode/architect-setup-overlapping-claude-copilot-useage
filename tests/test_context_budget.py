@@ -95,9 +95,11 @@ def _six_violations(skills_root: Path):
     assert not missing, f"process skills not found under {skills_root}: {missing}"
     paths = [found[n] for n in SIX]
     for p in paths:
-        n = len(p.read_bytes())
-        assert n > 0, f"{p} is empty"
-        print(f"{p.parent.name:24s} {n:6d} / {SIX_CEIL}")
+        text = p.read_text()
+        m = cb.FM.match(text)
+        assert (text[m.end():] if m else text).strip(), f"{p} has no body after its front matter"
+        body = len(text.encode()) - len(cb._frontmatter(text).encode())  # skill_violations' measure
+        print(f"{p.parent.name:24s} body {body:6d} / {SIX_CEIL}")
     return cb.skill_violations(paths, ceiling=SIX_CEIL)
 
 
@@ -112,6 +114,15 @@ def test_six_process_skills_check_fails_when_a_skill_dir_is_missing(tmp_path):
     shutil.rmtree(root / "wave-review")
     import pytest
     with pytest.raises(AssertionError, match="wave-review"):
+        _six_violations(root)
+
+
+def test_six_process_skills_check_fails_when_a_body_is_empty(tmp_path):
+    root = tmp_path / "skills"
+    shutil.copytree(REPO / ".claude/skills", root, ignore=shutil.ignore_patterns("reference"))
+    (root / "wave-review/SKILL.md").write_text("---\nname: wave-review\ndescription: x\n---\n")
+    import pytest
+    with pytest.raises(AssertionError, match="wave-review/SKILL.md has no body"):
         _six_violations(root)
 
 

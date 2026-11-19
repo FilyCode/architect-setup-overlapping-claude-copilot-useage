@@ -7,6 +7,7 @@ exceeds PART bytes is split into reference/part-N.md files, listed in SKILL.md b
 text. `body_text()` reverses the assembly; the tests use it to prove the bodies are verbatim.
 Provenance (source file:line of each span) is written to `<skill>/provenance.tsv`, a sidecar that
 SKILL.md does not reference, so it costs no context; the loaded files carry no provenance comments.
+Dormant since the 2026-11 consolidation (DECISION-032): .claude/skills holds curated text, not this output.
 """
 import argparse
 import sys
@@ -114,7 +115,8 @@ def body_text(skill_dir: Path) -> str:
 def main(argv=None):
     root = Path(__file__).resolve().parents[1]
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--out", default=str(root / ".claude/skills"))
+    ap.add_argument("--out", required=True,
+                    help="output dir; required so a bare run cannot overwrite the curated .claude/skills")
     a = ap.parse_args(argv)
     build_all(root / "docs/history/rules-2026-10-14", root / "docs/history/rule-map.tsv",
               root / "skill-headers", Path(a.out))
