@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse guard for Bash: blocks the shared-tree hazards and login-node pytest.
+"""PreToolUse guard for Bash: blocks the shared-tree hazards, login-node pytest and qdel of jobs this session did not submit.
 
 Tokenises with shlex; never regex-matches the raw command. Any internal error allows
 the command (a broken guard must not become a source of spurious blocks).
@@ -11,6 +11,9 @@ import re
 import shlex
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import job_ledger  # noqa: E402
 
 PROJECTS = "/projectnb/liu-scc/philipp/projects"
 SEP = {";", "&&", "||", "|", "&", "\n"}
@@ -212,12 +215,34 @@ def _find(seg, shvars):
     return ("allow", "")
 
 
+JOB_ID = re.compile(r"^(\d+)(\.[\d,:-]+)?$")  # 123 or a task range 123.4-9:1
+
+
+def _qdel(seg, session, env):
+    """Allow qdel only for job ids this session submitted (job_ledger); flags (-u), names and wildcards deny.
+    A missing ledger means no owned jobs. Internal errors allow, like the rest of the guard."""
+    try:
+        args = [a for a in seg[1:] if a != "-f"]  # -f (force) changes nothing about whose job it is
+        ids = [m.group(1) if (m := JOB_ID.match(a)) else None for a in args]
+        bad = [a for a, i in zip(args, ids) if i is None]
+        foreign = [a for a, i in zip(args, ids) if i is not None and i not in job_ledger.owned_ids(session, env)]
+        if args and not bad and not foreign:
+            return "allow", ""
+        why = (f"not a plain numeric job id: {', '.join(bad)}" if bad else
+               f"job id(s) not submitted by this session: {', '.join(foreign)}" if foreign else
+               "no job id given")
+        return "deny", (f"qdel is allowed only for jobs this session submitted ({why}; qdel -u, names and wildcards "
+                        f"are never allowed). Ask the owner to run `! qdel <id>`.")
+    except Exception:
+        return "allow", ""
+
+
 def _is_assign(tok):
     name, eq, _ = tok.partition("=")
     return bool(eq) and name.isidentifier()
 
 
-def decide(command: str, cwd: str, env: dict):
+def decide(command: str, cwd: str, env: dict, session=None):
     shvars = {"PWD": cwd, "HOME": os.path.expanduser("~")}
     warn = None
     for line in _lines(command):
@@ -250,6 +275,8 @@ def decide(command: str, cwd: str, env: dict):
                 continue
             if cmd == "git":
                 v = _git(seg, cwd, shvars)
+            elif cmd == "qdel":
+                v = _qdel(seg, session, env)
             elif cmd == "rm":
                 v = _rm(seg, cwd, shvars)
             elif cmd in ("pytest", "py.test") or (cmd.startswith("python") and seg[1:3] == ["-m", "pytest"]):
@@ -274,7 +301,8 @@ def main():
         d = json.load(sys.stdin)
         if d.get("tool_name") != "Bash":
             return 0
-        verdict, reason = decide(d.get("tool_input", {}).get("command", ""), d.get("cwd", os.getcwd()), dict(os.environ))
+        verdict, reason = decide(d.get("tool_input", {}).get("command", ""), d.get("cwd", os.getcwd()), dict(os.environ),
+                                 d.get("session_id"))
         if verdict == "deny":
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
                   "permissionDecision": "deny", "permissionDecisionReason": reason}}))
