@@ -17,8 +17,8 @@ skip it), and for a known-heavy problem or a third failed fix (escalation sectio
 3. **Preflight:** run the plan's code blocks and resolve every path, symbol and figure it cites
    (EnzymeFinder has `projects/EnzymeFinder/scripts/check_citations.py` for citations).
 4. **inventory-auditor** against the plan draft; its findings go into the plan before the critique.
-5. **Critique wave** (minimum 3 seats, batched under the concurrency cap; lean-critic, always, is
-   one of them: which tasks, files and abstractions the plan can drop or reuse).
+5. **Critique wave** (minimum 3 seats plus lean-critic, always, as a fourth: which tasks, files
+   and abstractions the plan can drop or reuse; batched under the concurrency cap).
 6. **pragmatism-officer** over the critique findings.
 7. **Fix the plan before Task 1.** Exit: every "run X before/at T" in the critique's required
    changes is copied into the plan as a numbered task row before the plan is marked ready; the
@@ -119,9 +119,9 @@ Same mechanics as wave-end review in `wave-review` (parallel seats, unenumerated
 minor-triage content test); the plan-critique wave targets the plan text and its spec, not a diff,
 before work starts.
 
-- **Seats.** Minimum 3, lean-critic always among them; the defaults are `critic-reviewer`
-  (plan-shaped: feasibility, missing tasks, edge cases) and a `domain-reviewer` (name the role),
-  plus issue-specific angles from what the plan touches. Premise-checking a stage earlier, so a bad
+- **Seats.** Minimum 3: `critic-reviewer` (plan-shaped: feasibility, missing tasks, edge
+  cases), a `domain-reviewer` (name the role) and one issue-specific angle from what the plan
+  touches; lean-critic always comes on top (owner, 2026-11-18). Premise-checking a stage earlier, so a bad
   premise is caught before every task inherits it.
 - **Scale the number of dispatches to the plan's size and complexity**, minimum 3, up to ~10 for a
   large or high-stakes plan: one per major task-cluster or risk axis (correctness, domain,
