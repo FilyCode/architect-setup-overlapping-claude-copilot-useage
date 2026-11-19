@@ -23,7 +23,7 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
     `ls workspace-config/agents/` rather than trusting a list here — it went stale twice).
   - `rtk/` — retired 2026-10-14 (DECISION-026); kept for history, see `rtk/RETIRED.md`.
 - `.claude/skills/` — `council`, `storm`, `ccusage`, `caveman`, `workspace-audit`, and the
-  process skills built from `skill-headers/` by `tools/build_skills.py`.
+  process skills (curated SKILL.md; `skill-headers/` history, DECISION-032).
   `ccusage`, `council`, `storm` and `workspace-audit` are explicit-invocation only and linked
   at the workspace root; the process skills are model-invocable and linked at user scope
   (`~/.claude/skills/`) together with `core.md`, the seats and the hooks — recreate those links

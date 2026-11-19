@@ -1,0 +1,48 @@
+id	source	text	disposition
+running-sge-jobs-001	scc.md:1	BU SCC (liu-scc)	
+running-sge-jobs-002	scc.md:5	Job defaults	
+running-sge-jobs-003	scc.md:6	Cores: 1 non-parallel; 4 / 8 / 16 / 28 parallel (best scheduling efficiency at these). 32/48/64 only	
+running-sge-jobs-004	scc.md:7	Memory: `-l mem_per_core=8G`. Ceiling 512G; 1024G only for extreme workloads.	
+running-sge-jobs-005	scc.md:8	Runtime: `-l h_rt` ≤12h preferred. Escalate to 24/48/72h only when justified.	
+running-sge-jobs-006	scc.md:9	`#!/bin/bash -l` whenever the script uses `module load`.	
+running-sge-jobs-007	scc.md:10	`-P liu-scc` when a project spec is required. Array jobs use `SGE_TASK_ID`.	
+running-sge-jobs-008	scc.md:11	`export NCBI_EMAIL=phitro@bu.edu` before any job that hits NCBI.	
+running-sge-jobs-009	scc.md:19	Verifying a job	
+running-sge-jobs-010	scc.md:27	Waiting on a job without burning tokens	
+running-sge-jobs-011	scc.md:33	Wrap the wait in one `Bash(run_in_background=true)` call, with a bail-out: `qstat -j	
+running-sge-jobs-012	scc.md:40	A 30-60s sleep interval is fine and costs zero tokens per iteration — only the final	
+running-sge-jobs-013	scc.md:44	Neither the loop exiting nor a `qacct` `exit_status 0` alone proves success — always	
+running-sge-jobs-014	scc.md:51	**`qstat -j <jobid>` returns non-zero transiently** under qmaster load, so `while qstat -j	
+running-sge-jobs-015	scc.md:57	`scc-monitor` is for diagnosing *why* a job failed or a reported success can't be	
+running-sge-jobs-016	scc.md:60	Reading a job log	
+running-sge-jobs-017	scc.md:62	SGE appends to `-o` logs, it does not truncate.** A log path reused across runs accumulates	
+running-sge-jobs-018	scc.md:66	check the log's mtime against the job's `end_time` from `qacct` before believing it;	
+running-sge-jobs-019	scc.md:67	anchor on the LAST `=== ... started:` line, not the head of the file;	
+running-sge-jobs-020	scc.md:68	remember a differently-named job writes a different log — a stale log at the path you	
+running-sge-jobs-021	scc.md:71	Storage	
+running-sge-jobs-022	header@36f2a5e:1	# Running SGE jobs	
+running-sge-jobs-023	header@36f2a5e:2	## Correction to the moved text below (2026-10-14)	
+running-sge-jobs-024	header@36f2a5e:3	The listing-form wait loop in the moved text has no deadline, so it never exits for a job stuck in `Eqw` or `hqw`.	
+running-sge-jobs-025	header@36f2a5e:4	Use this form:	
+running-sge-jobs-026	header@36f2a5e:5	```bash deadline=$(( $(date +%s) + H_RT_SECONDS + 3600 )); absent=0 while [ $absent -lt 3 ]; do [ $(date +%s) -ge $deadline ] && { echo "TIMEOUT: check qstat -u phitro (Eqw/hqw?)"; break; } qstat -u phitro 2>/dev/null | grep -q "^ *<jobid> " && absent=0 || absent=$((absent+1)) sleep 45 done ```	
+running-sge-jobs-027	header@36f2a5e:6	**Cores: request what the job uses (2026-10-31; replaces "Cores" under Job defaults).** SGE charges every reserved core.	
+running-sge-jobs-028	header@36f2a5e:7	Over 14 days our jobs reserved 9143 core-h and used 3242 (35%); the EC523 arrays held 4-8 slots and used 1.1-1.25.	
+running-sge-jobs-029	header@36f2a5e:8	So:	
+running-sge-jobs-030	header@36f2a5e:9	- 1 slot unless a command in the script runs K threads; then put `# cores: <that command>` on the `-pe` line (`#$ -pe omp 8 # cores: diamond --threads $NSLOTS`) and pass `$NSLOTS` to it.	
+running-sge-jobs-031	header@36f2a5e:10	- Never add slots to get memory:	
+running-sge-jobs-032	header@36f2a5e:11	SCC enforces memory loosely (owner, 2026-10-31).	
+running-sge-jobs-033	header@36f2a5e:12	- Before choosing K for a job that ran before:	
+running-sge-jobs-034	header@36f2a5e:13	`tools/sge_efficiency.py lookup <name>` (config repo) shows its measured cores used.	
+running-sge-jobs-035	header@36f2a5e:14	After every job, with the artifact check:	
+running-sge-jobs-036	header@36f2a5e:15	`tools/sge_efficiency.py job <id>`;	
+running-sge-jobs-037	header@36f2a5e:16	OVER-RESERVED means lower K next time, and `qalter -pe omp <k> <id>` fixes array tasks still queued.	
+running-sge-jobs-038	header@36f2a5e:17	- Hook `qsub_guard` enforces this on qsub/qrsh/qalter:	
+running-sge-jobs-039	header@36f2a5e:18	K > 1 without a `# cores:` note is denied; a note contradicted by >= 2 measured runs is denied once.	
+running-sge-jobs-040	header@36f2a5e:19	A subagent's qsub is denied (rule 5).	
+running-sge-jobs-041	header@36f2a5e:20	**Host filters (2026-10-21, `qconf -sc`).** `-l mem_per_core=N` (relop `<=`) keeps only hosts with at least N per core;	
+running-sge-jobs-042	header@36f2a5e:21	12G matched only the 24G/core GPU nodes and job 8132228 sat 70 min in qw: keep mem_per_core at 8G or less.	
+running-sge-jobs-043	header@36f2a5e:22	A job in qw over 10 min: read the scheduling info in `qstat -j <id>`.	
+running-sge-jobs-044	header@36f2a5e:23	CPU test and eval jobs whose wheels need AVX2 (FBGEMM, torch CPU) request `-l avx2`: job 8171407 on a non-AVX2 host gave 6 false failures.	
+running-sge-jobs-045	header@36f2a5e:24	Claude runs inside an SGE job on a compute node (`$JOB_ID` set); the login-node limits below apply to work started from a login shell.	
+running-sge-jobs-046	header@36f2a5e:25	**Full test suite for a PR (2026-11-01):** run it through `tools/scc_ci_status.py submit`, which posts the `scc-tests` status on the commit.	
+running-sge-jobs-047	header@36f2a5e:26	The rules below are the original workspace text, moved verbatim.	

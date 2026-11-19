@@ -21,7 +21,7 @@ steps 1-6 run at most monthly. Neither is a per-session check.
 
 **0. Retro integration (weekly).** Read the open `- [ ] R-…` proposals in
 `docs/retros/retro-log.md`. For each: apply it (smallest change, test-first where it is code;
-governance files still need the owner's approval), defer it with a trigger, or reject it with
+governance files still need the owner's approval; a process-skill proposal edits `.claude/skills/<name>/SKILL.md`, never `skill-headers/`), defer it with a trigger, or reject it with
 a reason; tick it with the outcome and the commit. Apply first what recurs across entries or
 removes text; leave a one-off idea open until it recurs. A pattern seen in 3+ entries across
 2+ projects is promoted into `learnings.md`. Set `Last integrated:` to today and commit.

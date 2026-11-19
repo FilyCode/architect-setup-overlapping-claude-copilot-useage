@@ -20,10 +20,8 @@ def _skill_flags(name):
     if plugin:  # plugin skill, e.g. ponytail:ponytail, from the installed plugin cache
         found = sorted(Path.home().glob(f".claude/plugins/cache/{plugin}/*/*/skills/{skill}/SKILL.md"))
         return found[-1].read_text().split("\n---\n", 1)[0] if found else None
-    for p in (REPO / ".claude" / "skills" / name / "SKILL.md", REPO / "skill-headers" / f"{name}.md"):
-        if p.exists():
-            return p.read_text().split("\n---\n", 1)[0]
-    return None
+    p = REPO / ".claude" / "skills" / name / "SKILL.md"
+    return p.read_text().split("\n---\n", 1)[0] if p.exists() else None
 
 
 def test_agent_set():
@@ -84,8 +82,8 @@ def test_no_memory_on_scc_monitor_and_no_skill_tool_on_lean_critic():
 def test_lean_critic_preloads_ponytail_and_runs_in_plan_and_wave_review():
     assert "ponytail:ponytail" in _fm((REPO / "workspace-config/agents/lean-critic.md").read_text())["skills"]
     for name in ("wave-review", "plan-critique"):
-        head = (REPO / "skill-headers" / f"{name}.md").read_text().split("rules below are the original", 1)[0]
-        assert re.search(r"lean-critic[^.;]*always", head), name
+        body = (REPO / ".claude" / "skills" / name / "SKILL.md").read_text()
+        assert re.search(r"lean-critic[^.;]*always", body), name
 
 
 def test_patch_is_idempotent_and_keeps_spacing(tmp_path, capsys):

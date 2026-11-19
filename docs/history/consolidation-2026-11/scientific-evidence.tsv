@@ -1,0 +1,23 @@
+id	source	text	disposition
+scientific-evidence-001	verification.md:372	`selD` is itself a selenoprotein, so its in-frame UGA defeats gene calling — 66 of 73	
+scientific-evidence-002	verification.md:374	`TIGR00475` (SelB) sits a median **32.6 bits** over its trusted cutoff in Actinomycetota	
+scientific-evidence-003	verification.md:377	`RF01852` (tRNA-Sec) declares **TC 47.00 against NC 46.90** — a **0.1-bit** discrimination	
+scientific-evidence-004	verification.md:383	**Before writing "X is absent in C", measure where the instrument sits in C.** Report the	
+scientific-evidence-005	verification.md:420	**A general score depression is a mechanism, not a verdict.** Campylobacterota scores lower	
+scientific-evidence-006	verification.md:429	**When known biology says a thing must be present and the data says absent, write BOTH	
+scientific-evidence-007	verification.md:435	**An instrument-driven absence and a real absence are different states and must be typed as	
+scientific-evidence-008	verification.md:439	Attack the results that CONFIRMED what you expected, not only the surprising ones.** Effort	
+scientific-evidence-009	verification.md:481	**Any tool with more than one output format may gate them differently.** Read the manual	
+scientific-evidence-010	verification.md:485	**Prefer the report whose UNIT matches your question.** A membership question ("does this	
+scientific-evidence-011	verification.md:488	**When two reports should agree, compute the difference and store it**, with a third state	
+scientific-evidence-012	verification.md:491	**The symptom to watch for is a phylum, class or subgroup that looks "marginal" on one	
+scientific-evidence-013	header@36f2a5e:1	# Scientific evidence	
+scientific-evidence-014	header@36f2a5e:2	Before writing "absent", measure where the instrument sits in that stratum.	
+scientific-evidence-015	header@36f2a5e:3	When known biology and the data disagree, write both branches down before choosing one.	
+scientific-evidence-016	header@36f2a5e:4	Attack the result you hoped for at a finer stratum.	
+scientific-evidence-017	header@36f2a5e:5	When a tool writes two reports, check whether they are filtered differently.	
+scientific-evidence-018	header@36f2a5e:6	A between-model contrast is quoted only with its comparison K inside every arm's trained regime and with its seed-swap result; run the seed-swap negative control before the first results table, not at wave end.	
+scientific-evidence-019	header@36f2a5e:7	The moved text below refers to "the same three-state discipline as everywhere else in this file": that file is now the `verification-patterns` skill.	
+scientific-evidence-020	header@36f2a5e:8	The rule itself: unknown is its own typed state (an enum or dedicated type, never `bool | None`), and when you introduce one, list every consumer.	
+scientific-evidence-021	header@36f2a5e:9	An instrument-driven absence and a real absence are two different states.	
+scientific-evidence-022	header@36f2a5e:10	The rules below are the original workspace text, moved verbatim, including the worked cases.	

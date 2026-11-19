@@ -1,0 +1,91 @@
+id	source	text	disposition
+verification-patterns-001	verification.md:7	The shapes this takes	
+verification-patterns-002	verification.md:9	An output file predates the fix, or was never regenerated. Check mtimes against the fix,	
+verification-patterns-003	verification.md:11	A clean exit code with no artifact. A tool that catches its own errors exits 0 having	
+verification-patterns-004	verification.md:13	A comment or docstring describes a change the code below it never received. After	
+verification-patterns-005	verification.md:15	A plan's own example code carries the bug. Re-derive maths, library behaviour and	
+verification-patterns-006	verification.md:18	A field survives the forward path but is dropped by checkpoint serialization, so only	
+verification-patterns-007	verification.md:20	A cached column or stored flag is trusted as current. Re-check against the live source	
+verification-patterns-008	verification.md:22	A gate that passes because it never exercises the path in use. A regression check ran the	
+verification-patterns-009	verification.md:26	A parser validated against a fixture its own author wrote. The fixture encodes the same	
+verification-patterns-010	verification.md:29	Two artifacts compared positionally when their row order is not guaranteed. Align on a	
+verification-patterns-011	verification.md:32	A check that cannot fail, because it matches the wrong field. A docstring stating what a	
+verification-patterns-012	verification.md:34	A test that fails *on the fix* — the inverse of the bullet above, and it does fail, on the	
+verification-patterns-013	verification.md:41	A named metric appears in a governance doc as evidence without three basic checks having been	
+verification-patterns-014	verification.md:48	**Positive-control corollary:** if a positive control scores below a candidate on the same	
+verification-patterns-015	verification.md:51	A number that supports or closes a claim in a governance doc (decisions/findings/summary/status	
+verification-patterns-016	verification.md:55	Report-generating code contains a hardcoded numeric literal in its prose output, rather than	
+verification-patterns-017	verification.md:59	Two populations/rates/groups get compared without first listing every axis they could differ on	
+verification-patterns-018	verification.md:63	An isolation run credited with more than it executed. Isolating a diff to find *whose* failures	
+verification-patterns-019	verification.md:74	A green mocked test over a code path that cannot reach its service at all. Mocked transport	
+verification-patterns-020	verification.md:84	A claim written into multiple locations gets its scope qualifier updated in only one of them.	
+verification-patterns-021	verification.md:91	A three-state value collapsed back to two at a boundary its author did not own. This is	
+verification-patterns-022	verification.md:103	**A check that compares a derived quantity between two populations read through the SAME code	
+verification-patterns-023	verification.md:110	**Where a record carries both a generated field and a hand-written one, the hand-written one holds	
+verification-patterns-024	verification.md:117	**When you correct a false statement, check what was DECIDED on it.** A false premise that	
+verification-patterns-025	verification.md:123	**Four shape gates cannot detect decay.** A gate that validates a record's *shape* — row count,	
+verification-patterns-026	verification.md:129	A claim that a signal is live, or dark, argued from wiring rather than measured. **Firing is	
+verification-patterns-027	verification.md:136	A boundary held constant while the thing producing it changed meaning, with no version stamp	
+verification-patterns-028	verification.md:142	A test made vacuous by a change that never edited it. `test_fusion_is_monotone_in_each_signal_value`	
+verification-patterns-029	verification.md:149	**A capability claimed as "implemented" with no call path.** This workspace requires that a	
+verification-patterns-030	verification.md:221	**Match the command as invoked, not as idealised.** `^git log\b` failed to cover	
+verification-patterns-031	verification.md:223	**A positive control built from a convenient fixture proves nothing.** The `-l` collision	
+verification-patterns-032	verification.md:227	**Check the aggregate's distribution before optimising for it.** "98.8% of tokens saved" was	
+verification-patterns-033	verification.md:247	The earlier line in this file that "every other command runs raw, so grep/find/diff/git output	
+verification-patterns-034	verification.md:250	Before blaming the wrapper, check your own flags. A 0-vs-1 discrepancy that looked like the	
+verification-patterns-035	verification.md:254	Before overwriting** a canonical-named output with a `--redo`-style regeneration, archive	
+verification-patterns-036	verification.md:258	A stage that filters its own input must report what it dropped.** An omission from a queue is	
+verification-patterns-037	verification.md:270	This binds the CONTROLLER'S OWN counts, not only reviewers' absence claims.** W2 (2026-09-21)	
+verification-patterns-038	verification.md:279	Use `command grep` to find candidates, and a parser to count them.** `command grep` is right	
+verification-patterns-039	verification.md:298	A number in a comment is a claim and decays like one.** On 2026-09-05 a correct fix added	
+verification-patterns-040	verification.md:305	**A fix copied from a sibling module, without opening the sibling's CALLER.** The pattern transfers;	
+verification-patterns-041	verification.md:307	**RED-confirmed proves a fix is EFFECTIVE; it says nothing about whether it is SAFE.** Both halves o	
+verification-patterns-042	verification.md:312	**A RED proof run from inside `tests/` can silently execute the CURRENT tree, not the blob.** The	
+verification-patterns-043	verification.md:327	**A document that CLAIMS to be generated, and is not, decays faster than one that admits it is	
+verification-patterns-044	verification.md:337	**A gate that knows the answer and does not print it is half a gate.** `report_ownership`	
+verification-patterns-045	verification.md:346	**Making a no-op live is a behaviour change, and must not also move its default.** A parameter	
+verification-patterns-046	verification.md:358	**A boundary test that does not probe the disputed interval cannot fail.** The suite had four	
+verification-patterns-047	verification.md:497	Reporting.** State what was run and what it returned. If tests fail, say so with the	
+verification-patterns-048	verification.md:500	A plan's own tests and fixtures are suspects, not specifications	
+verification-patterns-049	verification.md:505	one never exercised the state it existed to protect — the `UNMEASURED` branch of a three-state	
+verification-patterns-050	verification.md:507	one asserted a branch that never executes (`if "ef_ec_confidence" in text:` where the column is	
+verification-patterns-051	verification.md:509	one used a fixture that could not trip its own check;	
+verification-patterns-052	verification.md:510	two could not run in CI at all, because they silently depended on a machine-local reference map	
+verification-patterns-053	verification.md:513	So: tests arriving in a brief are drafts.** Every dispatch that hands an implementer test code	
+verification-patterns-054	verification.md:518	The convenient-fixture rule now has a worked instance, and it is embarrassing enough to keep.	
+verification-patterns-055	verification.md:531	Execute the plan's own claims before Task 1	
+verification-patterns-056	verification.md:550	Watch for the asymmetry.** These rules are applied reliably *outward* — to dispatches, to	
+verification-patterns-057	header@36f2a5e:1	# Verification patterns	
+verification-patterns-058	header@36f2a5e:2	Each entry is a failure that actually happened here, with the check that catches it.	
+verification-patterns-059	header@36f2a5e:3	Before claiming a fix works, find the entries that match what you changed and apply their checks.	
+verification-patterns-060	header@36f2a5e:4	A gate or guard is verified by removing it and watching its test fail.	
+verification-patterns-061	header@36f2a5e:5	A liveness or "unit ran" predicate also needs a positive control: the value it accepts is one only the unit's own output can produce (never a column default, an empty result or a zero), else it is typed ROWS-ONLY and prints no "ok" (EnzymeFinder WF1a:	
+verification-patterns-062	header@36f2a5e:6	801 false / 0 true accepted as live).	
+verification-patterns-063	header@36f2a5e:7	**A zero from a join is accepted only with the pre-join count printed beside it** (R-20261030-4;	
+verification-patterns-064	header@36f2a5e:8	SenC and MeMES): a probe that prints a count and writes a verdict asserts the two agree, and a guard that passes a 99.97%-broken join is not a guard.	
+verification-patterns-065	header@36f2a5e:9	A scan's zero (secrets, leaks) names the input scanned and whether the producer ever held the secret; if it never did, the zero is "not exposed", not "clean".	
+verification-patterns-066	header@36f2a5e:10	**A published zero names the denominator that could have carried the signal, with the rate-implied expectation and P(0) beside it; and "X is kept out of Y" is accepted only after one run with X flipped shows Y unchanged** (R-119, R-122;	
+verification-patterns-067	header@36f2a5e:11	MeMES_OvoA_search 2026-11-09).	
+verification-patterns-068	header@36f2a5e:12	Both halves are one wave's errors.	
+verification-patterns-069	header@36f2a5e:13	A "0 of 1,940,695 proteins" was really 0 of 87,564 molybdopterin carriers, where the other arm's rate predicts 2.28 and P(0) = 0.102 -- an ordinary draw written up as a corroborating negative.	
+verification-patterns-070	header@36f2a5e:14	And "the undecided families are a column, not a unit" was published in a findings file and a commit message without once running the count with those families removed: they were supplying units through a `clan.get(n) or n` fallback, and 11.5% of the fusion census depended on them.	
+verification-patterns-071	header@36f2a5e:15	Both were flattering, both were found by accident weeks or hours later, and both cost one run to check at the time of writing.	
+verification-patterns-072	header@36f2a5e:16	After editing a helper or script that a test parses as text (ROOT lines, paths, log lines), run that test file before commit (R-20261105-B3; fe1b242).	
+verification-patterns-073	header@36f2a5e:17	**CI and PR checks** (2026-11-01; owner approved):	
+verification-patterns-074	header@36f2a5e:18	1.	
+verification-patterns-075	header@36f2a5e:19	A red check blocks the merge.	
+verification-patterns-076	header@36f2a5e:20	2.	
+verification-patterns-077	header@36f2a5e:21	Lint and type errors are fixed first, before any further push.	
+verification-patterns-078	header@36f2a5e:22	3.	
+verification-patterns-079	header@36f2a5e:23	Every failure gets a cause: a real bug is fixed in the PR; a test that passes only on SCC gets a skip marker for GitHub plus a register row; a flaky test gets at most one re-run, then quarantine plus a register row.	
+verification-patterns-080	header@36f2a5e:24	4.	
+verification-patterns-081	header@36f2a5e:25	Every EF PR needs `scc-tests` = success on its head SHA: the full suite does not run on GitHub for PRs, so run `tools/scc_ci_status.py submit` and cite its job id in the PR body.	
+verification-patterns-082	header@36f2a5e:26	A new push needs a new submit.	
+verification-patterns-083	header@36f2a5e:27	A GitHub check that did not run (out of minutes, blocked) is unknown, not passed.	
+verification-patterns-084	header@36f2a5e:28	For `scc-tests`, `pending`, `error` and absent also mean unknown, not passed; only `success` counts.	
+verification-patterns-085	header@36f2a5e:29	`scc_ci_status.py sweep` turns a stuck `pending` into `error`.	
+verification-patterns-086	header@36f2a5e:30	5.	
+verification-patterns-087	header@36f2a5e:31	Red main is reverted or fixed the same day, with no other pushes on top.	
+verification-patterns-088	header@36f2a5e:32	6.	
+verification-patterns-089	header@36f2a5e:33	A third failed fix of the same check triggers the escalation section of plan-critique.	
+verification-patterns-090	header@36f2a5e:34	The rules below are the original workspace text, moved verbatim.	

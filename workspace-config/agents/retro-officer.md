@@ -39,6 +39,7 @@ session transcript path.
   target file (and `command grep -c "<key phrase>" docs/retros/retro-log.md` for open ones) and
   quote the line it replaces; if the rule already exists, say why it did not fire and change
   that, or drop the proposal. Prefer a mechanism over prose; prefer deleting text over adding it.
+  A proposal for a process skill targets `.claude/skills/<name>/SKILL.md`, never `skill-headers/` (history).
   Say "recurs (see <date>)" when an earlier entry saw the same thing. Check the ID is unused.
 - **Project items** (owner rulings 2026-11-08, 2026-11-18): a change to a project's own file
   (script, gate, test, project CLAUDE.md) is not a retro-log proposal. You write nothing in a
