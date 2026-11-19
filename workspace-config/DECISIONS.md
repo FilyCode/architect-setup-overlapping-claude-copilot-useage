@@ -996,6 +996,9 @@ existence; a lost operative sentence under a kept title is invisible to it (crit
 mutation). Full suite 215 passed (job 8755024). Owner rulings: wave-review runs domain-reviewer
 only for domain work (F8); plan-critique: minimum 3 seats plus lean-critic as a fourth (F9).
 Review: `.superpowers/findings/2026-11-18/skill-consolidation/`.
+Eval (K=5, 10 scenarios, claude 2.1.328): before 43/50 (evals/results-consol-before.md), after
+45/50 (evals/results-consol-after.md); no scenario fell (S2 2->4, within noise at n=5): swap kept.
+Three eval arms were lost to the account usage limit (HTTP 429) before clean reruns.
 
 **Deferred at skill-consolidation review (2026-11-18)**:
 - Minor clause erosion, no behaviour change (alignment F4, F10-F13: non-SGE-wait qstat warning,
