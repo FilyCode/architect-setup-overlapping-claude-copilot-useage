@@ -190,3 +190,47 @@ def test_rm_recursive_tilde_is_home_not_cwd():
     assert d("\\rm -rf ~/.local/share/claude/versions/2.1.325") == "allow"
     assert d("rm -r ~") == "allow"
     assert d("rm -rf ./~/x") == "deny"  # a real directory named ~ under projects/ is still projects/
+
+
+@pytest.fixture
+def ledger(tmp_path):
+    (tmp_path / "sess1.txt").write_text("8762857\n8762858\n")
+    return {"CLAUDE_SESSION_JOBS_DIR": str(tmp_path)}
+
+
+def q(cmd, env, session="sess1"):
+    return decide(cmd, P, env, session=session)
+
+
+def test_qdel_own_id_allowed(ledger):
+    assert q("qdel 8762857", ledger)[0] == "allow"
+    assert q("qdel -f 8762857 8762858", ledger)[0] == "allow"
+    assert q("qdel 8762857.3-5", ledger)[0] == "allow"  # task range of an owned array
+
+
+def test_qdel_foreign_and_mixed_denied(ledger):
+    verdict, why = q("qdel 111", ledger)
+    assert verdict == "deny" and "111" in why and "! qdel <id>" in why
+    verdict, why = q("qdel 8762857 222", ledger)
+    assert verdict == "deny" and "222" in why and "8762857" not in why.split("(")[1].split(";")[0]
+    assert q("echo hi && qdel 8762857 222", ledger)[0] == "deny"
+
+
+def test_qdel_user_wildcard_and_bare_denied(ledger):
+    assert q("qdel -u phitro", ledger)[0] == "deny"
+    assert q("qdel", ledger)[0] == "deny"
+    assert q("qdel '*'", ledger)[0] == "deny"
+    assert q("qdel 87628*", ledger)[0] == "deny"
+    assert q("qdel myjobname", ledger)[0] == "deny"
+
+
+def test_qdel_missing_ledger_or_session_denied(ledger):
+    assert q("qdel 8762857", ledger, session="other")[0] == "deny"
+    assert q("qdel 8762857", ledger, session=None)[0] == "deny"
+    assert q("qdel 8762857", ledger, session="../sess1")[0] == "deny"
+
+
+def test_qdel_ledger_error_allows(monkeypatch, ledger):
+    import job_ledger
+    monkeypatch.setattr(job_ledger, "owned_ids", lambda *a: 1 / 0)
+    assert q("qdel 111", ledger)[0] == "allow"  # internal error fails open
