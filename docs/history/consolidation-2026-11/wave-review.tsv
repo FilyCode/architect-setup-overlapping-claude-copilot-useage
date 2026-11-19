@@ -1,38 +1,38 @@
 id	source	text	disposition
-wave-review-001	subagent-dispatch.md:213	Wave-end review (additive — the generic reviewer stays available)	
-wave-review-002	subagent-dispatch.md:222	Self-verification is not independent review.** Don't skip dispatching a reviewer for a task	
-wave-review-003	subagent-dispatch.md:237	Minor-triage content test.** Before filing a review finding as Minor, answer in writing: *if	
-wave-review-004	subagent-dispatch.md:266	Unenumerated-objection slot.** Every review dispatch — wave-end or ad hoc — ends with: *"list	
-wave-review-005	subagent-dispatch.md:272	Domain-role reviewer at wave end, not only after a crisis.** Alongside critic-reviewer/	
-wave-review-006	subagent-dispatch.md:286	Anomaly-hunter at wave end — the only seat whose job is to REOPEN things.** Alongside	
-wave-review-007	subagent-dispatch.md:306	Inventory-auditor when a wave adds new capability.** Alongside critic-reviewer/	
-wave-review-008	subagent-dispatch.md:318	Pragmatism-officer runs last, after findings exist.** Once critic-reviewer/alignment-officer/	
-wave-review-009	subagent-dispatch.md:560	Run the fast gates per task, not at wave end	
-wave-review-010	subagent-dispatch.md:571	So a task is not done until the repo's fast gates pass on it.** Put them in the task's definition	
-wave-review-011	subagent-dispatch.md:576	A suite run needs a quiet tree, and the wave owns keeping it quiet	
-wave-review-012	subagent-dispatch.md:581	**The job raced its own repository.** `#$ -cwd` runs against the LIVE tree, and a docs commit	
-wave-review-013	subagent-dispatch.md:584	**A reviewer's temporary test file was collected.** A review agent copied a test into `tests/` to	
-wave-review-014	subagent-dispatch.md:620	One integration seat, mid-wave	
-wave-review-015	subagent-dispatch.md:648	A pragmatism seat is the lever for fewer rounds	
-wave-review-016	header@36f2a5e:1	# Wave-end review	
-wave-review-017	header@36f2a5e:2	Roster by wave type: critic-reviewer always; alignment-officer and docs-sync when a plan or phase doc exists; domain-reviewer for domain work; anomaly-hunter when the wave produced a new measurement (skip on pure bug-fix or doc-only waves); inventory-auditor when the wave added capability; lean-critic, always, on the wave's diff (it preloads ponytail); pragmatism-officer last, once findings exist; then retro-officer, always, as the final step: give it the ledger path, the findings (files or reports), the commit range per repo and the main transcript path (`~/.claude/projects/<project>/<session id>.jsonl`).	
-wave-review-018	header@36f2a5e:3	It appends one entry to `docs/retros/retro-log.md` in the config repo.	
-wave-review-019	header@36f2a5e:4	**Analysis-wave trial (owner 2026-11-08, next 3 analysis waves, then decide):** a wave whose output is a measurement or finding, not code, runs domain-reviewer, anomaly-hunter and pragmatism-officer; critic-reviewer only when the wave changed a gate or test; lean-critic, inventory-auditor and docs-sync only at a doc-heavy close; retro-officer as always, recording "trial n/3" and any later finding a dropped seat would have caught.	
-wave-review-020	header@36f2a5e:5	Code waves keep the roster above.	
-wave-review-021	header@36f2a5e:6	Dispatch in batches under the concurrency cap (2 on the smaller account, 3 on the larger), science seats first (domain-reviewer, anomaly-hunter), then critic-reviewer and alignment-officer, then docs-sync, inventory-auditor and lean-critic, so governance text is drafted after the findings it must not contradict.	
-wave-review-022	header@36f2a5e:7	The review is pinned to one commit (its HEAD is named in the close); commits after it, such as features the owner adds at review, get a short second critic pass before merge.	
-wave-review-023	header@36f2a5e:8	A spawn refused at the cap is not queued: re-dispatch it when a slot frees.	
-wave-review-024	header@36f2a5e:9	The close lists every seat as ran or not-ran, with the reason.	
-wave-review-025	header@36f2a5e:10	Findings files go in the findings dir (`.superpowers/findings/<date>/` in the config repo, persistent), never the scratchpad, which dies with the job.	
-wave-review-026	header@36f2a5e:11	A seat is not "ran" until its findings file has its closing section (`command grep -q '^## CLOSING' <file>`) and `wave_stats.py` lists it under no `turn_limit_by_seat`; a truncated seat or a `Not covered` entry is re-dispatched on those areas, not accepted; if a seat put findings only in its message, re-run it; only as a last resort write them into its file, marked controller-written, before closing.	
-wave-review-027	header@36f2a5e:12	When the wave's evidence is only self-consistency, say so in the close and keep a standing row for one held-out evaluation.	
-wave-review-028	header@36f2a5e:13	A branch that is not merged, or whose full suite could not run, carries the line "MERGE GATE: full suite on the merge commit, job spec written" in its ledger and plan status, with the job spec's path; the wave is not marked closed without that line.	
-wave-review-029	header@36f2a5e:14	Nothing that says built, verified, merged, closed, answered or resolved (status docs, findings, commit subjects, headline prose in FINDINGS, replies to the owner) is written or pushed before the roster has run and the close line exists; before that it says "candidate" with its measurement, or is marked DRAFT (a headline is not a status doc, so this failed 4 times); "push at wave end" means after that line, and a /compact keep-line says "push after review close" (R-20261030-1/-9:	
-wave-review-030	header@36f2a5e:15	SenC and MeMES pushed claims hours before the review, one headline later retracted).	
-wave-review-031	header@36f2a5e:16	A post-refresh test failure recorded in a handoff becomes a ledger item with an owner and the next refresh as its gate, never only a note.	
-wave-review-032	header@36f2a5e:17	A ledger deferral saying a gate, guard or fixture "passes on" a default, "has no true case" or is unvalidated is not deferrable: it becomes a register row or a re-open, and the step is not GREEN.	
-wave-review-033	header@36f2a5e:18	A CI check that is red with no job log (minutes exhausted) is recorded as not run; the PR carries the local equivalent's command and output.	
-wave-review-034	header@36f2a5e:19	**Aim check, after the retro.** Before any new wave or fix round, dispatch `aim-keeper` with the project path, the wave's Goal line and commit range, and the next step on the table (say whether the owner or Claude proposed it).	
-wave-review-035	header@36f2a5e:20	Put its owner question to the owner with AskUserQuestion (core rule 15) and record the answer in the ledger.	
-wave-review-036	header@36f2a5e:21	The `aim_nudge` hook reminds at retro dispatch and at the third fix round.	
-wave-review-037	header@36f2a5e:22	The rules below are the original workspace text, moved verbatim.	
+wave-review-001	subagent-dispatch.md:213	Wave-end review (additive — the generic reviewer stays available)	merged into Wave-end review
+wave-review-002	subagent-dispatch.md:222	Self-verification is not independent review.** Don't skip dispatching a reviewer for a task	merged into Self-verification is not independent review
+wave-review-003	subagent-dispatch.md:237	Minor-triage content test.** Before filing a review finding as Minor, answer in writing: *if	merged into Minor-triage content test
+wave-review-004	subagent-dispatch.md:266	Unenumerated-objection slot.** Every review dispatch — wave-end or ad hoc — ends with: *"list	merged into Unenumerated-objection slot
+wave-review-005	subagent-dispatch.md:272	Domain-role reviewer at wave end, not only after a crisis.** Alongside critic-reviewer/	merged into Domain-reviewer as routine, not only after a crisis
+wave-review-006	subagent-dispatch.md:286	Anomaly-hunter at wave end — the only seat whose job is to REOPEN things.** Alongside	merged into Anomaly-hunter: the only seat whose job is to reopen things
+wave-review-007	subagent-dispatch.md:306	Inventory-auditor when a wave adds new capability.** Alongside critic-reviewer/	merged into Inventory-auditor closes its own loop
+wave-review-008	subagent-dispatch.md:318	Pragmatism-officer runs last, after findings exist.** Once critic-reviewer/alignment-officer/	merged into Pragmatism-officer: the lever for fewer rounds
+wave-review-009	subagent-dispatch.md:560	Run the fast gates per task, not at wave end	kept Run the fast gates per task, not at wave end
+wave-review-010	subagent-dispatch.md:571	So a task is not done until the repo's fast gates pass on it.** Put them in the task's definition	kept Run the fast gates per task, not at wave end
+wave-review-011	subagent-dispatch.md:576	A suite run needs a quiet tree, and the wave owns keeping it quiet	merged into A suite run needs a quiet tree, and the wave owns keeping it quiet
+wave-review-012	subagent-dispatch.md:581	**The job raced its own repository.** `#$ -cwd` runs against the LIVE tree, and a docs commit	merged into A suite run needs a quiet tree, and the wave owns keeping it quiet
+wave-review-013	subagent-dispatch.md:584	**A reviewer's temporary test file was collected.** A review agent copied a test into `tests/` to	kept A suite run needs a quiet tree, and the wave owns keeping it quiet
+wave-review-014	subagent-dispatch.md:620	One integration seat, mid-wave	merged into One integration seat, mid-wave
+wave-review-015	subagent-dispatch.md:648	A pragmatism seat is the lever for fewer rounds	merged into Pragmatism-officer: the lever for fewer rounds
+wave-review-016	header@36f2a5e:1	# Wave-end review	merged into Wave-end review
+wave-review-017	header@36f2a5e:2	Roster by wave type: critic-reviewer always; alignment-officer and docs-sync when a plan or phase doc exists; domain-reviewer for domain work; anomaly-hunter when the wave produced a new measurement (skip on pure bug-fix or doc-only waves); inventory-auditor when the wave added capability; lean-critic, always, on the wave's diff (it preloads ponytail); pragmatism-officer last, once findings exist; then retro-officer, always, as the final step: give it the ledger path, the findings (files or reports), the commit range per repo and the main transcript path (`~/.claude/projects/<project>/<session id>.jsonl`).	kept Roster by wave type
+wave-review-018	header@36f2a5e:3	It appends one entry to `docs/retros/retro-log.md` in the config repo.	kept Roster by wave type
+wave-review-019	header@36f2a5e:4	**Analysis-wave trial (owner 2026-11-08, next 3 analysis waves, then decide):** a wave whose output is a measurement or finding, not code, runs domain-reviewer, anomaly-hunter and pragmatism-officer; critic-reviewer only when the wave changed a gate or test; lean-critic, inventory-auditor and docs-sync only at a doc-heavy close; retro-officer as always, recording "trial n/3" and any later finding a dropped seat would have caught.	kept Roster by wave type
+wave-review-020	header@36f2a5e:5	Code waves keep the roster above.	kept Roster by wave type
+wave-review-021	header@36f2a5e:6	Dispatch in batches under the concurrency cap (2 on the smaller account, 3 on the larger), science seats first (domain-reviewer, anomaly-hunter), then critic-reviewer and alignment-officer, then docs-sync, inventory-auditor and lean-critic, so governance text is drafted after the findings it must not contradict.	kept Procedure
+wave-review-022	header@36f2a5e:7	The review is pinned to one commit (its HEAD is named in the close); commits after it, such as features the owner adds at review, get a short second critic pass before merge.	kept Procedure
+wave-review-023	header@36f2a5e:8	A spawn refused at the cap is not queued: re-dispatch it when a slot frees.	kept Procedure
+wave-review-024	header@36f2a5e:9	The close lists every seat as ran or not-ran, with the reason.	kept Procedure
+wave-review-025	header@36f2a5e:10	Findings files go in the findings dir (`.superpowers/findings/<date>/` in the config repo, persistent), never the scratchpad, which dies with the job.	kept Procedure
+wave-review-026	header@36f2a5e:11	A seat is not "ran" until its findings file has its closing section (`command grep -q '^## CLOSING' <file>`) and `wave_stats.py` lists it under no `turn_limit_by_seat`; a truncated seat or a `Not covered` entry is re-dispatched on those areas, not accepted; if a seat put findings only in its message, re-run it; only as a last resort write them into its file, marked controller-written, before closing.	kept Procedure
+wave-review-027	header@36f2a5e:12	When the wave's evidence is only self-consistency, say so in the close and keep a standing row for one held-out evaluation.	kept Procedure
+wave-review-028	header@36f2a5e:13	A branch that is not merged, or whose full suite could not run, carries the line "MERGE GATE: full suite on the merge commit, job spec written" in its ledger and plan status, with the job spec's path; the wave is not marked closed without that line.	kept Closing and ledger rules
+wave-review-029	header@36f2a5e:14	Nothing that says built, verified, merged, closed, answered or resolved (status docs, findings, commit subjects, headline prose in FINDINGS, replies to the owner) is written or pushed before the roster has run and the close line exists; before that it says "candidate" with its measurement, or is marked DRAFT (a headline is not a status doc, so this failed 4 times); "push at wave end" means after that line, and a /compact keep-line says "push after review close" (R-20261030-1/-9:	kept Closing and ledger rules
+wave-review-030	header@36f2a5e:15	SenC and MeMES pushed claims hours before the review, one headline later retracted).	kept Closing and ledger rules
+wave-review-031	header@36f2a5e:16	A post-refresh test failure recorded in a handoff becomes a ledger item with an owner and the next refresh as its gate, never only a note.	kept Closing and ledger rules
+wave-review-032	header@36f2a5e:17	A ledger deferral saying a gate, guard or fixture "passes on" a default, "has no true case" or is unvalidated is not deferrable: it becomes a register row or a re-open, and the step is not GREEN.	kept Closing and ledger rules
+wave-review-033	header@36f2a5e:18	A CI check that is red with no job log (minutes exhausted) is recorded as not run; the PR carries the local equivalent's command and output.	kept Closing and ledger rules
+wave-review-034	header@36f2a5e:19	**Aim check, after the retro.** Before any new wave or fix round, dispatch `aim-keeper` with the project path, the wave's Goal line and commit range, and the next step on the table (say whether the owner or Claude proposed it).	kept Aim check, after the retro
+wave-review-035	header@36f2a5e:20	Put its owner question to the owner with AskUserQuestion (core rule 15) and record the answer in the ledger.	kept Aim check, after the retro
+wave-review-036	header@36f2a5e:21	The `aim_nudge` hook reminds at retro dispatch and at the third fix round.	kept Aim check, after the retro
+wave-review-037	header@36f2a5e:22	The rules below are the original workspace text, moved verbatim.	dropped: layout boilerplate introducing the verbatim moved text; no rule (the moved text is now curated into the sections above)
