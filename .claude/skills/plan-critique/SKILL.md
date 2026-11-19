@@ -1,214 +1,189 @@
 ---
 name: plan-critique
-description: Reviews an architectural plan before Task 1 — Calibration block and its hard gate, plan preflight that executes the plan's claims, critique-wave sizing, three-state check, and the escalation wave after repeated failed fixes. Use before starting an approved plan, when asked for /plan-critique, or after a third failed fix. Not for review of finished work (wave-review).
+description: Reviews an architectural plan before Task 1 — Calibration block and its hard gate, retirement check, plan preflight that executes the plan's claims, critique-wave sizing, three-state check, and the escalation wave after repeated failed fixes. Use before starting an approved plan, when asked for /plan-critique, on a known-heavy problem, or after a third failed fix. Not for review of finished work (wave-review).
 effort: high
 ---
 
 # Plan critique
 
-Order: Calibration block present and self-fact-checked → **retirement check** (below) → preflight
-(run the plan's code blocks
-and resolve every path, symbol and figure it cites; EnzymeFinder has
-`projects/EnzymeFinder/scripts/check_citations.py` for citations) → inventory-auditor → critique
-wave (minimum 3 seats, batched under the concurrency cap; lean-critic, always, is one of
-them: which tasks, files and abstractions the plan can drop or reuse) → pragmatism-officer → fix the plan
-before Task 1. Ask of every new check: what is its third state, and how does it say so?
+Use after `writing-plans` and its self-review, before `executing-plans` or
+`subagent-driven-development` starts Task 1 (architectural path only; bounded-path in-chat designs
+skip it), and for a known-heavy problem or a third failed fix (escalation section).
 
-Exit: every "run X before/at T" in the critique's required changes is copied into the plan as a numbered task row before the plan is marked ready; the controller greps the critique for it.
-Calibration: a plan whose acceptance is a count of self-agreement names one independent check (a different tool, or hand-picked cases) in the task row.
-A forced-failure (or other negative-path) acceptance gets a miniature reachability run (stub chain, seconds) as a task row before the real run.
-Pre-registration and acceptance: expected values are committed before the first run; each acceptance metric has a planted-defect case that makes it fail (else it is labelled "reproduction", never PASS); the pre-registration lists every confound the project's known-limitations and earlier pre-registrations name, each controlled, measured or out of scope; a result called 'confirmed' or a 'gain' names its control and the factors in which they differ (diff of the run configs); each seat's strongest objection that touches an acceptance check gets a ledger line, adopted (task row with a planted-wrong-answer case) or declined with reason, before approval.
-A sequential multi-step mutation (rename, swap, ledger) lists the state after each step's failure and the test covering it.
+## Procedure
 
-**Retirement check (R-20261103-1, owner-approved 2026-11-03). One grep, and it blocks Task 1.**
-For every set the plan proposes to analyse, `command grep` the project's `DECISIONS.md` and
-`FINDINGS.md` for that set's **defining marker and its cut value**, together with
-`withdrawn|retired|sister`. Paste the hits into the Calibration block. **Any hit blocks Task 1**
-until the plan says why the set is still worth measuring.
+1. **Calibration block** present and self-fact-checked (below).
+2. **Retirement check** (below): one grep, and a hit blocks Task 1.
+3. **Preflight:** run the plan's code blocks and resolve every path, symbol and figure it cites
+   (EnzymeFinder has `projects/EnzymeFinder/scripts/check_citations.py` for citations).
+4. **inventory-auditor** against the plan draft; its findings go into the plan before the critique.
+5. **Critique wave** (minimum 3 seats, batched under the concurrency cap; lean-critic, always, is
+   one of them: which tasks, files and abstractions the plan can drop or reuse).
+6. **pragmatism-officer** over the critique findings.
+7. **Fix the plan before Task 1.** Exit: every "run X before/at T" in the critique's required
+   changes is copied into the plan as a numbered task row before the plan is marked ready; the
+   controller greps the critique for it.
 
-Why it exists: on 2026-11-03 a MeMES_OvoA_search wave spent **6 of its 11 commits** measuring a
-93-protein stratum that `D-014` had retired on 2026-10-22 as a sister family — 51 of the 93 carried
-the marker (Trm112/PF03966) that put it outside the target family, and the decision sat at
-`DECISIONS.md:115` the whole time. A five-seat plan-critique ran before Task 1 and **none of its
-five findings files mentions D-014**: the seats reviewed how the plan measured, never whether the
-thing being measured had already been set aside. Preflight executes a plan's claims; it does not
-ask whether the question was already answered. This is that question, and it costs one command.
+Ask of every new check: what is its third state, and how does it say so?
 
-Note the companion failure, which this check does not cover: that plan pre-registered its headline
-sentence and also permitted superseding it "with reason", and the controller did exactly that and
-published the wrong conclusion through eleven green gates. **A pre-registration with a
-write-a-paragraph escape hatch is not a constraint.** If a plan pre-registers a sentence, state
-what evidence — not what reasoning — may overturn it.
+## Retirement check (R-20261103-1)
 
-**Correction (2026-10-28, owner-approved):** the Calibration section below says "~35% identity really is the
-field-wide ceiling for reliable annotation transfer (Zallot 2019)". That is wrong as stated. ~35% is EFI-EST's SSN
-edge-drawing threshold; Zallot 2019 states the transfer sentence without a citation of its own, and the same paper's
-worked example needs ~58% identity to separate isofunctional clusters. Do not quote it as a field-wide transfer
-limit; cite a project's own low-identity measurements instead. Source:
-`projects/EnzymeFinder/docs/superpowers/specs/2026-09-06-instrument-not-readout-design.md:271-290`. The MA-104
-half of that sentence (a fixable 37.5% edge loss of ours) stands, and is still the point of the Calibration block.
+**Owner-approved 2026-11-03. One grep, and it blocks Task 1.** For every set the plan proposes to
+analyse, `command grep` the project's `DECISIONS.md` and `FINDINGS.md` for that set's **defining
+marker and its cut value**, together with `withdrawn|retired|sister`. Paste the hits into the
+Calibration block. **Any hit blocks Task 1** until the plan says why the set is still worth measuring.
 
-The rules below are the original workspace text, moved verbatim.
+Why (MeMES_OvoA_search, 2026-11-03): a wave spent 6 of 11 commits on a 93-protein stratum that
+`D-014` had retired on 2026-10-22 as a sister family (`DECISIONS.md:115`). A five-seat plan-critique ran before Task 1 and none of its
+five findings files mentions D-014: the seats reviewed how the plan measured, never whether the
+thing measured had been set aside. Preflight executes a plan's claims; it does not ask whether the
+question was already answered. This check asks that question, and it costs one command.
 
-## Reference files (read the one you need)
+## Acceptance and pre-registration
 
-- See [reference/part-2.md](reference/part-2.md) — **Known-heavy problem, before any attempt** — matches a patt; **`systematic-debugging`'s own 3+-failed-fixes gate** (Phase; a **research** pass (`research-scout` or a web-search-capabl; a **review/audit** pass (`critic-reviewer`-shaped) that re-d; a **domain-role** reviewer if the problem is domain-shaped, ; Three-state is a plan-time checklist item, not a review-time; during that wave to fix that
+- **A pre-registration with a write-a-paragraph escape hatch is not a constraint.** If a plan
+  pre-registers a sentence, state what evidence, not what reasoning, may overturn it (the same wave
+  pre-registered its headline, allowed superseding it "with reason", and published the wrong
+  conclusion through eleven green gates).
+- Expected values are committed before the first run. Each acceptance metric has a planted-defect
+  case that makes it fail, else it is labelled "reproduction", never PASS.
+- The pre-registration lists every confound the project's known-limitations and earlier
+  pre-registrations name, each controlled, measured or out of scope.
+- A result called "confirmed" or a "gain" names its control and the factors in which they differ
+  (diff of the run configs).
+- Each seat's strongest objection that touches an acceptance check gets a ledger line before
+  approval: adopted (task row with a planted-wrong-answer case) or declined with reason.
+- A plan whose acceptance is a count of self-agreement names one independent check (a different
+  tool, or hand-picked cases) in the task row.
+- A forced-failure (or other negative-path) acceptance gets a miniature reachability run (stub
+  chain, seconds) as a task row before the real run.
+- A sequential multi-step mutation (rename, swap, ledger) lists the state after each step's failure
+  and the test covering it.
 
-Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
-`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
-and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+## The Calibration block — required before the critique wave
 
-<!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
-## Brainstorming: research-scout
+Every architectural plan carries a **Calibration** section, written before the critique wave
+dispatches, separating what this class of method cannot do from what our implementation does
+badly. Why (SSN wave, 2026-08): a validation harness ran for weeks and never cleared its own anchor
+floor. Our sub-35% edge recall was 62.5% because of
+a DIAMOND sensitivity defect (MA-104), and that fixable 37.5% edge loss hid behind a cited field
+limit. The citation was itself wrong: ~35% identity is EFI-EST's SSN edge-drawing threshold, not a
+field-wide ceiling for annotation transfer; Zallot 2019 states the transfer sentence without a
+citation of its own, and its worked example needs ~58% identity to separate isofunctional clusters
+(owner-approved correction 2026-10-28; source
+`projects/EnzymeFinder/docs/superpowers/specs/2026-09-06-instrument-not-readout-design.md:271-290`).
+Do not quote ~35% as a field-wide transfer limit; cite a project's own low-identity measurements.
 
-**Before dispatching any research task, `command grep` the gitignored workspace directories for
-prior work on the same question.** `.superpowers/` holds every previous wave's ledgers, briefs
-and reports, and this workspace's `grep` is a shell function that **skips gitignored paths** —
-so the controller's own prior-art search silently misses them. On 2026-09-01 a calibration
-literature review was dispatched that partly duplicated a **713-line, 48 KB review from three
-days earlier**; the agent found it immediately with `command grep`. `verification.md` already
-warns about this hazard for *reviewers' absence claims*; it binds the controller's own searches
-too.
+Required items:
 
-For a non-trivial design decision during `brainstorming`, dispatch `research-scout`
-first (see its own description for scope). Skip it for small/obvious decisions.
+- **Vision context:** which layer or axis of the project's north-star this serves, at what scale,
+  and what the plan is *not* responsible for, so no later reviewer indicts it for that.
+- **Realistic target:** what this achieves when it works correctly. Not the aspiration.
+- **General limits vs our limits:** every constraint named as field-wide *with a citation* or ours
+  to fix. **Anything unattributed defaults to OURS**; a field limit without a citation is an
+  untested excuse.
+- **Standard:** at least current tool and literature standard, better where we can; name the tool
+  and the number matched, not "state of the art".
+- **Does the named standard already do this?** Read the named tool's output and say what it already
+  delivers (2026-08-30: a plan would partition an SSN by a property EFI-EST's clusters already
+  separated, 90.7% of the target mode in one).
+- **Any threshold or cutoff: universal, dynamic, or declared dataset-specific.** A number from one
+  dataset is that dataset's property until shown otherwise. Prefer deriving it per run (peak
+  detection, distribution-based); a constant cites what makes it general.
+
+**Hard gate when ANY of these hold:** the critique rejects a plan whose Calibration block is
+missing, incomplete, or carries an unattributed limit, exactly as a Blocking finding. The plan:
+
+- introduces a new capability or layer (as opposed to extending one that already runs);
+- has 5 or more tasks;
+- introduces an external tool, database, or data source;
+- asserts any accuracy, coverage, recall, or performance expectation.
+
+Otherwise soft: one honest paragraph, no gate. The triggers are deliberately mechanical: "this scope
+is small and known" is judged most confidently when a wave is rushed.
+
+**Self fact-check before dispatching.** The caller verifies the Calibration block's own claims
+first: every number resolves to a measurement on disk, every field-limit claim to a citation that
+was actually read. Otherwise 3-10 seats inherit the error (2026-08-29: ten caller claims caught
+downstream by the contradiction slot).
+
+**Unsettled questions become a research task, during plan-writing.** What the Calibration block
+could not answer goes into the project's research-questions file (EnzymeFinder:
+`docs/RESEARCH_QUESTIONS.md`): numbered, answerable, why it matters, what the answer would change;
+the owner researches it before Task 1. A question whose
+answer changes no decision does not belong there.
+
+## Plan review before implementation: the critique wave
+
+Same mechanics as wave-end review in `wave-review` (parallel seats, unenumerated-objection slot,
+minor-triage content test); the plan-critique wave targets the plan text and its spec, not a diff,
+before work starts.
+
+- **Seats.** Minimum 3, lean-critic always among them; the defaults are `critic-reviewer`
+  (plan-shaped: feasibility, missing tasks, edge cases) and a `domain-reviewer` (name the role),
+  plus issue-specific angles from what the plan touches. Premise-checking a stage earlier, so a bad
+  premise is caught before every task inherits it.
+- **Scale the number of dispatches to the plan's size and complexity**, minimum 3, up to ~10 for a
+  large or high-stakes plan: one per major task-cluster or risk axis (correctness, domain,
+  security, performance, data-integrity, concurrency, external API, backward-compat, test gaps,
+  premise/instrument). The concurrency cap still
+  applies (2-3 concurrent, `feedback_subagent_dispatch.md`): run in batches.
+- **Tell each dispatch to verify cheap claims empirically:** grep that a referenced function or
+  signature exists; run a two-line script on real data when the plan asserts library or format
+  behaviour. This catches "a plan's own example code carries the bug" (`verification-patterns`).
+- **Blocking and Important findings are fixed in the plan doc before Task 1.** "The brief is wrong"
+  is a first-class finding here too.
+- **A reviewer may surface an unrelated pre-existing defect.** Report it and judge case by case:
+  file overlap with a task is no automatic block, and a fix in a file a task already touches can be
+  folded into that task (declare ownership, `dispatch-brief`). Otherwise document what, where and
+  when to fix it (follow-up task, `DECISIONS.md` entry or known-issues note in the plan), never a
+  chat-only mention.
+- **pragmatism-officer runs over the plan-critique findings** before deciding the plan rewrite, so
+  one bounded issue does not trigger five rounds of rewrites before Task 1.
+
+## Three-state is a plan-time checklist item, not a review-time catch
+
+Ask once per new check, at plan time: **what is this check's third state, and how does it say it
+out loud?** Nearly always "account for it explicitly and report the count", nearly never "exclude
+it". W14 ruled this five times (R15, R19-R21, R24), each on code written during that wave to fix that
+class: a check that could not express "deliberately absent", fixed by removing the thing from view
+(rows excluded not accounted for, a claim reworded so the checker stops matching).
+`verification-patterns` catches the collapse at review; this asks before the check is written.
 
 ## Plan writing: inventory-auditor
 
-Before a plan's task list is locked in — during `writing-plans`, alongside or just before
-the Calibration block below — dispatch `inventory-auditor` against the plan draft (or,
-before one exists, the problem statement). It searches the codebase and project history for
-anything the plan proposes to build that already exists, exists-but-unwired, or was already
-tried and rejected. Motivated by a planning round (2026-09-11) that proposed four things
-that already existed — one already owner-approved as a decision, one built and marked
-`DONE, reach: yes` but never wired into the pipeline — and the checks that caught them were
-nine wave-end review seats rather than one dedicated inventory pass.
-
-Feed its findings into the plan before the critique wave runs, the same way the Calibration
-block's findings shape the plan before critique — a plan-critique wave should not have to
-independently rediscover that a task rebuilds something that already works, or that an
-"artifact this project has never had" is already committed under a different name.
-
-`inventory-auditor` is also available at wave end (see the wave-end review section above)
-for the retrospective direction: catching duplication a wave introduced, or capability it
-rebuilt instead of calling.
-
-## Plan review before implementation
-
-After `writing-plans` produces a plan doc (architectural path only — bounded-path short
-in-chat designs skip this, the dispatch cost isn't justified) and its own self-review, but
-before `executing-plans`/`subagent-driven-development` starts Task 1: dispatch a
-**plan-critique wave** against the plan and its spec. Same mechanics as wave-end review
-above (parallel, rtk position stated verbatim, unenumerated-objection slot, minor-triage
-content test) — the difference is what it targets (the plan text, not a diff) and when it
-runs (before work starts, not after).
-
-- Reuse `critic-reviewer` (plan-shaped: feasibility, missing tasks, edge cases) and a
-  `domain-reviewer` (see the wave-end section's domain-role paragraph; name the role in
-  the dispatch) — this is the same premise-checking discipline, just moved a stage earlier so
-  a bad premise is caught before it is copied into every task that inherits it.
-- Scale the number of dispatches to the plan's size and complexity: **minimum 3**
-  (critic-reviewer + one domain-role reviewer + one issue-specific angle, chosen from what
-  the plan actually touches — security, data-integrity, concurrency, etc.), up to **~10**
-  for a large or high-stakes plan — one per major task-cluster or distinct risk axis
-  (correctness, domain plausibility, security, performance, data-integrity, concurrency,
-  external-API/rate-limit behavior, backward-compat, test-coverage gaps, premise/instrument
-  choice). Pick the count from the plan's actual content, not a fixed default. The
-  account's concurrency cap still applies (2-3 concurrent, `feedback_subagent_dispatch.md`)
-  — a 10-agent wave runs in batches, not literally at once.
-- Tell each dispatch to verify cheap claims empirically, not just read the plan — grep that
-  a referenced function/signature actually exists, run a two-line script against real data
-  if the plan asserts a library or format behavior. This is what catches "a plan's own
-  example code carries the bug" (`verification.md`) before it propagates into every task
-  that copies it.
-- Blocking/Important findings against the plan get fixed in the plan doc directly, before
-  Task 1 starts — "the brief is wrong" is a first-class finding here too (see above),
-  applied one stage earlier than a wave-end review would catch it.
-- A reviewer may surface an unrelated pre-existing codebase defect while checking the plan.
-  Report it, then judge case by case whether fixing it fits this plan — file overlap with a
-  plan task is not an automatic block; a fix that belongs in the same file a task already
-  touches can be folded into that task directly (still declare ownership per "Concurrent
-  dispatches need declared file ownership" above so the fix and the task edit don't race).
-  If it doesn't fit this plan's scope or timing, don't fix it blind — document it: what it
-  is, where, and when it should be fixed (a follow-up task, a `DECISIONS.md` entry, or a
-  known-issues note in the plan doc itself), so it doesn't evaporate as a chat-only mention.
-- Once the plan-critique wave's findings are in, dispatch `pragmatism-officer` over them
-  before deciding what actually goes into the plan rewrite — same proportionality triage as
-  wave-end review, applied to plan-stage findings instead of a diff. A critique wave scaled
-  up to ~10 dispatches produces a lot of adversarial output; this is what keeps one bounded
-  issue from triggering five rounds of plan rewrites before Task 1 even starts.
-
-### The Calibration block — required before the critique wave
-
-Every architectural plan doc carries a **Calibration** section, written *before* the critique
-wave dispatches. It exists because of the SSN wave (2026-08): a validation harness was built
-around an expectation of what an SSN could do, ran for weeks, and could never clear its own
-anchor floor — because nobody had separated *what this class of method cannot do* from *what our
-implementation does badly*. A literature check afterwards showed both were present at once:
-~35% identity really is the field-wide ceiling for reliable annotation transfer (Zallot 2019),
-**and** our own sub-35% edge recall was 62.5% because of a DIAMOND sensitivity defect (MA-104).
-Conflating them let a fixable 37.5% edge loss hide behind a real citation.
-
-Four items, all four required:
-
-- **Vision context** — which layer or axis of the project's north-star this serves, and at what
-  scale. One layer is not the system. State what this plan is *not* responsible for, so a later
-  reviewer does not indict it for failing to do something it was never meant to do.
-- **Realistic target** — what this achieves when it works correctly. Not the aspiration.
-- **General limits vs our limits** — every constraint named as either field-wide *with a
-  citation* or ours to fix. **Anything unattributed defaults to OURS.** A field limit without a
-  citation is not a field limit; it is an untested excuse, and it is the specific move that cost
-  the SSN wave.
-- **Standard** — the bar is *at least* current tool and literature standard, better where we can.
-  Name the tool and the number being matched, not "state of the art".
-- **Does the named standard already do this?** Check the tool you just named as the bar, and say
-  what it already delivers of what you are proposing to build. Added 2026-08-30 because its
-  absence was not hypothetical: a plan proposed partitioning an SSN by a property its own named
-  comparison tool already separated — EFI-EST's existing cluster assignment put 90.7% of the
-  target mode in one cluster — and neither the author nor the self-fact-check noticed, because
-  both were checking whether the *limits* were attributed correctly rather than whether the
-  *capability* was already delivered. Naming a standard and not reading its output is how a wave
-  gets spent rebuilding it.
-- **Any threshold or cutoff: universal, dynamic, or declared dataset-specific.** A number derived
-  from one dataset is a property of that dataset until shown otherwise. State which of the three
-  it is. Prefer deriving it per run (a peak-detection or distribution-based rule that re-computes
-  on the data in hand) over a constant, and where a constant is genuinely right, cite what makes
-  it general. A hardcoded cut fitted to one corpus silently becomes a wrong cut on the next one,
-  and nothing in the pipeline will say so — the same shape as a score whose meaning depends on
-  the run that produced it.
-
-**Hard gate when ANY of these hold** — the critique wave rejects a plan whose Calibration block
-is missing, incomplete, or carries an unattributed limit, exactly as it would any Blocking
-finding:
-
-- introduces a new capability or layer (as opposed to extending one that already runs)
-- has 5 or more tasks
-- introduces an external tool, database, or data source
-- asserts any accuracy, coverage, recall, or performance expectation
-
-Otherwise soft: one honest paragraph, no gate. The trigger list is deliberately mechanical —
-"this scope is small and known" is a judgement that gets made most confidently when a wave is
-rushed, which is exactly when calibration errors happen.
-
-**Self fact-check before dispatching.** The caller verifies the Calibration block's own claims
-first: every number resolves to a measurement on disk, every field-limit claim to a citation
-that was actually read. This is the cheapest stage at which to catch a caller's error — the
-alternative is 3-10 agents inheriting it, which is the failure mode the whole
-"a dispatch's factual claims become code" section above exists to prevent. On 2026-08-29 ten
-caller claims were caught downstream by the contradiction slot; each would have been cheaper to
-catch here.
-
-**Unsettled questions become a research task, during plan-writing.** Whatever the Calibration
-block could not answer gets written into the project's research-questions file (for EnzymeFinder,
-`docs/RESEARCH_QUESTIONS.md`) as a numbered topic with specific answerable questions, stating
-*why it matters* and *what would change depending on the answer*. The human partner researches
-externally and feeds results back, so expectations are corrected **before Task 1** rather than by
-a wave discovering mid-flight that its premise was wrong. A question whose answer changes no
-decision does not belong there.
+Before a plan's task list is locked (during `writing-plans`, alongside the Calibration block),
+dispatch `inventory-auditor` against the plan draft, or the problem statement before one exists.
+It finds what the plan would build that already exists, exists unwired, or was tried and rejected.
+Feed its findings into the plan before the critique wave, so the critique need not rediscover them
+(2026-09-11: a plan proposed four existing things, one built but never wired). It also runs at wave end (`wave-review`) for
+duplication a wave introduced.
 
 ## Escalate to a research/review wave instead of continuing to guess
 
-Two triggers replace further ad hoc trial-and-error with a dispatched wave. Either is
-sufficient on its own — recognizing a problem as heavy up front is a valid trigger by
-itself, not just a fallback after burning several failed attempts:
+Either trigger alone is sufficient:
 
+- **Known-heavy problem, before any attempt:** it matches a pattern that has previously eaten a lot
+  of time or tokens (a recurring class, flagged as hard in history or memory, or architecturally
+  uncertain). Escalate immediately; do not spend 3 attempts to earn it.
+- **`systematic-debugging`'s own 3+-failed-fixes gate** (Phase 4.5, "discuss with your human
+  partner"): here that discussion is this wave, not a chat exchange.
+
+Then stop fixing in-thread and dispatch, scaled like the plan-review wave (minimum ~2-3, cap applies):
+
+- a **research** pass (`research-scout` or a web-search-capable dispatch) for prior art and known
+  issues with this failure mode, library or pattern;
+- a **review/audit** pass (`critic-reviewer`-shaped) that re-derives what is actually happening from
+  current real source, with fresh eyes rather than the accumulated hypothesis trail;
+- a **domain-role** reviewer if the problem is domain-shaped, as elsewhere.
+
+Output: a short written diagnosis and fix approach (root cause, evidence, plan), not a fifth guess.
+Run it through `pragmatism-officer` so the fix is sized to the stake, then resume in
+`systematic-debugging` Phase 4, or `writing-plans` (with its own plan-critique) if the fix is big.
+
+## Brainstorming: research-scout
+
+For a non-trivial design decision during `brainstorming`, dispatch `research-scout` first; skip it
+for small or obvious decisions. **Before dispatching any research task, `command grep` the gitignored
+workspace directories (`.superpowers/`) for prior work:** the shell `grep` skips gitignored paths
+(2026-09-01: a dispatched review duplicated a 713-line review from three days earlier).
