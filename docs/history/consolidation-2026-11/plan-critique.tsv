@@ -1,0 +1,61 @@
+id	source	text	disposition
+plan-critique-001	subagent-dispatch.md:339	Brainstorming: research-scout	kept Brainstorming: research-scout
+plan-critique-002	subagent-dispatch.md:361	Plan writing: inventory-auditor	kept Plan writing: inventory-auditor
+plan-critique-003	subagent-dispatch.md:381	Plan review before implementation	merged into Plan review before implementation: the critique wave
+plan-critique-004	subagent-dispatch.md:386	plan-critique wave** against the plan and its spec. Same mechanics as wave-end review	kept Plan review before implementation: the critique wave
+plan-critique-005	subagent-dispatch.md:391	Reuse `critic-reviewer` (plan-shaped: feasibility, missing tasks, edge cases) and a	kept Plan review before implementation: the critique wave
+plan-critique-006	subagent-dispatch.md:395	Scale the number of dispatches to the plan's size and complexity: **minimum 3**	kept Plan review before implementation: the critique wave
+plan-critique-007	subagent-dispatch.md:404	Tell each dispatch to verify cheap claims empirically, not just read the plan — grep that	kept Plan review before implementation: the critique wave
+plan-critique-008	subagent-dispatch.md:409	Blocking/Important findings against the plan get fixed in the plan doc directly, before	kept Plan review before implementation: the critique wave
+plan-critique-009	subagent-dispatch.md:412	A reviewer may surface an unrelated pre-existing codebase defect while checking the plan.	kept Plan review before implementation: the critique wave
+plan-critique-010	subagent-dispatch.md:420	Once the plan-critique wave's findings are in, dispatch `pragmatism-officer` over them	kept Plan review before implementation: the critique wave
+plan-critique-011	subagent-dispatch.md:426	The Calibration block — required before the critique wave	kept The Calibration block — required before the critique wave
+plan-critique-012	subagent-dispatch.md:439	**Vision context** — which layer or axis of the project's north-star this serves, and at what	kept The Calibration block — required before the critique wave
+plan-critique-013	subagent-dispatch.md:442	**Realistic target** — what this achieves when it works correctly. Not the aspiration.	kept The Calibration block — required before the critique wave
+plan-critique-014	subagent-dispatch.md:443	**General limits vs our limits** — every constraint named as either field-wide *with a	kept The Calibration block — required before the critique wave
+plan-critique-015	subagent-dispatch.md:447	**Standard** — the bar is *at least* current tool and literature standard, better where we can.	kept The Calibration block — required before the critique wave
+plan-critique-016	subagent-dispatch.md:449	**Does the named standard already do this?** Check the tool you just named as the bar, and say	kept The Calibration block — required before the critique wave
+plan-critique-017	subagent-dispatch.md:457	**Any threshold or cutoff: universal, dynamic, or declared dataset-specific.** A number derived	kept The Calibration block — required before the critique wave
+plan-critique-018	subagent-dispatch.md:465	Hard gate when ANY of these hold** — the critique wave rejects a plan whose Calibration block	kept The Calibration block — required before the critique wave
+plan-critique-019	subagent-dispatch.md:469	introduces a new capability or layer (as opposed to extending one that already runs)	kept The Calibration block — required before the critique wave
+plan-critique-020	subagent-dispatch.md:470	has 5 or more tasks	kept The Calibration block — required before the critique wave
+plan-critique-021	subagent-dispatch.md:471	introduces an external tool, database, or data source	kept The Calibration block — required before the critique wave
+plan-critique-022	subagent-dispatch.md:472	asserts any accuracy, coverage, recall, or performance expectation	kept The Calibration block — required before the critique wave
+plan-critique-023	subagent-dispatch.md:478	Self fact-check before dispatching.** The caller verifies the Calibration block's own claims	kept The Calibration block — required before the critique wave
+plan-critique-024	subagent-dispatch.md:486	Unsettled questions become a research task, during plan-writing.** Whatever the Calibration	kept The Calibration block — required before the critique wave
+plan-critique-025	subagent-dispatch.md:494	Escalate to a research/review wave instead of continuing to guess	merged into Escalate to a research/review wave instead of continuing to guess
+plan-critique-026	subagent-dispatch.md:500	**Known-heavy problem, before any attempt** — matches a pattern that's previously eaten a	kept Escalate to a research/review wave instead of continuing to guess
+plan-critique-027	subagent-dispatch.md:504	**`systematic-debugging`'s own 3+-failed-fixes gate** (Phase 4.5: "discuss with your human	kept Escalate to a research/review wave instead of continuing to guess
+plan-critique-028	subagent-dispatch.md:511	a **research** pass (`research-scout` or a web-search-capable dispatch) for prior art /	kept Escalate to a research/review wave instead of continuing to guess
+plan-critique-029	subagent-dispatch.md:513	a **review/audit** pass (`critic-reviewer`-shaped) that re-derives what's actually	kept Escalate to a research/review wave instead of continuing to guess
+plan-critique-030	subagent-dispatch.md:516	a **domain-role** reviewer if the problem is domain-shaped, same pattern as elsewhere in	kept Escalate to a research/review wave instead of continuing to guess
+plan-critique-031	subagent-dispatch.md:633	Three-state is a plan-time checklist item, not a review-time catch	merged into Three-state is a plan-time checklist item, not a review-time catch
+plan-critique-032	subagent-dispatch.md:636	during that wave to fix that class**: a check that could not express "deliberately absent", where	kept Three-state is a plan-time checklist item, not a review-time catch
+plan-critique-033	header@36f2a5e:1	# Plan critique	kept Plan critique
+plan-critique-034	header@36f2a5e:2	Order:	merged into Procedure
+plan-critique-035	header@36f2a5e:3	Calibration block present and self-fact-checked → **retirement check** (below) → preflight (run the plan's code blocks and resolve every path, symbol and figure it cites;	kept Procedure
+plan-critique-036	header@36f2a5e:4	EnzymeFinder has `projects/EnzymeFinder/scripts/check_citations.py` for citations) → inventory-auditor → critique wave (minimum 3 seats, batched under the concurrency cap; lean-critic, always, is one of them: which tasks, files and abstractions the plan can drop or reuse) → pragmatism-officer → fix the plan before Task 1.	kept Procedure
+plan-critique-037	header@36f2a5e:5	Ask of every new check: what is its third state, and how does it say so?	kept Procedure
+plan-critique-038	header@36f2a5e:6	Exit: every "run X before/at T" in the critique's required changes is copied into the plan as a numbered task row before the plan is marked ready; the controller greps the critique for it.	kept Procedure
+plan-critique-039	header@36f2a5e:7	Calibration: a plan whose acceptance is a count of self-agreement names one independent check (a different tool, or hand-picked cases) in the task row.	merged into Acceptance and pre-registration
+plan-critique-040	header@36f2a5e:8	A forced-failure (or other negative-path) acceptance gets a miniature reachability run (stub chain, seconds) as a task row before the real run.	kept Acceptance and pre-registration
+plan-critique-041	header@36f2a5e:9	Pre-registration and acceptance: expected values are committed before the first run; each acceptance metric has a planted-defect case that makes it fail (else it is labelled "reproduction", never PASS); the pre-registration lists every confound the project's known-limitations and earlier pre-registrations name, each controlled, measured or out of scope; a result called 'confirmed' or a 'gain' names its control and the factors in which they differ (diff of the run configs); each seat's strongest objection that touches an acceptance check gets a ledger line, adopted (task row with a planted-wrong-answer case) or declined with reason, before approval.	kept Acceptance and pre-registration
+plan-critique-042	header@36f2a5e:10	A sequential multi-step mutation (rename, swap, ledger) lists the state after each step's failure and the test covering it.	kept Acceptance and pre-registration
+plan-critique-043	header@36f2a5e:11	**Retirement check (R-20261103-1, owner-approved 2026-11-03).	merged into Retirement check (R-20261103-1)
+plan-critique-044	header@36f2a5e:12	One grep, and it blocks Task 1.** For every set the plan proposes to analyse, `command grep` the project's `DECISIONS.md` and `FINDINGS.md` for that set's **defining marker and its cut value**, together with `withdrawn|retired|sister`.	kept Retirement check (R-20261103-1)
+plan-critique-045	header@36f2a5e:13	Paste the hits into the Calibration block.	kept Retirement check (R-20261103-1)
+plan-critique-046	header@36f2a5e:14	**Any hit blocks Task 1** until the plan says why the set is still worth measuring.	kept Retirement check (R-20261103-1)
+plan-critique-047	header@36f2a5e:15	Why it exists: on 2026-11-03 a MeMES_OvoA_search wave spent **6 of its 11 commits** measuring a 93-protein stratum that `D-014` had retired on 2026-10-22 as a sister family — 51 of the 93 carried the marker (Trm112/PF03966) that put it outside the target family, and the decision sat at `DECISIONS.md:115` the whole time.	merged into Retirement check (R-20261103-1)
+plan-critique-048	header@36f2a5e:16	A five-seat plan-critique ran before Task 1 and **none of its five findings files mentions D-014**: the seats reviewed how the plan measured, never whether the thing being measured had already been set aside.	kept Retirement check (R-20261103-1)
+plan-critique-049	header@36f2a5e:17	Preflight executes a plan's claims; it does not ask whether the question was already answered.	kept Retirement check (R-20261103-1)
+plan-critique-050	header@36f2a5e:18	This is that question, and it costs one command.	kept Retirement check (R-20261103-1)
+plan-critique-051	header@36f2a5e:19	Note the companion failure, which this check does not cover: that plan pre-registered its headline sentence and also permitted superseding it "with reason", and the controller did exactly that and published the wrong conclusion through eleven green gates.	merged into Acceptance and pre-registration
+plan-critique-052	header@36f2a5e:20	**A pre-registration with a write-a-paragraph escape hatch is not a constraint.** If a plan pre-registers a sentence, state what evidence — not what reasoning — may overturn it.	kept Acceptance and pre-registration
+plan-critique-053	header@36f2a5e:21	**Correction (2026-10-28, owner-approved):** the Calibration section below says "~35% identity really is the field-wide ceiling for reliable annotation transfer (Zallot 2019)".	merged into The Calibration block — required before the critique wave
+plan-critique-054	header@36f2a5e:22	That is wrong as stated. ~35% is EFI-EST's SSN edge-drawing threshold;	kept The Calibration block — required before the critique wave
+plan-critique-055	header@36f2a5e:23	Zallot 2019 states the transfer sentence without a citation of its own, and the same paper's worked example needs ~58% identity to separate isofunctional clusters.	kept The Calibration block — required before the critique wave
+plan-critique-056	header@36f2a5e:24	Do not quote it as a field-wide transfer limit; cite a project's own low-identity measurements instead.	kept The Calibration block — required before the critique wave
+plan-critique-057	header@36f2a5e:25	Source:	kept The Calibration block — required before the critique wave
+plan-critique-058	header@36f2a5e:26	`projects/EnzymeFinder/docs/superpowers/specs/2026-09-06-instrument-not-readout-design.md:271-290`.	kept The Calibration block — required before the critique wave
+plan-critique-059	header@36f2a5e:27	The MA-104 half of that sentence (a fixable 37.5% edge loss of ours) stands, and is still the point of the Calibration block.	merged into The Calibration block — required before the critique wave
+plan-critique-060	header@36f2a5e:28	The rules below are the original workspace text, moved verbatim.	dropped: layout boilerplate of the retired header + verbatim-move format (no rule); the move markers are gone

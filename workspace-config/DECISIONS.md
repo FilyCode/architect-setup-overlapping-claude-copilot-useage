@@ -729,7 +729,8 @@ load which process" triggers); the rest of the three rule files moved **verbatim
 skills (`dispatch-brief`, `wave-review`, `plan-critique`, `verification-patterns`,
 `scientific-evidence`, `running-sge-jobs`, `completion-check`), assembled by
 `tools/build_skills.py` from `docs/history/rule-map.tsv` (185 items, checked by
-`tools/rule_map.py`); originals kept in `docs/history/rules-2026-10-14/`. Seats start with
+`tools/rule_map.py`); originals kept in `docs/history/rules-2026-10-14/`. *(Superseded 2026-11-18
+by DECISION-032: the six process skills are curated single texts; `build_skills.py` is dormant.)* Seats start with
 `omitClaudeMd: true` (first call ≈ 12k tokens vs 49.6–55.6k before, n = 20 interactive seats;
 the Phase 0 probe's 4,772 was one two-tool agent) and preload only their skills; their shared
 Environment block (`workspace-config/seat-environment.md`) carries the invariants seats need,
@@ -899,6 +900,7 @@ from the call table.
 4. `memory_budget.py` also runs on Bash commands that mention MEMORY.md.
 5. Skill provenance comments move from the loaded skill text to `provenance.tsv` sidecars
    (`tools/build_skills.py`); dispatch-brief splits at 11,400 bytes so its body fits the ceiling.
+   *(Superseded 2026-11-18 by DECISION-032: sidecars and reference parts removed.)*
 6. `tools/move_transcripts.sh`: moves `~/.claude/projects` (3.2 GB of the 10 GB home) to
    `software/claude-projects` behind a symlink; the owner runs it with every session closed.
 7. Opus reviewer seats stay on opus (26.0M, 7.5%, would reprice lower on sonnet; quality trade
@@ -955,11 +957,11 @@ post-close finding a dropped seat would have caught, then adopt or revert.
 
 ---
 
-### [2026-11-18] [DECISION-032]: Skill consolidation and documentation convention (planned)
+### [2026-11-18] [DECISION-032]: Skill consolidation (done) and documentation convention (planned)
 
 **What** (owner, AskUserQuestion 2026-11-18): (1) the six process skills are rewritten as curated
 single texts in a staging worktree, `tools/build_skills.py` stays on disk but dormant, a coverage
-script (`tools/skill_coverage.py`) checks every old rule's disposition, a full 7-seat review runs,
+script (`tools/skill_coverage.py`) records a disposition for every old rule, a full 7-seat review runs,
 and the owner signs off before the swap commit; supersedes the verbatim-move part of DECISION-026
 and the provenance sidecars of DECISION-030 item 5. (2) Documentation convention: four doc classes
 (generated with `--check`, append-only, register, prose); reference checking by extending EF
@@ -981,6 +983,37 @@ moving check_citations.py into the config repo.
 **Best-practice reference**: Claude Code skills and memory docs (concise SKILL.md, progressive
 disclosure, compaction keeps the first 5,000 tokens); cog-style generated blocks with `--check`;
 arXiv 2212.01479 (outdated code references in docs), 2602.11988 (context-file cost).
+
+**Status (consolidation, 2026-11-18)**: merged from branch `skill-consolidation` (owner sign-off,
+AskUserQuestion 2026-11-18). Body bytes (ceiling 12,288 for these six, 80% of the 15,360 general
+ceiling): dispatch-brief 12,119 (+ reference/incidents.md 5,689), plan-critique 12,163,
+verification-patterns 12,040 (+ reference/incidents.md 6,064), wave-review 10,752,
+scientific-evidence 8,798, running-sge-jobs 6,503. Disposition maps:
+`docs/history/consolidation-2026-11/<skill>.tsv`; dropped 8 rows (6 layout lines, 1 list label,
+1 rtk-era correction). `skill_coverage.py --check` is a swap-time gate, not CI. **Limit**: it
+checks the first line of each old rule only; kept rows by title tokens, merged rows by section
+existence; a lost operative sentence under a kept title is invisible to it (critic F1, shown by
+mutation). Full suite 215 passed (job 8755024). Owner rulings: wave-review runs domain-reviewer
+only for domain work (F8); plan-critique: minimum 3 seats plus lean-critic as a fourth (F9).
+Review: `.superpowers/findings/2026-11-18/skill-consolidation/`.
+
+**Deferred at skill-consolidation review (2026-11-18)**:
+- Minor clause erosion, no behaviour change (alignment F4, F10-F13: non-SGE-wait qstat warning,
+  trimmed incident figures in plan-critique, "more for a hard problem", "command grep for absence
+  checks" now "find candidates", "before assuming the fix is wrong"). Trigger: a retro row showing
+  a session acting on the missing clause, or the next edit of that section.
+- running-sge-jobs "login-node limits" pointer dangles (the 30 s reaper rule lives in
+  scc-monitor.md and core.md). Trigger: next edit of running-sge-jobs or a login-node kill report.
+- Lean duplicate cuts (16 cuts, ~5,900 B in dispatch-brief, wave-review, plan-critique; list in
+  the review's lean.md). Trigger: next retro row targeting plan-critique or dispatch-brief, or any
+  body within 300 B of 12,288.
+- Meaning read of kept rows (sample, or sections cited by name). Trigger: any eval-after scenario
+  down >= 2 of 5, a merged row flagged meaning-changing, or a retro row showing a curated rule
+  ignored.
+- Cited-heading existence test and a `docs/history/rule-index.md` pointer to the disposition maps.
+  Home: the reference check of the doc-convention half; trigger: next `tools/rule_map.py` edit.
+- Pre-existing drift: README lists a nonexistent `rtk` skill; runbook.md:3 claims a link from
+  running-sge-jobs. Trigger: next edit of README or runbook.
 
 **Revisit trigger**: consolidation: eval after arm (a scenario down ≥ 3 of 5 reverts the swap);
 doc convention: the S4 table at the next SenC review.

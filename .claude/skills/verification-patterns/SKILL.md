@@ -5,190 +5,164 @@ description: Catalogue of verification failures seen in this workspace — stale
 
 # Verification patterns
 
-Each entry is a failure that actually happened here, with the check that catches it. Before
-claiming a fix works, find the entries that match what you changed and apply their checks. A
-gate or guard is verified by removing it and watching its test fail. A liveness or "unit ran"
-predicate also needs a positive control: the value it accepts is one only the unit's own output can
-produce (never a column default, an empty result or a zero), else it is typed ROWS-ONLY and prints no
-"ok" (EnzymeFinder WF1a: 801 false / 0 true accepted as live).
+Use when writing or reviewing a test, gate or check, or before claiming a fix works. Each entry is
+a failure that actually happened here, with the check that catches it: find the entries that match
+what you changed and apply their checks. Worked incidents: [reference/incidents.md](reference/incidents.md).
 
-**A zero from a join is accepted only with the pre-join count printed beside it** (R-20261030-4;
-SenC and MeMES): a probe that prints a count and writes a verdict asserts the two agree, and a guard
-that passes a 99.97%-broken join is not a guard. A scan's zero (secrets, leaks) names the input
-scanned and whether the producer ever held the secret; if it never did, the zero is "not exposed",
-not "clean".
+## Procedure
 
-**A published zero names the denominator that could have carried the signal, with the
-rate-implied expectation and P(0) beside it; and "X is kept out of Y" is accepted only after one
-run with X flipped shows Y unchanged** (R-119, R-122; MeMES_OvoA_search 2026-11-09). Both halves
-are one wave's errors. A "0 of 1,940,695 proteins" was really 0 of 87,564 molybdopterin carriers,
-where the other arm's rate predicts 2.28 and P(0) = 0.102 -- an ordinary draw written up as a
-corroborating negative. And "the undecided families are a column, not a unit" was published in a
-findings file and a commit message without once running the count with those families removed:
-they were supplying units through a `clan.get(n) or n` fallback, and 11.5% of the fusion census
-depended on them. Both were flattering, both were found by accident weeks or hours later, and
-both cost one run to check at the time of writing.
+1. Prove each gate, guard or test you rely on can fail.
+2. Check the artifact, not the exit code: it exists, is non-empty, is newer than the fix.
+3. On a contract change, run the blast-radius grep before calling the fix verified.
+4. Every count, zero or percentage carries its denominator.
+5. Report what was run and what it returned.
 
-After editing a helper or script that a test parses as text (ROOT lines, paths, log lines), run that test file before commit (R-20261105-B3; fe1b242).
+## Gates and tests that cannot fail
 
-**CI and PR checks** (2026-11-01; owner approved):
+- **A gate or guard is verified by removing it and watching its test fail.** A docstring stating
+  what a check does is not evidence: a check that matches the wrong field cannot fail.
+- **A liveness or "unit ran" predicate also needs a positive control:** the value it accepts is one
+  only the unit's own output can produce (never a column default, an empty result or a zero), else it
+  is typed ROWS-ONLY and prints no "ok" (EnzymeFinder WF1a: 801 false / 0 true accepted as live).
+- **A check that compares a derived quantity between two populations read through the same code
+  path** passes vacuously once a rename zeroes both sides: assert non-zero on one side first (2026-09-21).
+- **A gate that passes because it never exercises the path in use:** when you add a code path, add a
+  positive control on that path; the regression check on production artifacts does not cover it.
+- **A positive control built from a convenient fixture proves nothing.** Pick the fixture that
+  should trip the check (`grep -l` collision; W14's 11-column probe vs a real 6-column artifact).
+- **A boundary test that does not probe the disputed interval cannot fail.** Parametrise both sides
+  of every constant it names; when a constant changes, re-derive which tests tell old from new.
+- **A test made vacuous by a change that never edited it:** a change to how inputs combine
+  invalidates tests probing one input alone (`test_fusion_is_monotone_in_each_signal_value`).
+- **Four shape gates cannot detect decay.** A gate that validates only shape (row count, enum,
+  reason) stays green when content goes false; one gate must dereference a claim.
+- **A gate that knows the answer and does not print it is half a gate.** Order offenders by
+  actionability, break truncation down by state (`... and 77 more (77 SEEDED)`) (`report_ownership`).
+- **Match the command as invoked, not as idealised:** `^git log\b` missed `git -C <dir> log`.
+
+## Zeros, counts and denominators
+
+- **A zero from a join is accepted only with the pre-join count printed beside it** (R-20261030-4;
+  SenC and MeMES). A probe that prints a count and writes a verdict asserts the two agree; a guard
+  that passes a 99.97%-broken join is not a guard.
+- **A scan's zero (secrets, leaks) names the input scanned and whether the producer ever held the
+  secret;** if it never did, the zero is "not exposed", not "clean".
+- **A published zero names the denominator that could have carried the signal, with the
+  rate-implied expectation and P(0) beside it; "X is kept out of Y" is accepted only after one run
+  with X flipped shows Y unchanged** (R-119, R-122; MeMES_OvoA_search 2026-11-09). Both errors
+  were flattering, found by accident, and cost one run to check at the time of writing.
+- **A stage that filters its own input must report what it dropped:** an omission is invisible to
+  counters that count what arrived. Report the denominator you started with (2026-09-05: 69 → 10).
+- **Use `command grep` to find candidates, and a parser to count them:** shell `grep` skips
+  gitignored paths, and a grep count is not an enumeration (2026-09-05: grep 102/17, AST 78/10).
+- **This binds the controller's own counts, not only reviewers' absence claims:** a count for a
+  brief comes from parsing its structure (table rows, AST nodes), and says which (W2 2026-09-21).
+- **Check the aggregate's distribution before optimising for it:** a headline percentage with no
+  percentiles says nothing about the common case ("98.8% saved"; median zero).
+- **Two populations compared** only after listing every axis they could differ on (taxonomy,
+  detection, window, copy number, annotation, sampling) and which were matched; fixing only the one
+  axis you were told about relocates the confound.
+- **A named metric that appears in a governance doc as evidence needs three checks:** its formula
+  quoted from code and what it physically measures; its value on the control arm (both saturate =
+  no comparison); the modelled system's physical state (holo/apo, ligands) vs the claim. All three:
+  none substitutes for another.
+- **Positive-control corollary:** if a positive control scores below a candidate on the same
+  metric, the metric is suspect, not the control.
+
+## CI and PR checks
+
+Owner approved, 2026-11-01:
 1. A red check blocks the merge.
 2. Lint and type errors are fixed first, before any further push.
 3. Every failure gets a cause: a real bug is fixed in the PR; a test that passes only on SCC gets a
    skip marker for GitHub plus a register row; a flaky test gets at most one re-run, then quarantine
    plus a register row.
-4. Every EF PR needs `scc-tests` = success on its head SHA: the full suite does not run on GitHub for
-   PRs, so run `tools/scc_ci_status.py submit` and cite its job id in the PR body. A new push needs a new
-   submit. A GitHub check that did not run (out of minutes, blocked) is unknown, not passed. For
-   `scc-tests`, `pending`, `error` and absent also mean unknown, not passed; only `success` counts.
+4. Every EF PR needs `scc-tests` = success on its head SHA (the full suite does not run on GitHub
+   for PRs): run `tools/scc_ci_status.py submit` and cite its job id in the PR body. A new push needs
+   a new submit. A GitHub check that did not run (out of minutes, blocked) is unknown, not passed;
+   for `scc-tests`, `pending`, `error` and absent are unknown too, only `success` counts.
    `scc_ci_status.py sweep` turns a stuck `pending` into `error`.
 5. Red main is reverted or fixed the same day, with no other pushes on top.
 6. A third failed fix of the same check triggers the escalation section of plan-critique.
 
-The rules below are the original workspace text, moved verbatim.
+## Fixes: effective is not safe
 
-## Reference files (read the one you need)
+- **RED-confirmed proves a fix is effective; it says nothing about whether it is safe.** If a fix
+  changes timing, a transaction boundary, an exception type, a return contract or an arity,
+  `command grep` `tests/` and `src/` for consumers before `FIXED-VERIFIED` and name the grep and hit
+  count; without one it is `FIXED-UNVERIFIED` (W2b-1 2026-09-23). Each old assertion found is
+  corrected or deleted, never left contradicting; assert the contract, not `sleep.call_count`.
+- **A fix copied from a sibling module needs the sibling's caller opened:** the pattern transfers,
+  the call site may not. Return → raise is a contract change; check how far the failure escapes.
+- **When a fix turns an existing test red, ask whether the test asserts the bug** (2026-08-27);
+  ones in files no task owns surface only in a full-suite run after the fix.
+- **A three-state value must be typed, not conventional:** an enum or type, never `bool | None`
+  (`bool()`, `or False`, `.get(k, False)` erase the third state); at introduction `command grep` every
+  consumer and list them in the commit (five collapses at a boundary, 2026-09-01).
+- **Making a no-op live is a behaviour change, and must not also move its default:** default the
+  newly read parameter to the value the code already used and say default output is unchanged; a
+  different value is a cited decision (0.45 vs 0.40 re-tiered inputs).
+- **A boundary held constant while the thing producing it changed meaning:** stability of the scale
+  is not stability of the meaning. Bump a version carried by every artifact and refuse to resume
+  across a mismatch (2026-09-01).
+- **Firing is not moving:** whether a signal is live or dark is measured, not argued from wiring;
+  probe the value's own upper bound (2026-09-01).
+- **A RED proof run from inside `tests/` can silently execute the current tree, not the blob:**
+  print `m.__file__` and the new symbol from inside pytest, or run outside the repo (2026-09-23).
+- **An isolation run credited with more than it executed:** isolating attributes, never clears
+  (that takes a full suite). A worktree is not the main checkout: baseline it, read the skip count.
+- **Mocked transport cannot see that no socket opens:** an external-service adapter needs one live
+  call showing the real response; the test asserts the construction (2026-08-29).
+- **A field that survives the forward path but is dropped by checkpoint serialization** breaks only
+  resumed runs: test the round-trip's downstream consequence.
+- After editing a helper or script that a test parses as text (ROOT lines, paths, log lines), run
+  that test file before commit (R-20261105-B3; fe1b242).
 
-- See [reference/part-2.md](reference/part-2.md) — A test made vacuous by a change that never edited it. `test_; **A capability claimed as "implemented" with no call path.**; **Match the command as invoked, not as idealised.** `^git lo; **A positive control built from a convenient fixture proves ; **Check the aggregate's distribution before optimising for i; The earlier line in this file that "every other command runs; Before blaming the wrapper, 
-- See [reference/part-3.md](reference/part-3.md) — **Making a no-op live is a behaviour change, and must not al; **A boundary test that does not probe the disputed interval ; Reporting.** State what was run and what it returned. If tes; A plan's own tests and fixtures are suspects, not specificat; one never exercised the state it existed to protect — the `U; one asserted a branch that never executes (`if "ef_ec_confid; one used a fixture that coul
+## Plans, briefs and fixtures
 
-Old file names in the moved text are retired: `subagent-dispatch.md` is now the skills
-`dispatch-brief`, `wave-review` and `plan-critique`; `verification.md` is `verification-patterns`
-and `scientific-evidence`; `scc.md` is `running-sge-jobs`.
+- **A plan's own tests and fixtures are suspects, not specifications.** Tests arriving in a brief are
+  drafts: every dispatch that hands an implementer test code says "prove each can fail before
+  trusting it, and report any that cannot" (W14 2026-09-06: 4 of ~15 defective).
+- A plan's own example code carries the bug: re-derive maths, library behaviour and signatures from
+  current source, especially against "this is exact" or "this mirrors the existing pattern".
+- **A parser validated against a fixture its own author wrote** shares its misunderstanding: the
+  first fixture is a real artifact, downsampled, never a hand-typed row; else say "unvalidated".
+- **Execute the plan's own claims before Task 1:** check each symbol, path and figure and run each
+  code block to copy, or label the claim `UNVERIFIED` (W14: six wrong claims).
+- **Watch for the asymmetry:** these rules are applied reliably outward (dispatches, reviewers)
+  and unreliably to the author's own assertions.
 
-<!-- BEGIN MOVED TEXT (verbatim; do not edit — source: docs/history/rules-2026-10-14) -->
-**The shapes this takes**
+## Stale artifacts and outputs
 
-- An output file predates the fix, or was never regenerated. Check mtimes against the fix,
-  or rerun and diff — do not reason about which outputs "should be unaffected".
-- A clean exit code with no artifact. A tool that catches its own errors exits 0 having
-  produced nothing. Check the expected file exists.
-- A comment or docstring describes a change the code below it never received. After
-  changing behaviour, grep the actual invocation line, not the prose around it.
-- A plan's own example code carries the bug. Re-derive maths, library behaviour and
-  adapter signatures from real current source — especially against any claim of the form
-  "this is exact", "this mirrors the existing pattern", or "this always holds".
-- A field survives the forward path but is dropped by checkpoint serialization, so only
-  resumed runs are wrong, silently. Test the round-trip's downstream consequence.
-- A cached column or stored flag is trusted as current. Re-check against the live source
-  before reporting something as missing or needing manual work.
-- A gate that passes because it never exercises the path in use. A regression check ran the
-  statistic on the *production* artifacts and passed, while the new code path it was meant to
-  protect produced a null result for every input. When you add a code path, assume the existing
-  gate does not cover it, and add a positive control on the new path specifically.
-- A parser validated against a fixture its own author wrote. The fixture encodes the same
-  misunderstanding as the parser, so it passes a dry run and fails on first real input.
-  Validate against a real artifact, or state plainly that it is unvalidated.
-- Two artifacts compared positionally when their row order is not guaranteed. Align on a
-  unique key first. An unstable sort on a tied key is itself a reproducibility bug even when
-  every value is correct — row order that changes between runs is not reproducible output.
-- A check that cannot fail, because it matches the wrong field. A docstring stating what a
-  check does is not evidence the check works. Test it against a real case that should trip it.
-- A test that fails *on the fix* — the inverse of the bullet above, and it does fail, on the
-  correct repair, because it asserts the defect as the expected behaviour.
-  `test_plm_backend_revision_override` asserted that a 15-character non-SHA revision is
-  *accepted*, pinning the defeat of a version pin. When a fix turns an existing test red, ask
-  whether the test was asserting the bug before assuming the fix is wrong. Three instances
-  surfaced on 2026-08-27, one in a file no task owned — per-task review cannot find those, only
-  a full-suite run after the fix.
-- A named metric appears in a governance doc as evidence without three basic checks having been
-  done: quote its defining formula from the code and state in one sentence what it physically
-  measures; compute it on the control/negative arm too (if both arms saturate, the metric cannot
-  support the comparison at that setting — that, not "the window/threshold was too wide," is the
-  real lesson); and state the physical state of the modelled system (e.g. holo/apo, ligands present,
-  which cofactors) and whether it matches the claim being made. All three are needed — each
-  catches a different failure, and none substitutes for another.
-- **Positive-control corollary:** if a positive control scores below a candidate on the same
-  metric, the metric is suspect, not the control. A yardstick that fails on a case it should have
-  passed easily is broken before it says anything about the harder case.
-- A number that supports or closes a claim in a governance doc (decisions/findings/summary/status
-  files) traces only to chat-report or ledger prose, never to a committed script + output
-  artifact. Plausibility is not provenance — a wrong number survives review precisely because it
-  looks right; require it to resolve to something on disk before it is cited as evidence.
-- Report-generating code contains a hardcoded numeric literal in its prose output, rather than
-  formatting a value computed from data. This is the mechanism, not just a symptom — a literal
-  sitting in a template is exactly how a fabricated statistic gets produced and then gets cited as
-  if it were computed.
-- Two populations/rates/groups get compared without first listing every axis they could differ on
-  (taxonomy, detection method, window or distance scale, copy number, annotation quality,
-  sampling) and stating which were matched and which were not. Fixing only the one axis you were
-  told about just relocates the confound to the next one.
-- An isolation run credited with more than it executed. Isolating a diff to find *whose* failures
-  these are is valid **attribution** and invalid **clearance** — the two need different runs, and
-  the second always costs a full suite. On 2026-08-29 an isolation over the five *failing* files
-  correctly attributed 9 failures to one agent, and was then quoted as "the other agent's work is
-  clean"; that run never executed the other agent's own new test file, which held 2 of its 3 real
-  failures. Second half of the same rule: **a `git worktree` is not the main checkout.** Tests
-  keying on CWD, an env lock, or on-disk state fail there for reasons unrelated to the diff — the
-  same day, a worktree isolation reported 5 failures of which 2 reproduced on a clean worktree
-  with *no diff applied*. Run a clean-worktree baseline before believing any worktree failure, and
-  read the **skip count**, not only the FAILED lines: 23-vs-12 skipped was the only visible tell
-  that the environment differed.
-- A green mocked test over a code path that cannot reach its service at all. Mocked transport
-  asserts what the code does with a response it was handed; it cannot observe that no socket
-  ever opens. On 2026-08-29 an ID-mapping path had a full mocked suite passing while every real
-  call died in the TLS handshake — and behind that, once the handshake was fixed, every call
-  returned HTTP 400 for a second, independent reason. Two stacked defects, neither reachable by
-  any mock, in a path whose paging bug had been "fixed" with mocked tests 43 minutes earlier. For
-  an adapter that talks to an external service, evidence is **one live call showing the real
-  response**; the regression test then asserts the *construction* (that the session is built
-  with the right policy), because that is the part that silently regressed and the part a test
-  can actually hold.
-- A claim written into multiple locations gets its scope qualifier updated in only one of them.
-  This is asymmetric in practice: a strengthening edit naturally recruits the author to hunt down
-  every place the old, weaker claim lived, but an edit that *undercuts* an existing claim gets
-  written once and the other locations are never revisited because nothing there looks wrong, only
-  unsupported. When a finding undercuts an existing claim, grep for that claim's other homes
-  before considering the fix committed.
+- An output predates the fix or was never regenerated: check mtimes against the fix or rerun and
+  diff; do not reason about which outputs "should be unaffected".
+- A clean exit code with no artifact: a tool that catches its own errors exits 0; check the file.
+- A cached column or stored flag trusted as current: re-check against the live source.
+- Artifacts compared positionally when row order is not guaranteed: align on a unique key. An
+  unstable sort on a tied key is itself a reproducibility bug.
+- Before overwriting a canonical-named output with a `--redo`-style regeneration, archive the old one.
+- Before blaming the wrapper, check your own flags: compare with identical arguments (0-vs-1 discrepancy: `-i`).
 
-- A three-state value collapsed back to two at a boundary its author did not own. This is
-  the single most repeated defect in this workspace: **five instances in one wave**
-  (2026-09-01), two of them in code written during that wave *to fix* the class, by agents
-  whose briefs quoted the convention. Unknown became `False` and manufactured a novelty flag;
-  became "index unavailable" with no flag; became **`unanimous`, the strongest state**; became
-  a prediction failure; became `[]`, identical to a genuine empty result. **A three-state
-  value must be typed, not conventional** — introduce it as a distinct type or explicit enum,
-  never a `bool | None` guarded by a comment, because `bool()`, `or False`, `.get(k, False)`
-  and any truthiness test erases the third state silently. **At introduction, enumerate every
-  consumer** with `command grep` across `src/`, tests, renderers and exporters, and list them
-  in the commit message: four of those five collapses were in a consumer the introducing
-  change never looked at.
-- **A check that compares a derived quantity between two populations read through the SAME code
-  path, with no liveness assertion.** Rename the field and BOTH sides go to zero; the comparison
-  then passes vacuously, forever, and nothing reddens. Three instances in one wave (2026-09-21),
-  including an implementer discovering its **own** synthetic tests were vacuous because a fixture
-  package name never resolved — caught only because one of them *passed on the unfixed code*. The
-  repair is one line: assert the quantity is non-zero on at least one side before comparing. Prove
-  it by removing the guard and watching the check pass anyway.
-- **Where a record carries both a generated field and a hand-written one, the hand-written one holds
-  ALL the decay risk and needs MORE verification, not less.** Stated best by the agent who missed it:
-  *"a `reach:` value is regenerated on every `--write` and cannot drift; a `no-impl` reason is prose
-  nothing re-checks."* It had been sizing verification effort by how **visible** a claim was rather
-  than how **load-bearing**. The same error produced its earlier miss — it verified a baseline's
-  *counts* were untouched (they were) and never read its *prose*, which the preceding commit had
-  just falsified.
-- **When you correct a false statement, check what was DECIDED on it.** A false premise that
-  supported a decision means the decision is now unjustified-as-written, and that belongs in the
-  record rather than buried under the correction. A CI comment asserted the job ran Python 3.13 and
-  used that to justify making a type-check ratchet report-only instead of gating; the job runs
-  3.11.13, the same version CI pins. Correcting the sentence exposed that the gating decision rests
-  on nothing — which is now a visible open question instead of a settled one.
-- **Four shape gates cannot detect decay.** A gate that validates a record's *shape* — row count,
-  enum membership, non-empty reason — can never go red when its *content* stops being true: a
-  parked item whose blocker was resolved, a superseded item whose named replacement was itself
-  deleted. At least one gate must **dereference a claim**. This objection reshaped a wave's largest
-  deliverable from four shape checks into five of which three dereference, and all three were then
-  watched failing against a mutated copy of the real artifact.
-- A claim that a signal is live, or dark, argued from wiring rather than measured. **Firing is
-  not moving.** On 2026-09-01 a controller reported "no shipped score moves" from a code
-  comment, a reviewer corrected it to "the signal is live, so scores move", and the
-  measurement showed it was live *and algebraically incapable of changing any score* — it sat
-  in a `max`-folded group where its own upper bound could never beat a co-member. Three
-  parties reasoned about connectivity; none probed behaviour. The cheap probe is the value's
-  **own upper bound**: if the output does not move there, the signal cannot move it anywhere.
-- A boundary held constant while the thing producing it changed meaning, with no version stamp
-  on the output. **Stability of the scale is not stability of the meaning** — it is what makes
-  old and new artifacts incomparable *while looking comparable*. If a score's inputs, grouping
-  or semantics change, bump a version that travels with every artifact carrying it and refuse
-  to resume across a mismatch. "No boundary was touched" was offered as this workspace's
-  safety property on 2026-09-01 and was precisely the hazard.
+## Claims and documents that decay
+
+- A number that supports or closes a claim in a governance doc (decisions, findings, summary,
+  status) resolves to a committed script and output artifact, never prose.
+- Report-generating code that contains a hardcoded numeric literal in its prose is how a fabricated
+  statistic gets cited as computed: format the value computed from data.
+- **A capability claimed as "implemented"** names its entry point, config flag and artifact; "it has
+  tests" is not reachability (2026-09-01: 53 of 196 modules unreachable). Prefer generating the column.
+- A claim written into multiple locations: when a finding undercuts it, grep its other homes and fix
+  each scope qualifier.
+- Where a record carries a generated and a hand-written field, the hand-written one holds the decay
+  risk and needs more verification: size it by how load-bearing a claim is, not how visible.
+- When you correct a false statement, check what was decided on it and record the decision as unjustified.
+- A number in a comment is a claim: a change to the code it quantifies re-measures or deletes it
+  (30.7 µs → 6.64 ms after a correct fix, 2026-09-05).
+- A comment or docstring describes a change the code never received: grep the invocation line.
+- A document that claims to be generated, and is not, decays fastest: it is generated only if a
+  script writes it and something runs that script; otherwise label it a hand-maintained snapshot.
+
+## Reporting
+
+State what was run and what it returned. If tests fail, say so with the output. If a step was
+skipped, say that. When something is verified, say it plainly.

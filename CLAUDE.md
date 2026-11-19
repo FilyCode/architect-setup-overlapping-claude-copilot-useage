@@ -19,11 +19,11 @@ Edit either path — they are the same file. Do not replace a symlink with a cop
   - `rules/*.md` → `.claude/rules/` (path-scoped); `core.md` → `~/.claude/rules/`. Unscoped rules load in every session and every subagent
     that does not set `omitClaudeMd`; path-scoped rules (`paths:` frontmatter) load when a
     matching file is touched. Only `core.md` may be unscoped (`tools/context_budget.py`).
-  - `agents/*.md` → `~/.claude/agents/` (14 seats; list them with
+  - `agents/*.md` → `~/.claude/agents/` (16 seats; list them with
     `ls workspace-config/agents/` rather than trusting a list here — it went stale twice).
   - `rtk/` — retired 2026-10-14 (DECISION-026); kept for history, see `rtk/RETIRED.md`.
 - `.claude/skills/` — `council`, `storm`, `ccusage`, `caveman`, `workspace-audit`, and the
-  process skills built from `skill-headers/` by `tools/build_skills.py`.
+  process skills (curated SKILL.md; `skill-headers/` history, DECISION-032).
   `ccusage`, `council`, `storm` and `workspace-audit` are explicit-invocation only and linked
   at the workspace root; the process skills are model-invocable and linked at user scope
   (`~/.claude/skills/`) together with `core.md`, the seats and the hooks — recreate those links

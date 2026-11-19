@@ -111,3 +111,6 @@ bytes; on yes, merge; E1 after arm `ARM=consol-after` on the merged tree; DECISI
   down ≥ 2 of 5 or a merged row flagged as meaning-changing.
 - Seats on other models (sonnet, haiku) not tested [A3]; trigger = a retro row showing such a seat
   ignoring a curated rule.
+- `kept` rows are checked by title tokens of the old rule's first line, not meaning; a lost
+  operative sentence under a kept title is invisible to `--check` (critic F1); bounded read
+  deferred (pragmatism.md).

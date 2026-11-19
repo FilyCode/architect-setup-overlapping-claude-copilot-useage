@@ -38,6 +38,23 @@ def always_loaded(ws: Path, home: Path, mem: Path) -> dict[str, int]:
     return out
 
 
+def skill_violations(paths, ceiling: int = CEIL["body"]) -> list[str]:
+    """Body-size (> ceiling) and description-size (> CEIL['description']) violations per SKILL.md in paths."""
+    v = []
+    for sk in paths:
+        text = Path(sk).read_text()
+        fm = _frontmatter(text)
+        body = len(text.encode()) - len(fm.encode())
+        if body > ceiling:
+            v.append(f"{Path(sk).parent.name} body {body} > {ceiling}")
+        if re.search(r"^disable-model-invocation:\s*true", fm, re.M):
+            continue
+        m = re.search(r"^description:\s*(.*?)(?=^\w[\w-]*:|\Z)", fm, re.S | re.M)
+        if m and len(m.group(1).strip().encode()) > CEIL["description"]:
+            v.append(f"{Path(sk).parent.name} description {len(m.group(1).strip().encode())} > {CEIL['description']}")
+    return v
+
+
 def check(ws: Path, home: Path, mem: Path) -> list[str]:
     v = []
     sizes = always_loaded(ws, home, mem)
@@ -59,17 +76,7 @@ def check(ws: Path, home: Path, mem: Path) -> list[str]:
     # user-scope links count when they resolve into the workspace (ours); third-party skills do not
     skills.update({p.resolve(): p for p in (home / "skills").glob("*/SKILL.md")
                    if p.resolve().is_relative_to(ws.resolve())})
-    for sk in sorted(skills.values()):
-        text = sk.read_text()
-        fm = _frontmatter(text)
-        body = len(text.encode()) - len(fm.encode())
-        if body > CEIL["body"]:
-            v.append(f"{sk.parent.name} body {body} > {CEIL['body']}")
-        if re.search(r"^disable-model-invocation:\s*true", fm, re.M):
-            continue
-        m = re.search(r"^description:\s*(.*?)(?=^\w[\w-]*:|\Z)", fm, re.S | re.M)
-        if m and len(m.group(1).strip().encode()) > CEIL["description"]:
-            v.append(f"{sk.parent.name} description {len(m.group(1).strip().encode())} > {CEIL['description']}")
+    v.extend(skill_violations(sorted(skills.values())))
     return v
 
 

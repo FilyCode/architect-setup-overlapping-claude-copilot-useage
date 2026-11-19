@@ -81,3 +81,54 @@ def test_user_scope_rules_are_counted(tmp_path):
     v = " ".join(cb.check(ws, home, mem))
     assert "core.md 10000 >" in v and "unscoped rule extra.md" in v
     assert str(home / "rules/core.md") in cb.always_loaded(ws, home, mem)
+
+
+SIX = ("verification-patterns", "dispatch-brief", "plan-critique", "wave-review", "scientific-evidence",
+       "running-sge-jobs")
+SIX_CEIL = 12288
+REPO = Path(__file__).resolve().parents[1]
+
+
+def _six_violations(skills_root: Path):
+    found = {p.parent.name: p for p in skills_root.glob("*/SKILL.md")}
+    missing = [n for n in SIX if n not in found]
+    assert not missing, f"process skills not found under {skills_root}: {missing}"
+    paths = [found[n] for n in SIX]
+    for p in paths:
+        text = p.read_text()
+        m = cb.FM.match(text)
+        assert (text[m.end():] if m else text).strip(), f"{p} has no body after its front matter"
+        body = len(text.encode()) - len(cb._frontmatter(text).encode())  # skill_violations' measure
+        print(f"{p.parent.name:24s} body {body:6d} / {SIX_CEIL}")
+    return cb.skill_violations(paths, ceiling=SIX_CEIL)
+
+
+def test_six_process_skills_within_curated_ceiling():
+    """Red until the six curated rewrites (plan T2-T7) land: each SKILL.md body must be <= 12,288 B."""
+    assert _six_violations(REPO / ".claude/skills") == []
+
+
+def test_six_process_skills_check_fails_when_a_skill_dir_is_missing(tmp_path):
+    root = tmp_path / "skills"
+    shutil.copytree(REPO / ".claude/skills", root, ignore=shutil.ignore_patterns("reference"))
+    shutil.rmtree(root / "wave-review")
+    import pytest
+    with pytest.raises(AssertionError, match="wave-review"):
+        _six_violations(root)
+
+
+def test_six_process_skills_check_fails_when_a_body_is_empty(tmp_path):
+    root = tmp_path / "skills"
+    shutil.copytree(REPO / ".claude/skills", root, ignore=shutil.ignore_patterns("reference"))
+    (root / "wave-review/SKILL.md").write_text("---\nname: wave-review\ndescription: x\n---\n")
+    import pytest
+    with pytest.raises(AssertionError, match="wave-review/SKILL.md has no body"):
+        _six_violations(root)
+
+
+def test_skill_violations_ceiling_is_the_only_changed_field(tmp_path):
+    p = tmp_path / "s" / "SKILL.md"
+    p.parent.mkdir()
+    p.write_text("---\nname: s\ndescription: x\n---\n" + "b" * 100)
+    assert cb.skill_violations([p], ceiling=200) == []
+    assert cb.skill_violations([p], ceiling=50) == ["s body 109 > 50"]  # body counts the two --- delimiter lines (existing behaviour)
