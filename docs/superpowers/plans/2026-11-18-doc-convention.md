@@ -9,7 +9,7 @@ efficient, while keeping or increasing quality" (2026-11-08).
 **Owner rulings (AskUserQuestion 2026-11-18):** "Doc program" → convention + SenC pilot; "SenC
 pilot" → staged, S2 + S4 first; "Rollout bar" → no preset threshold: "lets just wait for next
 review and then check the result and then lets decide what to do".
-**Order:** D3 runs after the skill-consolidation plan's T9 (both edit wave-review) [F3, L8].
+**Order:** D3 runs after the skill-consolidation plan's T10 swap (both edit wave-review) [F3, L8].
 **Critique:** `.superpowers/findings/2026-11-18/plan-critique/` (rows applied; ids in brackets).
 
 ## Calibration (evidence: `.superpowers/findings/2026-11-18/workspace-audit/`)
@@ -53,7 +53,7 @@ EF `scripts/check_citations.py` gains `--repo-root` and a prefix list, through a
 governance test updated. Run from SenC at wave end, report-only. Before any gate use: measure n
 references and n unresolved on SenC HEAD; gate only with a ratchet baseline or 0 unresolved; flag
 attribution stays report-only. The allowlist never exempts CLAUDE.md or `.claude/rules`.
-**D3 wave end [C13, L8].** One line in the curated wave-review (after the consolidation T9):
+**D3 wave end [C13, L8].** One line in the curated wave-review (after the consolidation T10 swap):
 docs-sync runs `check_citations.py --repo-root` and the project's gate script; "gate not run" is a
 distinct output state.
 

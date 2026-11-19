@@ -65,15 +65,15 @@ What loads, and the ceilings `tools/context_budget.py` enforces (DECISION-026):
 |---|---|---|---|
 | `~/.claude/CLAUDE.md` | every session; not in seats | 1,024 | English only; home quota |
 | root `CLAUDE.md` | sessions under the workspace; not in seats | 3,072 | environment, governance gate, where things live |
-| `~/.claude/rules/core.md` | every session; not in seats | 9,216 | 11 invariants + "when to load which process" |
+| `~/.claude/rules/core.md` | every session; not in seats | 9,216 | 15 numbered rules (rule 8: "when to load which process") |
 | path-scoped rules | when a matching file is read, also in seats | none | `python`, `shell`, `r`, `enzymefinder`, `bileaciddb`, `codebase-navigation` (`projects/**`) |
 | memory index `MEMORY.md` | main session (seats: not measured) | 6,656, ≤ 60 entries | one-line pointers |
 | skill descriptions | every session | 512 each | what + when + boundary |
 | skill bodies | on invoke, or preloaded by a seat | 15,360 each | process rules |
 | project `CLAUDE.md` | when working in that project, also in seats | none | project facts only |
-| `docs/history/` | never | none | retired rule text, `rule-index.md`, `rule-map.tsv` |
+| `docs/history/` | never | none | retired rule text, `rule-index.md`, `rule-map.tsv`, `consolidation-2026-11/` |
 
-**Subagents** (15 seats in `workspace-config/agents/`; list them with `ls`). Every seat sets
+**Subagents** (16 seats in `workspace-config/agents/`; list them with `ls`). Every seat sets
 `omitClaudeMd: true`, an explicit model, effort and `maxTurns`, and preloads its skills; seats
 have no `Skill` tool. Their shared Environment block (`workspace-config/seat-environment.md`)
 carries the invariants they need, since `core.md` never reaches them.

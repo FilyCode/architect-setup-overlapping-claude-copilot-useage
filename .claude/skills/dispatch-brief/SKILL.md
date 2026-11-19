@@ -64,9 +64,10 @@ message has not followed its brief. Also:
    off-limits in a shared worktree: render to scratch and diff there.
 2. At most 4 ranked areas with a drop order; prefer executing a small script over reading more source.
 3. HEAD moves during review: never tell a seat the tree is clean. It runs `git log -1` and
-   `git status --porcelain` at start and end, and re-runs `git log -1 --format=%h` before each
-   finding's evidence line (cited file changed: mark it `RE-DERIVE`). The controller edits no file
-   a running seat reads; name which files are concurrently modified, and by whom.
+   `git status --porcelain` at start and end, says whether they moved, and re-runs
+   `git log -1 --format=%h` before each finding's evidence line (cited file changed: mark it
+   `RE-DERIVE`). The controller edits no file a running seat reads; name which files are
+   concurrently modified, and by whom.
 4. `command grep` for absence claims; exit codes checked outside a pipe (`| tail` masks them).
 5. A guard, gate or check under review is verified by removing it and watching its test fail.
 6. The minor-triage question, answered in writing; what is already known and accepted.
@@ -76,7 +77,7 @@ message has not followed its brief. Also:
    (live call, fixture vs claim), not only the diff.
 
 Every review brief ends with: *"Append each finding to your findings file as you find it; the file
-is your report. Before your last turn, append `## CLOSING`: objection, errors in this brief, what
+is your report. By turn limit minus 8, append `## CLOSING`: objection, errors in this brief, what
 you did not cover. Your final message is at most 10 lines: verdict, counts, the file path."*
 
 ## Which seat
@@ -86,8 +87,9 @@ cross-module or contract change or a retry, with that reason in the brief's firs
 (DECISION-028). Ad hoc questions go to `investigator`; "where is X" to Explore with `model: haiku`.
 Never general-purpose. A named seat's front matter is the source of truth for its model and
 effort; a dispatch that overrides it rounds up when unsure (a small task on a security-sensitive
-path still warrants a higher tier). At most 2 subagents at once (3 on the larger account); queue
-the rest.
+path still warrants a higher tier). A dispatch with no named agent inherits the parent session's
+model: set model and effort explicitly (tiers: reference/incidents.md "Model and effort
+tiering"). At most 2 subagents at once (3 on the larger account); queue the rest.
 
 ## A dispatch's factual claims become code
 
@@ -107,6 +109,8 @@ attribution, not counts. When a subagent challenges a claim, check the artifact 
   (1,577 vs 1,459 on two identity columns; `0.0717` was 16/223).
 - **Prefer a short brief of verified claims to a long brief of relayed ones** (2026-09-01: eleven
   of twelve implementers found a factual error in the controller's brief; the shortest brief had none).
+  Failure classes: figures without n, drifting line numbers, mechanism claims (being right that it
+  failed is not being right about why).
 - **Say your summary is lossy and point at the source:** *"the table above is a compression of
   <source>; read the full row there before trusting it, and report any place the compression is
   wrong."* (W2b-1 2026-09-23.)
@@ -165,10 +169,11 @@ held-out evaluation with a stated denominator and a trivial baseline (W2b-1 2026
 
 ## Every dispatch carries the environment-invariants block
 
-Scratchpad path, no `rm -rf` in the tree, never create a file under `tests/`, output directories
-read-only. **Name the repo's own test-environment traps**: autouse fixtures in `conftest.py` that
-override what is deployed, and CI's real `-k`/`-m` filter, checked with `--collect-only`
-(W14: a `slow` marker excluded nothing without its env opt-in).
+Scratchpad path, namespaced per agent; delete only files you created, by name; no `rm -rf` in
+the tree, never create a file under `tests/`, output directories read-only.
+**Name the repo's own test-environment traps**: autouse fixtures in `conftest.py` that override
+what is deployed, and CI's real `-k`/`-m` filter, checked with `--collect-only` (W14: a `slow`
+marker excluded nothing without its env opt-in).
 
 ## Generate a task's brief at dispatch time, not up front
 
