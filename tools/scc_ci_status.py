@@ -24,7 +24,9 @@ qsubs tools/scc_ci_build_venv.sh as a build job (flock per hash, marker written 
 the test job on it (-hold_jid); the build never runs on the login node. If the build fails the
 test job still starts, finds no usable venv, never reaches pytest, and gets verdict `error`.
 Lockfile: --lockfile (default requirements-dev.lock). sweep --prune also removes venvs whose
-newest record (or marker) is older than DAYS.
+newest record (or marker) is older than DAYS, except a venv used by a record whose status is not final
+(pending/unknown) or whose job is still queued (MA-1034). Every qsub, including the follow-up, runs with
+cwd = the worktree so removing the caller's directory cannot strand a held job (MA-1035).
 Stdlib only; needs `git`, `gh` (authenticated) and, for submit/finish, SGE's `qsub`/`qacct`.
 """
 import argparse
@@ -132,7 +134,7 @@ def submit(args):
         follow = run(["qsub", "-terse", "-V", "-b", "y", "-hold_jid", job, "-pe", "omp", "1", "-l", "h_rt=0:15:00",
                       "-P", "liu-scc", "-N", f"scc_ci_post_{sha[:7]}", "-j", "y", "-o", str(out), sys.executable, str(me),
                       "finish", "--repo", str(repo), "--sha", sha, "--job-id", job, "--worktree", str(wt),
-                      "--context", args.context])
+                      "--context", args.context], cwd=wt)  # SGE uses the caller's cwd otherwise (MA-1035)
     except SystemExit as e:
         subprocess.run(["qdel", job], capture_output=True, text=True)  # an unobserved test job must not run
         post_status(repo, sha, "error", f"submit failed, follow-up not queued, test job {job} deleted: {why(e)}", args.context)
@@ -217,6 +219,7 @@ def queue_states():
 def sweep(args):
     """Resolve stale `pending` statuses and optionally prune finished worktrees (see module docstring)."""
     queued = queue_states()
+    busy_venvs = set()  # venvs of records that are not final or still have a queued job (MA-1034)
     for rec_file in sorted(WORKTREES.glob("*/*.json")):
         rec = json.loads(rec_file.read_text())
         if args.repo and Path(rec["repo"]).resolve() != Path(args.repo).resolve():
@@ -235,6 +238,8 @@ def sweep(args):
                 run(["qdel", follow])
             state = "error"
             print(f"{rec['sha'][:12]}: error, {reason}")
+        if state not in ("success", "failure", "error") or test in queued or follow in queued:
+            busy_venvs.add(rec.get("venv"))
         if args.prune is not None and state in ("success", "failure", "error") \
                 and test not in queued and follow not in queued \
                 and time.time() - rec["submitted"] > args.prune * 86400:
@@ -242,18 +247,19 @@ def sweep(args):
             rec_file.unlink()
             print(f"{rec['sha'][:12]}: pruned worktree {rec['worktree']}")
     if args.prune is not None:
-        prune_venvs(Path(args.repo).resolve().name if args.repo else None, args.prune)
+        prune_venvs(Path(args.repo).resolve().name if args.repo else None, args.prune, busy_venvs)
 
 
-def prune_venvs(repo_name, days):
-    """Remove cached venvs of repo_name (None = all) whose newest record or marker/dir mtime is older than days."""
+def prune_venvs(repo_name, days, busy=frozenset()):
+    """Remove cached venvs of repo_name (None = all) whose newest record or marker/dir mtime is older than days,
+    never one in `busy` (referenced by a record whose status is not final or whose job is queued)."""
     last = {}
     for rec_file in WORKTREES.glob("*/*.json"):
         rec = json.loads(rec_file.read_text())
         if rec.get("venv"):
             last[rec["venv"]] = max(last.get(rec["venv"], 0), rec["submitted"])
     for venv in sorted(VENVS.glob(f"{repo_name or '*'}/*")):
-        if not venv.is_dir():
+        if not venv.is_dir() or str(venv) in busy:
             continue
         marker = venv / MARKER
         used = max(last.get(str(venv), 0), (marker if marker.exists() else venv).stat().st_mtime)

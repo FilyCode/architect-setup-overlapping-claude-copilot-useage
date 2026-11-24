@@ -40,7 +40,7 @@ def env(tmp_path, monkeypatch):
     git(repo, "config", "url.%s.insteadOf" % origin, "git@github.com:FilyCode/EnzymeFinder.git")
     bindir = tmp_path / "bin"
     bindir.mkdir()
-    (bindir / "qsub").write_text(STUB % 'case "$*" in *scc_ci_post*) echo 202;; *scc_ci_venv*) echo 100;; *) echo 101;; esac')
+    (bindir / "qsub").write_text(STUB % 'pwd >> "$STUB_DIR/qsub_cwd.log"; case "$*" in *scc_ci_post*) echo 202;; *scc_ci_venv*) echo 100;; *) echo 101;; esac')
     (bindir / "gh").write_text(STUB % '[[ "$*" == */commits/* ]] && cat "$STUB_DIR/statuses.json"; true')
     (bindir / "qdel").write_text(STUB % "")
     (bindir / "qstat").write_text(STUB % 'cat "$STUB_DIR/qstat.txt"')
@@ -384,3 +384,46 @@ def test_owner_repo_parses_https_and_ssh(env):
     assert ci.owner_repo(repo) == ("FilyCode", "EnzymeFinder")
     git(repo, "remote", "set-url", "origin", "https://github.com/Foo/bar.git")
     assert ci.owner_repo(repo) == ("Foo", "bar")
+
+
+def test_submit_runs_every_qsub_from_the_worktree_not_the_callers_dir(env, tmp_path, monkeypatch):
+    """MA-1035: the held follow-up inherited the caller's cwd; SGE went to Eqw when that dir was removed."""
+    repo, log = env
+    caller = tmp_path / "caller_dir"
+    caller.mkdir()
+    monkeypatch.chdir(caller)
+    ci.main(["submit", "--repo", str(repo), "--test-script", "run.sh"])
+    wt = (ci.WORKTREES / "proj" / git(repo, "rev-parse", "HEAD")[:12]).resolve()
+    cwds = [Path(c).resolve() for c in (tmp_path / "qsub_cwd.log").read_text().splitlines()]
+    assert len(cwds) == 3 and cwds == [wt] * 3, f"qsub cwds {cwds} should all be the worktree {wt}, not {caller}"
+
+
+def _old_venv_with_record(env, tmp_path, state, qstat):
+    venv = ci.VENVS / "proj" / "facd"
+    venv.mkdir(parents=True)
+    (venv / ci.MARKER).write_text("")
+    long_ago = time.time() - 30 * 86400
+    os.utime(venv / ci.MARKER, (long_ago, long_ago))
+    (ci.WORKTREES / "proj").mkdir(parents=True, exist_ok=True)
+    wt = tmp_path / "w"
+    git(env[0], "worktree", "add", "--detach", str(wt))
+    (ci.WORKTREES / "proj" / "abc.json").write_text(json.dumps(
+        {"sha": "abc", "repo": str(env[0]), "context": "scc-tests", "test_job": "1", "follow_job": "2",
+         "worktree": str(wt), "venv": str(venv), "submitted": long_ago}))
+    (tmp_path / "statuses.json").write_text(json.dumps([{"context": "scc-tests", "state": state}]))
+    (tmp_path / "qstat.txt").write_text(qstat)
+    return venv
+
+
+def test_sweep_prune_zero_keeps_venv_of_pending_running_job(env, tmp_path):
+    """MA-1034: `sweep --prune 0` deleted the venv under a running job (Bus error, exit 135)."""
+    venv = _old_venv_with_record(env, tmp_path, "pending", "1 0.5 t u r 11/01\n2 0.5 f u hqw 11/01\n")
+    ci.main(["sweep", "--prune", "0"])
+    assert venv.exists(), "venv used by a pending record with a running job must survive prune"
+
+
+def test_sweep_prune_zero_removes_venv_once_record_is_final(env, tmp_path):
+    """Control: same venv, only the record's state differs (success, nothing queued): it is pruned."""
+    venv = _old_venv_with_record(env, tmp_path, "success", "")
+    ci.main(["sweep", "--prune", "0"])
+    assert not venv.exists()
