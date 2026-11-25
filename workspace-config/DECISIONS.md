@@ -1064,6 +1064,29 @@ weekly audit and compare implementer opus share and per-call context.
 written vs `/clear` used, autoCompactWindow-triggered subagent compactions; an opus-denied
 dispatch that the owner overrides twice.
 
+
+### [2026-11-25] [DECISION-034]: Setup audit round 2 — PreCompact live-state hook; other levers declined
+
+**What** (owner, AskUserQuestion 2026-11-25): new PreCompact hook `precompact_state.py`
+(commit 6a2d7ff, registered in `~/.claude/settings.json`, timeout 15 s). Its stdout, which Claude
+Code feeds to the compaction summary, lists this session's still-running SGE jobs (job_ledger +
+`qstat`), uncommitted files of the cwd's repo (max 30) and the handoff path if < 12 h old; capped
+at 4,000 chars, empty when nothing is live, never blocks. Static keep-list stays in the
+workspace CLAUDE.md "Compact instructions".
+**Why**: the owner compacts mid-wave; the static list cannot name live job ids or dirty files.
+**Declined by owner**: SubagentStop evidence hook, core.md `/rewind` + rule-1 wording,
+investigator skill-preload trim. **Skipped on evidence**: Monitor (30-min cap), Workflow,
+cache-TTL settings (main already rebuilds only after > 60-min gaps), superpowers SessionStart
+trim (389 x ~3.5k chars, ~0.4% est.), image-read changes (315 image blocks, est. ~0.5M tok).
+**Evidence**: `.superpowers/findings/2026-11-25/setup-round2/REPORT.md`, scan3.json (SGE 8938350),
+scan4.json (SGE 8938400), suite.log (SGE 8938580, 262 passed). PreCompact stdout semantics are
+quoted from code.claude.com/docs/en/hooks by an investigator; not yet observed in a live compaction.
+**Alternatives**: a PreCompact handoff file (rejected: summary survives in-session, crash/resume
+is covered by session_handoff); PostCompact writing compact_summary to disk (not needed now).
+**Best practice**: Claude Code hooks docs, PreCompact.
+**Revisit trigger**: first real compaction — check the summary carries the hook's lines; if not,
+remove the hook. Next weekly audit: compactions per session, re-read text share (44% now).
+
 ---
 
 ## Related Documents
