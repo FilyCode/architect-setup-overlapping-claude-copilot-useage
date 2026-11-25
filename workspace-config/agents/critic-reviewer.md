@@ -5,6 +5,7 @@ tools: Read, Grep, Glob, Bash, WebFetch
 model: opus
 effort: medium
 maxTurns: 60
+autoCompactWindow: 400000
 omitClaudeMd: true
 skills: [verification-patterns, completion-check]
 ---

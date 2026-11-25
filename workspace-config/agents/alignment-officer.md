@@ -6,6 +6,7 @@ model: sonnet
 memory: local
 effort: medium
 maxTurns: 45
+autoCompactWindow: 400000
 omitClaudeMd: true
 ---
 

@@ -5,6 +5,7 @@ tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 effort: medium
 maxTurns: 100
+autoCompactWindow: 400000
 omitClaudeMd: true
 skills: [verification-patterns, completion-check]
 ---

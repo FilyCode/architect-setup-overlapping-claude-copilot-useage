@@ -136,4 +136,5 @@ tRNA model at the same locus, 16/16 in the test arm, **0/80** in controls.
 
 A between-model contrast is quoted only with its comparison K inside every arm's trained regime
 and with its seed-swap result. Run the seed-swap negative control before the first results
-table, not at wave end (R-20261025-8).
+table, not at wave end (R-20261025-8); and a published-outcome control before any run that tries
+to rescue an instrument that failed one.

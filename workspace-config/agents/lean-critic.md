@@ -5,6 +5,7 @@ tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: medium
 maxTurns: 50
+autoCompactWindow: 400000
 omitClaudeMd: true
 skills: [ponytail:ponytail, thermo-nuclear-code-quality-review, verification-patterns]
 ---

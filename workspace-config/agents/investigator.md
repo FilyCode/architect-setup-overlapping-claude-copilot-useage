@@ -5,6 +5,7 @@ tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: sonnet
 effort: medium
 maxTurns: 60
+autoCompactWindow: 400000
 omitClaudeMd: true
 skills: [verification-patterns]
 ---

@@ -1,6 +1,6 @@
 # Decision Log: liu-scc (Workspace-Wide)
 
-**Last updated**: 2026-08-25
+**Last updated**: 2026-11-25
 **Format**: `[YYYY-MM-DD] [DECISION-XXX]: Title | Rationale | Impact`
 **Scope**: Only workspace-wide decisions live here. Project-specific decisions live in `projects/<project>/DECISIONS.md` and `projects/<project>/phases/<phase>/DECISIONS.md`.
 
@@ -1020,6 +1020,36 @@ Three eval arms were lost to the account usage limit (HTTP 429) before clean rer
 
 **Revisit trigger**: consolidation: eval after arm (a scenario down ≥ 3 of 5 reverts the swap);
 doc convention: the S4 table at the next SenC review.
+
+### [2026-11-25] [DECISION-033]: Weekly audit 2026-11-24 — opus must be argued, subagent compaction, clear-boundary handoff
+
+**What** (owner, AskUserQuestion 2026-11-25, plus follow-up message): (1) An implementer
+dispatched on opus is denied by `dispatch_guard` unless the brief's first line starts
+`Opus because: <reason>`; a plan task that wants opus carries the same line in its row and the
+critique challenges it (dispatch-brief, plan-critique). Tightens DECISION-028's warn-only check.
+(2) Main-session `CLAUDE_CODE_AUTO_COMPACT_WINDOW` stays 650000; subagents with maxTurns ≥ 45
+(8 seats) get `autoCompactWindow: 400000`. (3) New: at a task boundary (commit since the last
+prompt, or 30+ min idle) with context ≥ 150k, `context_nudge` tells the owner it is a good point
+to `/clear` and has Claude write a handoff to
+`software/claude-handoffs/<cwd>/latest.md`; a SessionStart hook (`session_handoff.py`) points the
+next session at it (< 12 h old). (4) Hook timeouts 5 → 15 s for the Bash guards and
+UserPromptSubmit; bash_guard adds `set -o pipefail;` to gate commands piped into tail/head.
+**Why**: scan of 246 sessions since 2026-11-10 (SGE job 8929862,
+`.superpowers/findings/2026-11-24/workspace-audit/scan2.json`, REPORT.md): opus overrides on
+implementers rose from 10/78 (Oct 16-31) to 100/188 (Nov 16-24), implementer = 22.3% of all
+context; context_nudge hit its 5 s timeout on all 4 recorded runs (reads 2 MB tail), Bash guards
+timed out 30x; 9,790 gate commands piped into tail/head with no pipefail although a text rule
+exists; `/clear` used 3x vs `/compact` 134x, and compaction lands mid-wave (owner).
+**Alternatives rejected**: main window 400k or 300k (owner: compaction already lands mid-task;
+fix the boundary signal instead); keep the warn-only opus check (drift continued under it);
+deny gate pipes (one extra turn on ~700 calls/day).
+**Best-practice reference**: code.claude.com/docs/en/sub-agents (`autoCompactWindow`, v2.1.296+);
+/en/costs (context length is the cost lever); /en/hooks (hooks are best-effort, `updatedInput`).
+**Measured cost**: UNMEASURED — savings are expected, not measured; re-run `scan2.py` at the next
+weekly audit and compare implementer opus share and per-call context.
+**Revisit trigger**: next weekly audit: opus share of implementer runs, count of handoff files
+written vs `/clear` used, autoCompactWindow-triggered subagent compactions; an opus-denied
+dispatch that the owner overrides twice.
 
 ---
 

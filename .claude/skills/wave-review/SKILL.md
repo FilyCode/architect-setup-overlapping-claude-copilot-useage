@@ -29,7 +29,9 @@ change, superpowers `requesting-code-review` stays available; seat briefs come f
 is a measurement or finding, not code, runs domain-reviewer, anomaly-hunter and
 pragmatism-officer; critic-reviewer only when the wave changed a gate or test; lean-critic,
 inventory-auditor and docs-sync only at a doc-heavy close; retro-officer as always, recording
-"trial n/3" and any later finding a dropped seat would have caught. Code waves keep the roster above.
+"trial n/3" and any later finding a dropped seat would have caught. The first domain seat is briefed at
+the FIRST measurement, not at close, with one question: "what does the instrument receive; list its
+inputs and show a row". Code waves keep the roster above.
 
 ## Procedure
 

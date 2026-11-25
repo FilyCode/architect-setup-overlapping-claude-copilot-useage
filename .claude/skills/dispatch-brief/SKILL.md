@@ -1,6 +1,6 @@
 ---
 name: dispatch-brief
-description: Builds the brief for an implementer or review seat in this workspace, on top of superpowers subagent-driven-development's templates — verified claims or UNVERIFIED labels, file ownership, environment block, job-spec handoff, and the review template (findings file first, objection slot). Use when dispatching an implementer or a review seat. Which seats run at wave end: wave-review; plan review: plan-critique.
+description: "Builds the brief for an implementer or review seat in this workspace, on top of superpowers subagent-driven-development's templates — verified claims or UNVERIFIED labels, file ownership, environment block, job-spec handoff, and the review template (findings file first, objection slot). Use when dispatching an implementer or a review seat. Which seats run at wave end: wave-review; plan review: plan-critique."
 ---
 
 # Dispatch brief
@@ -32,6 +32,7 @@ the rules below them say why each line is there. Worked incidents:
 
 - **Turn budget, first line:** *"Commit your finished work and write your report by turn 70 of
   100; leave the rest as a listed remainder."* A task that still hits 100 is too big: split it.
+- Never amend or rebase; add a new commit.
 - The implementer runs its importing tests first, then only its own tests and the linter, and
   stops instead of asking: this overrides the SDD template.
 - *"Lean checks before commit: no pass-through wrappers, no assert, gate, control arm or oracle
@@ -83,8 +84,9 @@ you did not cover. Your final message is at most 10 lines: verdict, counts, the 
 ## Which seat
 
 Code tasks (SDD included) go to `implementer` on its default sonnet; `model: opus` only for a
-cross-module or contract change or a retry, with that reason in the brief's first line
-(DECISION-028). Ad hoc questions go to `investigator`; "where is X" to Explore with `model: haiku`.
+cross-module or contract change or a retry, argued in the brief's first line as
+`Opus because: <reason>` (copied from the plan's task row); `dispatch_guard` denies an opus
+implementer without it (owner 2026-11-25, DECISION-028). Ad hoc questions go to `investigator`; "where is X" to Explore with `model: haiku`.
 Never general-purpose. A named seat's front matter is the source of truth for its model and
 effort; a dispatch that overrides it rounds up when unsure (a small task on a security-sensitive
 path still warrants a higher tier). A dispatch with no named agent inherits the parent session's

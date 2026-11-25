@@ -14,7 +14,8 @@ what you changed and apply their checks. Worked incidents: [reference/incidents.
 1. Prove each gate, guard or test you rely on can fail.
 2. Check the artifact, not the exit code: it exists, is non-empty, is newer than the fix.
 3. On a contract change, run the blast-radius grep before calling the fix verified.
-4. Every count, zero or percentage carries its denominator.
+4. Every count, zero or percentage carries its denominator; a count read from a directory or glob
+   is printed beside the number of tasks that should have produced it (an unexplained multiple is a stop).
 5. Report what was run and what it returned.
 
 ## Gates and tests that cannot fail
@@ -28,8 +29,9 @@ what you changed and apply their checks. Worked incidents: [reference/incidents.
   path** passes vacuously once a rename zeroes both sides: assert non-zero on one side first (2026-09-21).
 - **A gate that passes because it never exercises the path in use:** when you add a code path, add a
   positive control on that path; the regression check on production artifacts does not cover it.
-- **A positive control built from a convenient fixture proves nothing.** Pick the fixture that
-  should trip the check (`grep -l` collision; W14's 11-column probe vs a real 6-column artifact).
+- **A control's expected outcome is published or declared in source before any score is read,
+  never assumed;** a POSITIVE call first gets its population pass-rate and one published positive
+  and negative.
 - **A boundary test that does not probe the disputed interval cannot fail.** Parametrise both sides
   of every constant it names; when a constant changes, re-derive which tests tell old from new.
 - **A test made vacuous by a change that never edited it:** a change to how inputs combine
