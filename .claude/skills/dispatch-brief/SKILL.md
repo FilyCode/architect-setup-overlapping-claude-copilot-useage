@@ -85,8 +85,7 @@ you did not cover. Your final message is at most 10 lines: verdict, counts, the 
 
 Code tasks (SDD included) go to `implementer` on its default sonnet; `model: opus` only for a
 cross-module or contract change or a retry, argued in the brief's first line as
-`Opus because: <reason>` (copied from the plan's task row); `dispatch_guard` denies an opus
-implementer without it (owner 2026-11-25, DECISION-028). Ad hoc questions go to `investigator`; "where is X" to Explore with `model: haiku`.
+`Opus because: <reason>` (from the plan row); `dispatch_guard` denies it otherwise (DECISION-033). Ad hoc questions go to `investigator`; "where is X" to Explore with `model: haiku`.
 Never general-purpose. A named seat's front matter is the source of truth for its model and
 effort; a dispatch that overrides it rounds up when unsure (a small task on a security-sensitive
 path still warrants a higher tier). A dispatch with no named agent inherits the parent session's

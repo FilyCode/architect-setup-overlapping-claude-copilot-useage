@@ -22,9 +22,8 @@ skip it), and for a known-heavy problem or a third failed fix (escalation sectio
 6. **pragmatism-officer** over the critique findings.
 7. **Fix the plan before Task 1.** Exit: every "run X before/at T" in the critique's required
    changes is copied into the plan as a numbered task row before the plan is marked ready; the
-   controller greps the critique for it. A task that needs an opus implementer says
-   `Opus because: <reason>` in its row (cross-module, contract change, or retry); the critique
-   challenges each one, and a row without it runs on sonnet.
+   controller greps the critique for it. An opus task row says `Opus because: <reason>`;
+   the critique challenges it.
 
 Ask of every new check: what is its third state, and how does it say so?
 

@@ -1047,6 +1047,19 @@ deny gate pipes (one extra turn on ~700 calls/day).
 /en/costs (context length is the cost lever); /en/hooks (hooks are best-effort, `updatedInput`).
 **Measured cost**: UNMEASURED — savings are expected, not measured; re-run `scan2.py` at the next
 weekly audit and compare implementer opus share and per-call context.
+**Known limitations (deferred, each with its trigger)**:
+- Savings UNMEASURED (see above). Trigger: next weekly audit re-runs `scan2.py`.
+- The handoff is only as good as what Claude writes; nothing checks its sections. Trigger: a
+  session that starts from a handoff missing a running job id or an uncommitted file.
+- bash_guard's pipefail rewrite covers `| tail` only; Monitor-tool commands are not rewritten
+  (hooks docs). Trigger: a masked gate failure found through `| head` or Monitor.
+- ask_guard denies 23.5% of owner questions (259/1,101); false-alarm share unmeasured.
+  Trigger: next weekly audit (count denials followed by an identical resubmit).
+- DECISION-032's lean-cut trigger ("any body within 300 B of 12,288") is likely met by
+  dispatch-brief, plan-critique and verification-patterns after this batch. Trigger: now — next
+  wave on the config repo.
+- context_nudge's tail reader drops the first line even when it reads from byte 0 (pre-existing).
+  Trigger: a nudge missing on a transcript shorter than 256 KB.
 **Revisit trigger**: next weekly audit: opus share of implementer runs, count of handoff files
 written vs `/clear` used, autoCompactWindow-triggered subagent compactions; an opus-denied
 dispatch that the owner overrides twice.

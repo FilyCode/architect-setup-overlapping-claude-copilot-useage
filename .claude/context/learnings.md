@@ -210,3 +210,19 @@ retro-officer now lists rows for the caller. context_budget.py failed silently (
 Research: 2 investigator seats (best practice, internal churn) -> two plans critiqued by inventory,
 critic, lean, domain, pragmatism (35 findings, 30 FIX-NOW): docs/superpowers/plans/2026-11-18-*.md;
 DECISION-032. Evidence: `.superpowers/findings/2026-11-18/`.
+
+**2026-11-24/25 (workspace-audit steps 0-3, 5, 6 + /doctor; step 4 obsolete).** Scan of 246 sessions
+since 11-10 (job 8929862, `scan2.json`): main 63% / subagents 37% of summed context; 9 sessions
+active >=8 h carry 99.5% of main context; `/clear` 3x vs `/compact` 134x. Implementer 22.3% of all
+context, opus overrides 10/78 (Oct 16-31) -> 100/188 (Nov 16-24). Broken guards found: context_nudge
+timed out on every recorded run (2 MB tail, 5 s timeout), Bash guards 30 timeouts; 9,790 gate pipes to
+tail/head without pipefail despite a text rule (text rules do not stop a habit; a rewrite hook does).
+dispatch-brief frontmatter was invalid YAML (tolerated by Claude Code). Owner rulings -> DECISION-033:
+opus implementer denied without "Opus because:", plans argue opus too, 8 long seats autoCompactWindow
+400k, main window stays 650k, new /clear-at-boundary signal + handoff file + SessionStart pointer.
+Retro: 11 open -> 2 (6 applied 034b24b, 1 as mechanism deaae68, 1 rejected, 2 deferred, 2 one-offs
+left open). Hooks deaae68 + efbab8b (75 tests). Old CLI 2.1.330/331 deleted, home 3.4 -> 2.7 GB. External scan
+(investigator): no deprecated agent fields; aliases map to Opus/Sonnet/Haiku 5.5. Open: lean-cut trigger
+of DECISION-032 ("body within 300 B of 12,288") likely met by dispatch-brief/plan-critique/
+verification-patterns — next wave. ask_guard denies 23.5% of owner questions; false-alarm share unmeasured.
+Evidence: `.superpowers/findings/2026-11-24/workspace-audit/`.
