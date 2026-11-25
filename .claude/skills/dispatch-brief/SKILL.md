@@ -11,6 +11,10 @@ the rules below them say why each line is there. Worked incidents:
 
 ## Every brief carries
 
+- A claim about an API's SHAPE — importable, a function, a unique key, a column exists — pastes
+  the command and its output, not a line number. Values were right and shapes were assumed in
+  both 2026-11-25 brief errors: `273`'s rule was inline in `main()` and could not be imported as
+  the brief said, and `anchor_gff_id` is not a unique key (60 anchors returned 79,098 rows).
 - Claims as pasted command output (source, n, denominator) or `UNVERIFIED — check before relying
   on it`, absences and external facts too. Every signature, exit code, path or flag it cites is
   copied from a grep run in this turn, with file:line.
@@ -86,6 +90,11 @@ you did not cover. Your final message is at most 10 lines: verdict, counts, the 
 Code tasks (SDD included) go to `implementer` on its default sonnet; `model: opus` only for a
 cross-module or contract change or a retry, argued in the brief's first line as
 `Opus because: <reason>` (from the plan row); `dispatch_guard` denies it otherwise (DECISION-033). Ad hoc questions go to `investigator`; "where is X" to Explore with `model: haiku`.
+**A SOURCED SURVEY is not a `research-scout` task**: that seat's own budget is one search and at
+most two fetches, so asking it for the state of a field gets a memory answer that looks like a
+survey. It goes to `investigator`, with a minimum search and fetch count stated in the brief
+(2026-11-25: the scout obeyed its budget and the dispatch was wrong; the `investigator` re-run
+did 13 searches and 6 fetches and graded each claim by how it was obtained).
 Never general-purpose. A named seat's front matter is the source of truth for its model and
 effort; a dispatch that overrides it rounds up when unsure (a small task on a security-sensitive
 path still warrants a higher tier). A dispatch with no named agent inherits the parent session's

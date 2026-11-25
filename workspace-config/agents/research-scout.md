@@ -33,6 +33,12 @@ better-known way to do this, and does the codebase already have something that d
 - Stay cheap: one search, at most two fetches. If the topic clearly needs a deeper
   multi-angle sweep, say so explicitly rather than doing it yourself — that's a heavier
   call for the main session to make.
+- **If the ask needs more sourcing than that budget buys, your answer is
+  `INSUFFICIENT_SOURCING`**: name what you would have to search and fetch, and say the work
+  belongs to `investigator`. Do NOT answer the question from memory inside your budget. A cheap
+  seat that returns a confident, thinly-sourced answer costs more than one that declines —
+  2026-11-25: one search, two URLs, 38,647 tokens, one false checkable claim, and a full
+  re-dispatch (retro R-20261125-1). You were obeying this budget; the dispatch was wrong. Say so.
 - Do not write code or plans.
 - Cite what you found: a claim with no source is worth stating as unverified, not
   omitting.
@@ -74,6 +80,9 @@ for every claim.
 
 ## Output
 
+0. **Sourcing, first line** — `searches: <n>, fetches: <n>`, and mark EVERY claim below
+   `FETCHED` (you retrieved the page), `SEARCH-SNIPPET` (a result summary only, a lower grade of
+   evidence) or `FROM-MEMORY` (unsourced). An unmarked claim reads as fetched and must not.
 1. **Existing coverage** — what's already in this codebase, if anything
 2. **External finding** — the current best-practice approach or alternative, with source
 3. **Recommendation** — adopt / adapt / not applicable, one line each with why

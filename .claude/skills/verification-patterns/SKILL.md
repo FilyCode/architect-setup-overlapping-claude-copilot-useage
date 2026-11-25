@@ -42,6 +42,21 @@ what you changed and apply their checks. Worked incidents: [reference/incidents.
   actionability, break truncation down by state (`... and 77 more (77 SEEDED)`) (`report_ownership`).
 - **Match the command as invoked, not as idealised:** `^git log\b` missed `git -C <dir> log`.
 
+**A gate on a CONTROL arm states what a PASSING control looks like BEFORE what a failing one
+looks like.** Written the other way round, the rule is usually inverted and nothing notices until
+it rejects every control. 2026-11-25: a sham-validity gate was ruled "the per-rank-class removed
+mass must match the real arm's", from a fixture reading. A WORKING permuted-label control is
+supposed to FLATTEN those classes — measured on the real corpus, every sham class landed on the
+corpus mean (0.0157/0.0164/0.0162) against the real arm's (0.2366/0.2683/0.0068). The gate as
+ruled would have rejected all five controls and made the pre-registered falsification unreadable.
+
+**A typed classification prints its state distribution.** An all-one-state result is a null result
+about the INSTRUMENT, not a finding about the data, and may not be quoted as one until it has been
+re-run at another granularity or on a case that should type differently. 2026-11-25: an
+identifiability check typed 8 of 8 clusters `CROSS_FAMILY_identifiable` — 100% — because one
+cluster spanned 362 families; the statistic was only informative one level down (48 of 68 variants
+replicated, 20 single-family).
+
 ## Zeros, counts and denominators
 
 - **A zero from a join is accepted only with the pre-join count printed beside it** (R-20261030-4;
