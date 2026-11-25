@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""PreToolUse(Agent): warn on an opus implementer whose brief's first line names no reason (DECISION-028/029).
+"""PreToolUse(Agent): deny an opus implementer unless the brief's first line gives a reason (owner ruling 2026-11-25).
 
-Warns only; never denies. Any internal error stays silent.
+The first non-blank line of the prompt must start with "Opus because:" (case-insensitive) followed by at least
+10 non-space characters. Non-opus models and other seats pass. Any internal error stays silent (allows).
 """
 import json
 import re
 import sys
 
-REASON = re.compile(r"cross[- ]module|contract|retry", re.I)
-MSG = ("Opus implementer without a reason in the brief's first line (DECISION-028/029). The check "
-       'passes when the first non-blank line contains "cross-module" (or "cross module"), "contract" '
-       'or "retry". Put the reason there in those words, or drop model: opus.')
+REASON = re.compile(r"^\s*opus because:\s*(\S(?:\s*\S){9})", re.I)
+MSG = ('Opus implementer without a stated reason (owner ruling 2026-11-25). Make the first non-blank line of the '
+       'prompt "Opus because: <reason>" with at least 10 non-space characters of reason, or drop model: opus '
+       "so the implementer runs on the default model.")
 
 
 def main():
@@ -24,7 +25,8 @@ def main():
             return 0
         first = next((ln for ln in str(ti.get("prompt") or "").splitlines() if ln.strip()), "")
         if not REASON.search(first):
-            print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": MSG}}))
+            print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                              "permissionDecisionReason": MSG}}))
     except Exception:
         return 0
     return 0

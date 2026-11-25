@@ -170,3 +170,120 @@ def test_retro_hint_counts_indented_proposals(tmp_path):
     p.write_text("Last integrated: 2026-10-01\n- [ ] R-1 a\n  - [ ] R-2 b\n  - [x] R-3 c\n")
     import datetime
     assert "2 open" in cn.retro_hint(p, datetime.date(2026, 11, 18))
+
+
+# --- speed: one small tail read, 2 MB only as a fallback (SGE 8929862: median 6.1 s, all hit the 5 s timeout) ---
+def _count_reads(monkeypatch):
+    sizes, real = [], cn._read_tail
+    monkeypatch.setattr(cn, "_read_tail", lambda p, n: (sizes.append(n), real(p, n))[1])
+    return sizes
+
+
+def _pad(path, n_bytes):
+    """Prepend `n_bytes` of usage-free lines so earlier entries fall outside a 256 KB tail."""
+    junk = json.dumps({"type": "system", "x": "y" * 900}) + "\n"
+    return junk * (n_bytes // len(junk) + 1)
+
+
+def test_tail_sizes_are_256k_then_2m():
+    assert (cn.TAIL_SMALL, cn.TAIL) == (256 * 1024, 2_000_000)
+
+
+def test_usage_in_last_256k_never_reads_2m(tmp_path, monkeypatch):
+    p = _tx(tmp_path, [100])
+    p.write_text(p.read_text() + _pad(p, 600_000) + _tx(tmp_path, [777_000]).read_text())
+    sizes = _count_reads(monkeypatch)
+    assert cn.last_context(p) == 777_000
+    assert sizes == [cn.TAIL_SMALL]
+
+
+def test_usage_outside_256k_retries_once_at_2m(tmp_path, monkeypatch):
+    p = _tx(tmp_path, [1, 321_000])  # first line is dropped by the tail reader (existing behaviour)
+    p.write_text(p.read_text() + _pad(p, 600_000))
+    sizes = _count_reads(monkeypatch)
+    assert cn.last_context(p) == 321_000
+    assert sizes == [cn.TAIL_SMALL, cn.TAIL]
+
+
+def test_boundary_retries_at_2m_only_when_prompt_not_found(tmp_path, monkeypatch):
+    now = cn.dt.datetime(2026, 10, 22, 12, 0, tzinfo=cn.dt.timezone.utc)
+    body = "".join(json.dumps(e) + "\n" for e in [_user("go", "2026-10-22T11:50:00Z"), _bash("git commit -m a", "2026-10-22T11:51:00Z")])
+    p = tmp_path / "x.jsonl"
+    p.write_text(body + _pad(p, 600_000))  # user prompt and commit are > 256 KB back
+    sizes = _count_reads(monkeypatch)
+    assert cn.boundary(p, now) == "commit"
+    assert sizes == [cn.TAIL_SMALL, cn.TAIL]
+    q = tmp_path / "y.jsonl"
+    q.write_text(_pad(q, 600_000) + body)  # commit inside the small tail
+    del sizes[:]
+    assert cn.boundary(q, now) == "commit"
+    assert sizes == [cn.TAIL_SMALL]
+
+
+def test_main_reads_the_tail_once(tmp_path, monkeypatch, capsys):
+    import io
+    p = _tx(tmp_path, [400_000])
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(cn, "RETRO_LOG", tmp_path / "none.md")
+    sizes = _count_reads(monkeypatch)
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps({"prompt": "x", "session_id": "once", "transcript_path": str(p)})))
+    cn.main()
+    assert sizes == [cn.TAIL_SMALL]  # last_context and boundary share one read
+
+
+# --- good point to /clear + handoff (owner 2026-11-25) ---
+def _run_main(monkeypatch, tmp_path, tx, sid, cwd="/projectnb/x/My Proj", clear_min=None):
+    import io
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(cn, "RETRO_LOG", tmp_path / "none.md")
+    monkeypatch.setenv("CLAUDE_HANDOFF_DIR", str(tmp_path / "handoffs"))
+    if clear_min is not None:
+        monkeypatch.setenv("CLAUDE_CLEAR_MIN", str(clear_min))
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(
+        {"prompt": "next", "session_id": sid, "transcript_path": str(tx), "cwd": cwd})))
+    cn.main()
+
+
+def _committed_tx(tmp_path, ctx, tool_id="toolu_A", ts="2026-10-22T11:58:00Z"):
+    use = _bash("git commit -m x", ts)
+    use["message"]["content"][0]["id"] = tool_id
+    use["message"]["usage"] = {"input_tokens": ctx, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0}
+    return _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), use])
+
+
+def test_clear_signal_fires_once_per_commit(tmp_path, monkeypatch, capsys):
+    tx = _committed_tx(tmp_path, 180_000)
+    _run_main(monkeypatch, tmp_path, tx, "c1")
+    o = json.loads(capsys.readouterr().out)
+    assert o["systemMessage"] == "Good point to /clear: task boundary at 180k context. Claude is writing a handoff first."
+    h = o["hookSpecificOutput"]
+    assert h["hookEventName"] == "UserPromptSubmit"
+    for w in ("latest.md", "safe to /clear",
+              "UNVERIFIED", "SGE job", "uncommitted", "Next step"):
+        assert w in h["additionalContext"], w
+    assert "-projectnb-x-My-Proj" in h["additionalContext"]  # sanitized cwd
+    _run_main(monkeypatch, tmp_path, tx, "c1")
+    assert capsys.readouterr().out == ""  # same commit: silent
+    tx2 = _committed_tx(tmp_path, 190_000, tool_id="toolu_B", ts="2026-10-22T12:30:00Z")
+    _run_main(monkeypatch, tmp_path, tx2, "c1")
+    assert "systemMessage" in json.loads(capsys.readouterr().out)  # a new commit re-arms
+
+
+def test_clear_signal_needs_clear_min_and_env_overrides(tmp_path, monkeypatch, capsys):
+    tx = _committed_tx(tmp_path, 120_000)
+    _run_main(monkeypatch, tmp_path, tx, "c2")
+    assert capsys.readouterr().out == ""  # below 150k
+    _run_main(monkeypatch, tmp_path, tx, "c3", clear_min=100_000)
+    assert "systemMessage" in json.loads(capsys.readouterr().out)
+
+
+def test_clear_signal_not_without_boundary(tmp_path, monkeypatch, capsys):
+    tx = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash("ls", "2026-10-22T11:58:00Z")])
+    tx.write_text(tx.read_text().replace('"id": "2026-10-22T11:58:00Z"', '"id": "m", "usage": {"input_tokens": 200000}'))
+    monkeypatch.setattr(cn.dt, "datetime", type("D", (cn.dt.datetime,), {"now": classmethod(lambda c, tz=None: c(2026, 10, 22, 11, 59, tzinfo=tz))}))
+    _run_main(monkeypatch, tmp_path, tx, "c4")
+    assert capsys.readouterr().out == ""
+
+
+def test_handoff_path_sanitizes_cwd():
+    assert cn.handoff_path("/a/b c/d_e", "/h").as_posix() == "/h/-a-b-c-d-e/latest.md"

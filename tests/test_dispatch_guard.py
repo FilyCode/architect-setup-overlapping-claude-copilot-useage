@@ -19,22 +19,38 @@ def ev(prompt="Implement X", model="opus", sub="implementer", tool="Agent"):
     return {"tool_name": tool, "tool_input": ti}
 
 
-def test_opus_without_reason_warns():
+def denied(out):
+    o = json.loads(out)["hookSpecificOutput"]
+    assert o["hookEventName"] == "PreToolUse" and o["permissionDecision"] == "deny"
+    return o["permissionDecisionReason"]
+
+
+def test_opus_without_marker_is_denied_with_fix():
     rc, out = run(ev("\n\nImplement the parser\nthis is a contract change"))
     assert rc == 0
-    o = json.loads(out)["hookSpecificOutput"]
-    assert o["hookEventName"] == "PreToolUse" and "DECISION-028/029" in o["additionalContext"]
-    assert "permissionDecision" not in o
+    why = denied(out)
+    assert "Opus because:" in why and "model" in why
 
 
-def test_task_alias_and_claude_opus_id_warn():
-    assert run(ev(tool="Task"))[1]
-    assert run(ev(model="claude-opus-5-5"))[1]
+def test_task_alias_and_claude_opus_id_denied():
+    denied(run(ev(tool="Task"))[1])
+    denied(run(ev(model="claude-opus-5-5"))[1])
 
 
-def test_reason_in_first_line_silent():
-    for first in ("Cross-module change: rename API", "cross module rename", "Contract change", "RETRY of task 3"):
-        assert run(ev(first + "\nbody")) == (0, "")
+def test_marker_with_reason_passes():
+    for first in ("Opus because: cross-module rename of the API", "  opus BECAUSE: needs the whole contract in view",
+                  "OPUS because:   ten chars++"):
+        assert run(ev(first + "\nbody")) == (0, ""), first
+    assert run(ev("\n\nOpus because: long enough reason\nbody")) == (0, "")  # leading blank lines skipped
+
+
+def test_marker_needs_first_line_and_ten_nonspace_chars():
+    denied(run(ev("Implement X\nOpus because: a perfectly good reason"))[1])  # not the first line
+    denied(run(ev("Opus because: short"))[1])                                   # 5 chars
+    denied(run(ev("Opus because:      a b c d e"))[1])                         # 5 non-space chars, many spaces
+    denied(run(ev("Opus because:"))[1])
+    denied(run(ev("The old words: cross-module contract retry"))[1])           # old vocabulary no longer passes
+    assert run(ev("Opus because: 1234567890")) == (0, "")                       # exactly 10
 
 
 def test_sonnet_other_seat_other_tool_silent():
@@ -44,14 +60,7 @@ def test_sonnet_other_seat_other_tool_silent():
     assert run(ev(tool="Bash")) == (0, "")
 
 
-def test_malformed_stdin():
+def test_malformed_stdin_stays_silent():
     assert run(None, raw="{{") == (0, "")
     assert run({"tool_name": "Agent", "tool_input": "str"}) == (0, "")
-    assert run(ev(prompt=None)) [0] == 0
-
-
-def test_warning_names_the_accepted_words():
-    """R-20261103-4: 3 of 5 warned dispatches had real reasons outside the vocabulary; the message must say what passes."""
-    msg = json.loads(run(ev("writes the wave's published prose"))[1])["hookSpecificOutput"]["additionalContext"]
-    for w in ("cross-module", "contract", "retry"):
-        assert f'"{w}"' in msg
+    assert run(ev(prompt=None))[0] == 0

@@ -8,6 +8,11 @@ auto-compaction (CLAUDE_CODE_AUTO_COMPACT_WINDOW=650000) is the backstop. Each n
 per 100k band; CLAUDE_NUDGE_TOKENS overrides the 300k start. Also reminds once per session
 when the retro log has open proposals and was last integrated over 7 days ago. Any error exits
 0 silently.
+
+Speed: reads a 256 KB transcript tail once (shared by both lookups), 2 MB only if that holds no usage entry
+or previous prompt. At a boundary (commit / idle) with context >= CLAUDE_CLEAR_MIN (150k) it also tells the
+owner it is a good point to /clear and has Claude write a handoff (once per boundary event); the
+SessionStart hook session_handoff.py points the next session at it.
 """
 import datetime as dt
 import json
@@ -21,7 +26,10 @@ FIRM = 500_000
 AUTO_COMPACT = 650_000
 IDLE = dt.timedelta(minutes=30)
 
-TAIL = 2_000_000
+TAIL_SMALL = 256 * 1024
+TAIL = 2_000_000  # fallback when the small tail holds no usage entry / previous prompt
+CLEAR_MIN = 150_000
+HANDOFF_DIR = "/projectnb/liu-scc/philipp/software/claude-handoffs"
 BAND = 100_000
 RETRO_LOG = Path(os.environ.get("CLAUDE_RETRO_LOG", "/projectnb/liu-scc/philipp/"
                  "architect-setup-overlapping-claude-copilot-useage/docs/retros/retro-log.md"))
@@ -30,47 +38,96 @@ HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?[^\n]*\n.*?\n\1(?=\n|$)", re.S)  
 HEAVY = re.compile(r"\b(brainstorm\w*|architect\w*|design doc|spec|implementation plan|writing-plans|plan the)\b", re.I)
 
 
-def last_context(transcript: Path):
+_CACHE = {}
+
+
+def _read_tail(transcript: Path, n: int):
     with open(transcript, "rb") as f:
         f.seek(0, 2)
         size = f.tell()
-        f.seek(max(0, size - TAIL))
-        lines = f.read().decode("utf-8", errors="replace").split("\n")[1:]
-    for line in reversed(lines):
-        try:
-            e = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        u = (e.get("message") or {}).get("usage") if isinstance(e.get("message"), dict) else None
-        if u:
-            return u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0) + u.get("cache_read_input_tokens", 0)
+        f.seek(max(0, size - n))
+        return f.read().decode("utf-8", errors="replace").split("\n")[1:], size > n
+
+
+def _tail(transcript: Path, n: int):
+    """(lines, truncated) of the last n bytes; one read per size and file state per process."""
+    st = os.stat(transcript)
+    key = (str(transcript), n, st.st_size, st.st_mtime_ns)
+    if key not in _CACHE:
+        _CACHE[key] = _read_tail(transcript, n)
+    return _CACHE[key]
+
+
+def last_context(transcript: Path):
+    """Context size from the last usage entry: 256 KB tail first, the 2 MB tail only if none is there."""
+    for n in (TAIL_SMALL, TAIL):
+        lines, truncated = _tail(transcript, n)
+        for line in reversed(lines):
+            try:
+                e = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            u = (e.get("message") or {}).get("usage") if isinstance(e.get("message"), dict) else None
+            if u:
+                return u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0) + u.get("cache_read_input_tokens", 0)
+        if not truncated:
+            break
     return None
+
+
+def boundary_info(transcript: Path, now: dt.datetime):
+    """(kind, key): kind 'commit' if a git commit ran since the last user prompt (key: that tool_use's id, else its
+    timestamp), 'idle' if the last entry is 30+ min old (key: its timestamp), else (None, None).
+    Reads the 256 KB tail; retries at 2 MB only when the previous prompt is not in it."""
+    for n in (TAIL_SMALL, TAIL):
+        lines, truncated = _tail(transcript, n)
+        last_ts, found_prompt = None, False
+        for line in reversed(lines):
+            try:
+                e = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            last_ts = last_ts or e.get("timestamp")
+            m = e.get("message") if isinstance(e.get("message"), dict) else {}
+            content = m.get("content")
+            if e.get("type") == "user" and (isinstance(content, str) or not any(
+                    isinstance(b, dict) and b.get("type") == "tool_result" for b in content or [])):
+                found_prompt = True
+                break  # the previous prompt: anything older belongs to an earlier task
+            for b in content if isinstance(content, list) else []:
+                if e.get("type") == "assistant" and isinstance(b, dict) and b.get("type") == "tool_use" and COMMIT.search(HEREDOC.sub("", str(b.get("input", {}).get("command", "")))):
+                    return "commit", str(b.get("id") or e.get("timestamp") or "")
+        if found_prompt or not truncated:
+            break
+    if last_ts and now - dt.datetime.fromisoformat(last_ts.replace("Z", "+00:00")) >= IDLE:
+        return "idle", last_ts
+    return None, None
 
 
 def boundary(transcript: Path, now: dt.datetime):
     """'commit' if a git commit ran since the last user prompt, 'idle' if the last entry is 30+ min old."""
-    with open(transcript, "rb") as f:
-        f.seek(0, 2)
-        f.seek(max(0, f.tell() - TAIL))
-        lines = f.read().decode("utf-8", errors="replace").split("\n")[1:]
-    last_ts = None
-    for line in reversed(lines):
-        try:
-            e = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        last_ts = last_ts or e.get("timestamp")
-        m = e.get("message") if isinstance(e.get("message"), dict) else {}
-        content = m.get("content")
-        if e.get("type") == "user" and (isinstance(content, str) or not any(
-                isinstance(b, dict) and b.get("type") == "tool_result" for b in content or [])):
-            break  # the previous prompt: anything older belongs to an earlier task
-        for b in content if isinstance(content, list) else []:
-            if e.get("type") == "assistant" and isinstance(b, dict) and b.get("type") == "tool_use" and COMMIT.search(HEREDOC.sub("", str(b.get("input", {}).get("command", "")))):
-                return "commit"
-    if last_ts and now - dt.datetime.fromisoformat(last_ts.replace("Z", "+00:00")) >= IDLE:
-        return "idle"
-    return None
+    return boundary_info(transcript, now)[0]
+
+
+def handoff_path(cwd: str, base=None) -> Path:
+    base = base or os.environ.get("CLAUDE_HANDOFF_DIR") or HANDOFF_DIR
+    return Path(base) / re.sub(r"[^A-Za-z0-9]", "-", cwd) / "latest.md"
+
+
+def clear_signal(ctx, kind, key, state, clear_min, cwd):
+    """(systemMessage, additionalContext, state) once per boundary event at ctx >= clear_min."""
+    state = dict(state)
+    if ctx is None or not kind or ctx < clear_min or state.get("clear_key") == f"{kind}:{key}":
+        return None, None, state
+    state["clear_key"] = f"{kind}:{key}"
+    path = handoff_path(cwd)
+    sysmsg = f"Good point to /clear: task boundary at {ctx // 1000}k context. Claude is writing a handoff first."
+    extra = (f"Task boundary at {ctx // 1000}k context. Before anything else, write a handoff (overwrite it) to {path} "
+             f"(mkdir -p its directory) with these sections: done this session; files modified and uncommitted; running "
+             f"SGE job ids and the artifact each should produce; findings and ledger paths; open owner approvals; "
+             f"UNVERIFIED figures; the skill in use; Next step. Then tell the owner in one line it is safe to /clear "
+             f"and that the next session is pointed at the handoff.")
+    return sysmsg, extra, state
 
 
 def retro_hint(log: Path, today: dt.date):
@@ -122,14 +179,24 @@ def main():
         sid = re.sub(r"[^\w-]", "", str(d.get("session_id") or "nosession"))
         state_path = Path(os.environ.get("TMPDIR") or "/tmp") / f"context_nudge_{sid}.json"
         state = json.loads(state_path.read_text()) if state_path.exists() else {}
+        _CACHE.clear()
         ctx = last_context(tx) if tx.is_file() else None
         retro = None if state.get("retro_hint") else retro_hint(RETRO_LOG, dt.date.today())
         threshold = int(os.environ.get("CLAUDE_NUDGE_TOKENS", DEFAULT_THRESHOLD))
-        edge = boundary(tx, dt.datetime.now(dt.timezone.utc)) if ctx and ctx >= threshold and tx.is_file() else None
+        clear_min = int(os.environ.get("CLAUDE_CLEAR_MIN", CLEAR_MIN))
+        kind = key = None
+        if ctx and ctx >= min(threshold, clear_min) and tx.is_file():
+            kind, key = boundary_info(tx, dt.datetime.now(dt.timezone.utc))
+        edge = kind if ctx and ctx >= threshold else None
         msg, state = message(ctx, d.get("prompt", ""), state, threshold, retro, edge)
+        sysmsg, extra, state = clear_signal(ctx, kind, key, state, clear_min, str(d.get("cwd") or os.getcwd()))
         state_path.write_text(json.dumps(state))
+        msg = " ".join(x for x in (msg, extra) if x) or None
         if msg:
-            print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": msg}}))
+            out = {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": msg}}
+            if sysmsg:
+                out["systemMessage"] = sysmsg
+            print(json.dumps(out))
     except Exception:
         pass
     return 0

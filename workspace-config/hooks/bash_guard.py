@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse guard for Bash: blocks the shared-tree hazards, login-node pytest and qdel of jobs this session did not submit.
+"""PreToolUse guard for Bash: also prepends `set -o pipefail; ` to test/lint commands piped into tail/head (updatedInput, never an allow). Blocks the shared-tree hazards, login-node pytest and qdel of jobs this session did not submit.
 
 Tokenises with shlex; never regex-matches the raw command. Any internal error allows
 the command (a broken guard must not become a source of spurious blocks).
@@ -296,6 +296,15 @@ def decide(command: str, cwd: str, env: dict, session=None):
     return warn or ("allow", "")
 
 
+MASKED = re.compile(r"(pytest|ruff|mypy|gates\.sh)[^|]*\|\s*(tail|head)")
+PIPEFAIL_NOTE = "pipefail added so the exit code is not masked"
+
+
+def masks_exit(command: str) -> bool:
+    """A test/lint command piped into tail/head reports tail's exit code unless pipefail/PIPESTATUS is used."""
+    return bool(MASKED.search(command)) and "pipefail" not in command and "PIPESTATUS" not in command
+
+
 def main():
     try:
         d = json.load(sys.stdin)
@@ -306,8 +315,16 @@ def main():
         if verdict == "deny":
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
                   "permissionDecision": "deny", "permissionDecisionReason": reason}}))
-        elif verdict == "warn":
-            print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": reason}}))
+        else:
+            ti = d.get("tool_input", {})
+            command = ti.get("command", "")
+            out = {"hookEventName": "PreToolUse"}
+            if masks_exit(command):  # no permissionDecision: "allow" would bypass the auto-mode classifier
+                out["updatedInput"] = {**ti, "command": "set -o pipefail; " + command}
+                reason = f"{reason} {PIPEFAIL_NOTE}." if verdict == "warn" else PIPEFAIL_NOTE
+            if verdict == "warn" or "updatedInput" in out:
+                out["additionalContext"] = reason
+                print(json.dumps({"hookSpecificOutput": out}))
     except Exception:
         return 0
     return 0

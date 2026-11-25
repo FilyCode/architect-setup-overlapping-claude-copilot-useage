@@ -234,3 +234,36 @@ def test_qdel_ledger_error_allows(monkeypatch, ledger):
     import job_ledger
     monkeypatch.setattr(job_ledger, "owned_ids", lambda *a: 1 / 0)
     assert q("qdel 111", ledger)[0] == "allow"  # internal error fails open
+
+
+# --- pipefail rewrite: `pytest ... | tail` reports tail's exit code, masking the failure (9,790 commands, scan2.json) ---
+def _hook(cmd, env_job=True, extra=None):
+    import json
+    payload = {"tool_name": "Bash", "tool_input": {"command": cmd, "timeout": 5000}, "cwd": P, "session_id": "s"}
+    env = {**__import__("os").environ}
+    env.pop("JOB_ID", None)
+    if env_job:
+        env["JOB_ID"] = "1"
+    r = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / "workspace-config" / "hooks" / "bash_guard.py")],
+                       input=json.dumps(payload), capture_output=True, text=True, env=env)
+    return json.loads(r.stdout)["hookSpecificOutput"] if r.stdout else {}
+
+
+@pytest.mark.parametrize("cmd", ["pytest -q | tail -3", "ruff check src | head -20", "mypy src 2>&1 | tail", "bash tools/gates.sh | tail -5"])
+def test_masked_exit_gets_pipefail(cmd):
+    o = _hook(cmd)
+    assert o["updatedInput"]["command"] == "set -o pipefail; " + cmd
+    assert o["updatedInput"]["timeout"] == 5000          # other fields are carried over
+    assert "pipefail added so the exit code is not masked" in o["additionalContext"]
+    assert "permissionDecision" not in o                  # never "allow": that would skip the auto-mode classifier
+
+
+@pytest.mark.parametrize("cmd", ["set -o pipefail; pytest -q | tail -3", "pytest -q | tail -3; echo ${PIPESTATUS[0]}",
+                                 "ls | tail -3", "pytest -q > out.txt", "ruff check src"])
+def test_pipefail_not_added_when_present_or_not_matching(cmd):
+    assert "updatedInput" not in _hook(cmd)
+
+
+def test_denied_command_still_denied_not_rewritten():
+    o = _hook("pytest -q | tail -3", env_job=False)  # login-node pytest: decide() denies
+    assert o["permissionDecision"] == "deny" and "updatedInput" not in o
