@@ -287,3 +287,16 @@ def test_clear_signal_not_without_boundary(tmp_path, monkeypatch, capsys):
 
 def test_handoff_path_sanitizes_cwd():
     assert cn.handoff_path("/a/b c/d_e", "/h").as_posix() == "/h/-a-b-c-d-e/latest.md"
+
+
+def test_clear_signal_replaces_the_compact_nudge(tmp_path, monkeypatch, capsys):
+    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 350_000), "c5")
+    o = json.loads(capsys.readouterr().out)
+    assert "systemMessage" in o and "/clear" in o["hookSpecificOutput"]["additionalContext"]
+    assert "/compact" not in o["hookSpecificOutput"]["additionalContext"]
+    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 550_000, tool_id="toolu_Z"), "c6")
+    assert "/compact" not in capsys.readouterr().out  # firm band too: one message, not two
+
+
+def test_compact_nudge_still_fires_without_clear_signal():
+    assert "/compact" in cn.message(350_000, "next", {}, cn.DEFAULT_THRESHOLD, boundary="commit")[0]

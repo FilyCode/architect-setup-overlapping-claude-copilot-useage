@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse guard for Bash: also prepends `set -o pipefail; ` to test/lint commands piped into tail/head (updatedInput, never an allow). Blocks the shared-tree hazards, login-node pytest and qdel of jobs this session did not submit.
+"""PreToolUse guard for Bash: also prepends `set -o pipefail; ` to test/lint commands piped into tail (updatedInput, never an allow). Blocks the shared-tree hazards, login-node pytest and qdel of jobs this session did not submit.
 
 Tokenises with shlex; never regex-matches the raw command. Any internal error allows
 the command (a broken guard must not become a source of spurious blocks).
@@ -296,12 +296,12 @@ def decide(command: str, cwd: str, env: dict, session=None):
     return warn or ("allow", "")
 
 
-MASKED = re.compile(r"(pytest|ruff|mypy|gates\.sh)[^|]*\|\s*(tail|head)")
+MASKED = re.compile(r"(pytest|ruff|mypy|gates\.sh)[^|]*\|\s*tail\b")
 PIPEFAIL_NOTE = "pipefail added so the exit code is not masked"
 
 
 def masks_exit(command: str) -> bool:
-    """A test/lint command piped into tail/head reports tail's exit code unless pipefail/PIPESTATUS is used."""
+    """A test/lint command piped into tail reports tail's exit code unless pipefail/PIPESTATUS is used."""
     return bool(MASKED.search(command)) and "pipefail" not in command and "PIPESTATUS" not in command
 
 

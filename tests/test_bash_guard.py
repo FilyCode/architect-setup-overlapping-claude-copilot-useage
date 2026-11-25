@@ -249,7 +249,7 @@ def _hook(cmd, env_job=True, extra=None):
     return json.loads(r.stdout)["hookSpecificOutput"] if r.stdout else {}
 
 
-@pytest.mark.parametrize("cmd", ["pytest -q | tail -3", "ruff check src | head -20", "mypy src 2>&1 | tail", "bash tools/gates.sh | tail -5"])
+@pytest.mark.parametrize("cmd", ["pytest -q | tail -3", "mypy src 2>&1 | tail", "bash tools/gates.sh | tail -5"])
 def test_masked_exit_gets_pipefail(cmd):
     o = _hook(cmd)
     assert o["updatedInput"]["command"] == "set -o pipefail; " + cmd
@@ -259,7 +259,7 @@ def test_masked_exit_gets_pipefail(cmd):
 
 
 @pytest.mark.parametrize("cmd", ["set -o pipefail; pytest -q | tail -3", "pytest -q | tail -3; echo ${PIPESTATUS[0]}",
-                                 "ls | tail -3", "pytest -q > out.txt", "ruff check src"])
+                                 "ls | tail -3", "ruff check src | head -20", "pytest -q | head -5", "pytest -q > out.txt", "ruff check src"])
 def test_pipefail_not_added_when_present_or_not_matching(cmd):
     assert "updatedInput" not in _hook(cmd)
 

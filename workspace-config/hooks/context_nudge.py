@@ -143,7 +143,7 @@ def retro_hint(log: Path, today: dt.date):
             f"once: a weekly integration session runs skill `workspace-audit` (retro step).")
 
 
-def message(ctx, prompt, state, threshold, retro=None, boundary=None):
+def message(ctx, prompt, state, threshold, retro=None, boundary=None, compact=True):
     parts, state = [], dict(state)
     if retro and not state.get("retro_hint"):
         state["retro_hint"] = True
@@ -152,7 +152,7 @@ def message(ctx, prompt, state, threshold, retro=None, boundary=None):
         state.pop("band", None)  # compaction dropped context: re-arm for the next climb
     if ctx is not None and ctx >= threshold:
         band = ctx // BAND
-        if band > state.get("band", -1) and (ctx >= FIRM or boundary):
+        if compact and band > state.get("band", -1) and (ctx >= FIRM or boundary):
             state["band"] = band
             if ctx >= FIRM:
                 parts.append(f"Context is {ctx // 1000}k tokens; auto-compaction fires at {AUTO_COMPACT // 1000}k. "
@@ -188,8 +188,8 @@ def main():
         if ctx and ctx >= min(threshold, clear_min) and tx.is_file():
             kind, key = boundary_info(tx, dt.datetime.now(dt.timezone.utc))
         edge = kind if ctx and ctx >= threshold else None
-        msg, state = message(ctx, d.get("prompt", ""), state, threshold, retro, edge)
         sysmsg, extra, state = clear_signal(ctx, kind, key, state, clear_min, str(d.get("cwd") or os.getcwd()))
+        msg, state = message(ctx, d.get("prompt", ""), state, threshold, retro, edge, compact=not sysmsg)  # one message, not two
         state_path.write_text(json.dumps(state))
         msg = " ".join(x for x in (msg, extra) if x) or None
         if msg:
