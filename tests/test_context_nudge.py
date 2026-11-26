@@ -373,4 +373,5 @@ def test_wave_marker_behind_a_later_commit_wins(tmp_path):
     assert (kind, key) == ("wave", "toolu_aim-keeper")
     assert cn.boundary(_turns(tmp_path, entries[:1] + entries[2:]), NOW) == "commit"  # fail proof: marker removed
     old = [_agent("aim-keeper", "2026-10-22T11:40:00Z")] + entries[:1] + entries[2:]
+    cn._CACHE.clear()  # same path and byte size as the first file: mtime_ns can tie on NFS
     assert cn.boundary(_turns(tmp_path, old), NOW) == "commit"  # a marker before the last prompt does not count
