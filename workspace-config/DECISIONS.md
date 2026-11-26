@@ -1121,6 +1121,36 @@ verification-patterns-031). Trigger: next weekly audit re-measures brief-error r
 **Revisit trigger**: next weekly audit: /clear vs /compact counts, brief-error rate per week,
 preflight denials and resubmits; SenC pilot before/after numbers.
 
+
+### [2026-11-26] [DECISION-036]: One documentation system for all projects — item files + generated catalogue + managing script
+
+**What** (owner, AskUserQuestion 2026-11-26): every project converts ONCE to: one file per item
+`docs/items/<id>.md` (file name = id; front matter id, kind, state ∈ open/wip/blocked/closed/wontfix/
+superseded, area, title, created, updated, closed, blocked_by, supersedes, see_also; fixed headings
+Summary, Evidence, Next action, Resolution, History); one file per decision
+`docs/decisions/DEC-NNNN-slug.md` (ADR, superseded never edited); generated catalogue pages (INDEX.md,
+open.md, closed.md, by-area, decisions.md; one line per record `id | state | area | title`); one
+managing script (`new` = only id allocator, `build`, `check`, `show`, `find`) whose `check` runs
+pre-commit and in CI (schema, unique ids, links, catalogue fresh, size caps, append-only history; each
+failure prints its fix). Rollout MeMES -> BileAcidDB -> EnzymeFinder; SenC only if still active.
+Supersedes DECISION-035(3) (hot/cold tables) and plan `docs/superpowers/plans/2026-11-26-doc-system.md`.
+**Why**: owner: EF and BileAcidDB run 1-4 more years; registers grow ~+430k chars/week. Scale bench on EF
+W9-BACKLOG (1,020 items, 1.45M chars; `.superpowers/findings/2026-11-26/doc-research/bench2/RESULTS.md`):
+single table 6/9 (haiku) and 5/9 (sonnet), both miscounted open items (727, 728 vs 719); md-per-item,
+JSONL and SQLite 8-9/9 with a typed state field + generator; sonnet tokens 55-59k vs 77k. Small bench
+(190 items) all 10/10 (ceiling, `bench/RESULTS.md`). Format among structured ones decided on robustness:
+/projectnb is NFSv3 (local_lock=none, `mount`); sqlite.org warns of corruption on network FS; markdown
+gives per-file git diffs and every vendor's agent reads it (`format-research-investigator.md`).
+Catalogue design sources: `index-design-investigator.md` (llms.txt, PEP status sets, man-page order,
+ADR/MADR, EAD finding aids, regenerate-and-diff checks).
+**Alternatives**: hot/cold tables (DECISION-035(3), superseded: still one big file per register);
+SQLite or JSONL source (NFS corruption / append races, binary or merge-driver diffs); status quo.
+**Known limitations**: ID allocation by two concurrent agents on NFSv3 untested (plan task 1 tests it);
+no source shows the index line format or `see_also`/not-this text reduces mis-routing (reasoning);
+bench n=1 per model x format; T6 of bench2 was a fixture defect (state stored twice) -> converter keeps
+ONE home per field. Trigger: plan-critique; the MeMES pilot's before/after.
+**Revisit trigger**: MeMES pilot results; any check false positive rate > 0 on real use; ID collision.
+
 ---
 
 ## Related Documents
