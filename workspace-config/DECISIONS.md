@@ -1087,6 +1087,40 @@ is covered by session_handoff); PostCompact writing compact_summary to disk (not
 **Revisit trigger**: first real compaction — check the summary carries the hook's lines; if not,
 remove the hook. Next weekly audit: compactions per session, re-read text share (44% now).
 
+
+### [2026-11-26] [DECISION-035]: Clear only at wave/phase ends; brief preflight + brief check; documentation system (SenC pilot)
+
+**What** (owner, 2026-11-26 message + AskUserQuestion): (1) `context_nudge` suggests `/clear` +
+handoff only at a wave/phase boundary (retro-officer or aim-keeper dispatched, or PROJECT_STATE.md /
+`phases/` staged or committed since the last prompt); a commit or 30+ min idle suggests
+`/compact <what to keep>` from 200k (was 300k) (c8afd06). Amends DECISION-033(3). (2) Brief
+preflight in `dispatch_guard`: backticked paths, `path:N` and a stated `HEAD` sha must resolve,
+else deny once; identical resubmit passes (e37834f, false-positive skips 2026-11-26 follow-up).
+dispatch-brief: an investigator brief check before an opus implementer, an analysis brief or a
+wave's first task (0c4b83e). Skill bodies trimmed under the 12,288 B ceiling (63cea20).
+(3) Documentation system for all projects approved with a SenC pilot first: registers hold open
+items only (row cap 600 chars, corrections replace, closed rows to monthly archives), item files
+on demand, PROJECT_STATE as a short index with a generated block, decisions superseded-by + index,
+monthly log rotation, one shared tool + gate. Proposal:
+`.superpowers/findings/2026-11-26/doc-research/PROPOSAL.md`. Plan and plan-critique next.
+**Why**: (1) owner: clear was firing at every task commit. (2) 1,680 subagent runs since
+2026-10-27: ~37% report a brief error; in 150 hand-classified: premise ~55, figure ~43,
+path/line ~20, state ~12 (scan SGE 8963652, brief-errors-investigator.md); the preflight reaches
+path and state (~20% est.), the brief check premises. (3) inventory: register growth ~+430k
+chars/week across 4 repos (EF W9-BACKLOG 1.45M, MeMES ~1M, SenC NEXT_TASKS 749k, retro-log 347k)
+while agents read the registers rarely and partially (SGE 8963782, doc_reads.json).
+**Alternatives**: clear at every boundary (status quo, rejected by owner); investigator check on
+every implementer (rejected, ~2x dispatch overhead); one file per item / event log + view /
+Beads (best-practice-investigator.md; rejected for migration cost or non-markdown storage).
+**Evidence**: suite SGE 8963817; findings `.superpowers/findings/2026-11-26/`.
+**Known limitations**: preflight resolves relative paths against the hook cwd, so a brief citing
+project-relative paths from the workspace root is flagged (1 of 30 sampled briefs); premise and
+figure errors are not mechanically caught; the 37% is a floor (only reported errors);
+skill_coverage --check has 2 old key-token mismatches (dispatch-brief-039,
+verification-patterns-031). Trigger: next weekly audit re-measures brief-error rate.
+**Revisit trigger**: next weekly audit: /clear vs /compact counts, brief-error rate per week,
+preflight denials and resubmits; SenC pilot before/after numbers.
+
 ---
 
 ## Related Documents
