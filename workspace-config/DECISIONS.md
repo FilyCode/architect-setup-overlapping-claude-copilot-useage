@@ -1132,7 +1132,9 @@ Summary, Evidence, Next action, Resolution, History); one file per decision
 open.md, closed.md, by-area, decisions.md; one line per record `id | state | area | title`); one
 managing script (`new` = only id allocator, `build`, `check`, `show`, `find`) whose `check` runs
 pre-commit and in CI (schema, unique ids, links, catalogue fresh, size caps, append-only history; each
-failure prints its fix). Rollout MeMES -> BileAcidDB -> EnzymeFinder; SenC only if still active.
+failure prints its fix). Rollout (owner amendment, same day): MeMES -> SenC-SelD -> BileAcidDB ->
+EnzymeFinder. New projects adopt it automatically: the managing script has `init`, and the workspace's
+new-project path (template / setup step) runs it, so no project starts on the old tables.
 Supersedes DECISION-035(3) (hot/cold tables) and plan `docs/superpowers/plans/2026-11-26-doc-system.md`.
 **Why**: owner: EF and BileAcidDB run 1-4 more years; registers grow ~+430k chars/week. Scale bench on EF
 W9-BACKLOG (1,020 items, 1.45M chars; `.superpowers/findings/2026-11-26/doc-research/bench2/RESULTS.md`):
