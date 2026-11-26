@@ -7,7 +7,9 @@
 2. Brief preflight (owner ruling 2026-11-26), for every named seat (any subagent_type not in UNNAMED):
    - backticked path tokens (contain "/" or end in a common extension, optional :N or :N-M) must exist,
      resolved as absolute/~, then against the hook cwd, then the git top-level of cwd; :N needs >= N lines.
-     Tokens with globs, <placeholders>, $VARS, or on a line containing a CREATION_VERBS word are skipped.
+     Skipped: globs, <placeholders>, $VARS, lines containing a CREATION_VERBS word, elided paths (contain "..."
+     or the unicode ellipsis), a single segment plus trailing "/" (`reference/`: a directory relative to an
+     unstated base), and absolute tokens whose first segment does not exist under "/" (`/provenance/x`).
    - "HEAD" followed within ~20 chars by a backticked 7-40 hex sha must prefix-match `git rev-parse HEAD`.
    On a mismatch the dispatch is denied ONCE per (session_id, prompt hash); resubmitting the identical prompt
    passes. State: $TMPDIR (or /tmp)/dispatch_guard_<session>.json. Subprocesses time out at 3 s; at most
@@ -58,10 +60,17 @@ def check_brief(prompt, cwd):
             m = PATH_TOKEN.match(tok)
             if not m or not ("/" in m.group(1) or m.group(1).endswith(EXTS)):
                 continue
+            path = m.group(1)
+            if "..." in tok or "\u2026" in tok:
+                continue
+            if path.endswith("/") and path.count("/") == 1:
+                continue
+            if path.startswith("/") and not Path("/", path.split("/")[1]).exists():
+                continue
             seen += 1
             if seen > MAX_TOKENS:
                 break
-            path, a, b = m.group(1), m.group(2), m.group(3)
+            a, b = m.group(2), m.group(3)
             p = Path(path).expanduser()
             cands = [p] if p.is_absolute() else [Path(base) / p for base in (cwd, top) if base]
             found = next((c for c in cands if c.exists()), None)

@@ -153,3 +153,26 @@ def test_opus_rule_still_denies_before_preflight(tmp_path):
     assert "Opus because:" in denied(run(d, tmpdir=tmp_path)[1])
     d["tool_input"]["prompt"] = "Opus because: cross-module rename of the API"
     assert run(d, tmpdir=tmp_path) == (0, "")
+
+
+# --- preflight false-positive fixes (2026-11-26) ----------------------------------------------------------------
+
+def test_elided_path_skipped_but_real_missing_still_flagged(tmp_path):
+    for tok in (".../doc-research/inventory-investigator.md", "…/doc-research/x.md", "a/.../b.md"):
+        assert run(brief(f"see `{tok}`", tmp_path), tmpdir=tmp_path) == (0, ""), tok
+    assert "`doc-research/inventory-investigator.md`: missing" in denied(
+        run(brief("see `doc-research/inventory-investigator.md`", tmp_path), tmpdir=tmp_path)[1])
+
+
+def test_single_segment_trailing_slash_skipped_but_two_segments_flagged(tmp_path):
+    for tok in ("reference/", "implementer-trim/"):
+        assert run(brief(f"see `{tok}`", tmp_path), tmpdir=tmp_path) == (0, ""), tok
+    assert "`reference/sub/`: missing" in denied(run(brief("see `reference/sub/`", tmp_path), tmpdir=tmp_path)[1])
+    assert "`reference/a.md`: missing" in denied(run(brief("see `reference/a.md`", tmp_path), tmpdir=tmp_path)[1])
+
+
+def test_absolute_token_with_nonexistent_root_segment_skipped(tmp_path):
+    assert not Path("/provenance").exists()
+    assert run(brief("metric `/provenance/n_hits`", tmp_path), tmpdir=tmp_path) == (0, "")
+    why = denied(run(brief("see `/projectnb/zz_no_such_dir_9/a.md`", tmp_path), tmpdir=tmp_path)[1])
+    assert "`/projectnb/zz_no_such_dir_9/a.md`: missing" in why
