@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -6,9 +7,10 @@ from pathlib import Path
 HOOK = Path(__file__).resolve().parents[1] / "workspace-config" / "hooks" / "dispatch_guard.py"
 
 
-def run(payload, raw=None):
+def run(payload, raw=None, tmpdir=None):
     stdin = raw if raw is not None else json.dumps(payload)
-    r = subprocess.run([sys.executable, str(HOOK)], input=stdin, capture_output=True, text=True)
+    env = {**os.environ, "TMPDIR": str(tmpdir)} if tmpdir else None
+    r = subprocess.run([sys.executable, str(HOOK)], input=stdin, capture_output=True, text=True, env=env)
     return r.returncode, r.stdout
 
 
@@ -64,3 +66,90 @@ def test_malformed_stdin_stays_silent():
     assert run(None, raw="{{") == (0, "")
     assert run({"tool_name": "Agent", "tool_input": "str"}) == (0, "")
     assert run(ev(prompt=None))[0] == 0
+
+
+# --- brief preflight (owner ruling 2026-11-26) ---------------------------------------------------------------
+
+def brief(prompt, cwd, sub="reviewer", sid="s1"):
+    d = ev(prompt, model=None, sub=sub)
+    d.update(cwd=str(cwd), session_id=sid)
+    return d
+
+
+def git_repo(path):
+    def g(*a):
+        subprocess.run(["git", "-C", str(path), "-c", "user.name=t", "-c", "user.email=t@t", *a], check=True,
+                       capture_output=True)
+    g("init", "-q")
+    (path / "f.txt").write_text("x\n")
+    g("add", "f.txt")
+    g("commit", "-q", "-m", "init")
+    return subprocess.run(["git", "-C", str(path), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+
+
+def test_missing_path_denied_existing_passes(tmp_path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "a.py").write_text("x\n")
+    assert run(brief("Read `src/a.py` first", tmp_path), tmpdir=tmp_path) == (0, "")
+    why = denied(run(brief("Read `src/b.py` first", tmp_path), tmpdir=tmp_path)[1])
+    assert "`src/b.py`: missing" in why and "resubmit the identical prompt" in why
+
+
+def test_relative_path_resolves_against_git_toplevel(tmp_path):
+    git_repo(tmp_path)
+    (tmp_path / "sub").mkdir()
+    assert run(brief("see `f.txt`", tmp_path / "sub"), tmpdir=tmp_path) == (0, "")           # via toplevel
+    denied(run(brief("see `g.txt`", tmp_path / "sub"), tmpdir=tmp_path)[1])
+
+
+def test_line_beyond_eof_denied(tmp_path):
+    (tmp_path / "a.py").write_text("1\n2\n3\n")
+    assert run(brief("see `a.py:3` and `a.py:2-3`", tmp_path), tmpdir=tmp_path) == (0, "")
+    why = denied(run(brief("see `a.py:4`", tmp_path), tmpdir=tmp_path)[1])
+    assert "`a.py:4`: file has only 3 lines" in why
+    denied(run(brief("see `a.py:2-9`", tmp_path), tmpdir=tmp_path)[1])
+
+
+def test_creation_verb_line_and_non_path_tokens_skipped(tmp_path):
+    assert run(brief("Create `out/res.tsv` for me", tmp_path), tmpdir=tmp_path) == (0, "")
+    denied(run(brief("Read `out/res.tsv` for me", tmp_path), tmpdir=tmp_path)[1])  # same token, verb removed
+    for tok in ("out/*.tsv", "<dir>/a.py", "$HOME/x/y.py", "git log -1 --format=%h", "http://x.org/a.py"):
+        assert run(brief(f"see `{tok}`", tmp_path), tmpdir=tmp_path) == (0, ""), tok
+    home = Path.home()
+    assert run(brief(f"see `~/{home.name}_nonexistent_zz.md`", tmp_path), tmpdir=tmp_path)[1]  # ~ is expanded, then missing
+
+
+def test_head_mismatch_denied_match_passes(tmp_path):
+    head = git_repo(tmp_path)
+    assert run(brief(f"State: HEAD `{head[:7]}` clean", tmp_path), tmpdir=tmp_path) == (0, "")
+    assert run(brief(f"State: HEAD `{head}`", tmp_path), tmpdir=tmp_path) == (0, "")
+    why = denied(run(brief("State: HEAD `deadbee` clean", tmp_path), tmpdir=tmp_path)[1])
+    assert f"HEAD is now {head[:7]}" in why
+    assert run(brief("State: HEAD `deadbee`", tmp_path / "nonexistent"), tmpdir=tmp_path) == (0, "")  # no repo: skip
+
+
+def test_identical_resubmit_passes_changed_prompt_does_not(tmp_path):
+    p = "Read `nope.py`"
+    denied(run(brief(p, tmp_path), tmpdir=tmp_path)[1])
+    assert run(brief(p, tmp_path), tmpdir=tmp_path) == (0, "")
+    denied(run(brief(p + " now", tmp_path), tmpdir=tmp_path)[1])                # different prompt denied again
+    denied(run(brief(p, tmp_path, sid="other"), tmpdir=tmp_path)[1])            # different session denied again
+
+
+def test_non_seat_subagent_types_skipped(tmp_path):
+    for sub in ("general-purpose", "Explore", "Plan", "claude-code-guide", "fork", ""):
+        assert run(brief("Read `nope.py`", tmp_path, sub=sub), tmpdir=tmp_path) == (0, ""), sub
+    denied(run(brief("Read `nope.py`", tmp_path, sub="implementer"), tmpdir=tmp_path)[1])
+
+
+def test_reason_lists_at_most_15_tokens(tmp_path):
+    why = denied(run(brief("\n".join(f"see `m{i}.py`" for i in range(20)), tmp_path), tmpdir=tmp_path)[1])
+    assert "`m14.py`" in why and "`m15.py`" not in why and "+5 more" in why
+
+
+def test_opus_rule_still_denies_before_preflight(tmp_path):
+    d = brief("Opus because: short\nbody", tmp_path, sub="implementer")
+    d["tool_input"]["model"] = "opus"
+    assert "Opus because:" in denied(run(d, tmpdir=tmp_path)[1])
+    d["tool_input"]["prompt"] = "Opus because: cross-module rename of the API"
+    assert run(d, tmpdir=tmp_path) == (0, "")
