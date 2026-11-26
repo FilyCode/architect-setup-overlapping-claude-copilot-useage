@@ -114,6 +114,14 @@ with mine, stop and report — do not reconcile toward mine."* Mechanical backst
 `scripts/check_citations.py` preflights `path:line`, paths, arithmetic, sha pins and `--flag`
 attribution, not counts. When a subagent challenges a claim, check the artifact before overruling.
 
+- **Brief check before a costly dispatch** (owner 2026-11-26; 37% of 1,680 runs reported a brief
+  error, wrong premise or mechanism the largest class): before an opus implementer, an analysis
+  brief or a wave's first task, dispatch `investigator` (model sonnet, effort low, 20 turns) with
+  the draft: *"list each premise, figure, path and mechanism here that the repo contradicts or you
+  cannot confirm, with the command that shows it; do not do the task."* Fix or label each, then
+  dispatch. `dispatch_guard` denies once a brief whose backticked paths, `path:N` or `HEAD` sha do
+  not resolve; an identical resubmit passes.
+
 - **Every relayed figure carries its column, not only its n:** state the artifact, the column and
   the arm; a stratified or conditional figure carries its n in the brief and in the finding
   (1,577 vs 1,459 on two identity columns; `0.0717` was 16/223).
