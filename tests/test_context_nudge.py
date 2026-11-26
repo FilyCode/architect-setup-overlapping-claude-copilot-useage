@@ -80,9 +80,9 @@ def test_retro_hint_once_per_session():
     assert msg is None
 
 
-# Owner 2026-10-22: look for a good compaction point from 300k, firm nudge at 500k, auto-compaction at 650k.
-def test_bands_are_300_500_650():
-    assert (cn.DEFAULT_THRESHOLD, cn.FIRM, cn.AUTO_COMPACT) == (300_000, 500_000, 650_000)
+# Owner 2026-10-22 (compact start lowered 300k -> 200k on 2026-11-26): firm nudge at 500k, auto-compaction at 650k.
+def test_bands_are_200_500_650():
+    assert (cn.DEFAULT_THRESHOLD, cn.FIRM, cn.AUTO_COMPACT) == (200_000, 500_000, 650_000)
 
 
 def test_window_300_500_nudges_only_at_a_boundary():
@@ -244,18 +244,21 @@ def _run_main(monkeypatch, tmp_path, tx, sid, cwd="/projectnb/x/My Proj", clear_
     cn.main()
 
 
-def _committed_tx(tmp_path, ctx, tool_id="toolu_A", ts="2026-10-22T11:58:00Z"):
-    use = _bash("git commit -m x", ts)
+WAVE_CMD = "git add PROJECT_STATE.md && git commit -m x"
+
+
+def _committed_tx(tmp_path, ctx, tool_id="toolu_A", ts="2026-10-22T11:58:00Z", cmd="git commit -m x"):
+    use = _bash(cmd, ts)
     use["message"]["content"][0]["id"] = tool_id
     use["message"]["usage"] = {"input_tokens": ctx, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0}
     return _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), use])
 
 
-def test_clear_signal_fires_once_per_commit(tmp_path, monkeypatch, capsys):
-    tx = _committed_tx(tmp_path, 180_000)
+def test_clear_signal_fires_once_per_wave_event(tmp_path, monkeypatch, capsys):
+    tx = _committed_tx(tmp_path, 180_000, cmd=WAVE_CMD)
     _run_main(monkeypatch, tmp_path, tx, "c1")
     o = json.loads(capsys.readouterr().out)
-    assert o["systemMessage"] == "Good point to /clear: task boundary at 180k context. Claude is writing a handoff first."
+    assert o["systemMessage"] == "Good point to /clear: wave/phase boundary at 180k context. Claude is writing a handoff first."
     h = o["hookSpecificOutput"]
     assert h["hookEventName"] == "UserPromptSubmit"
     for w in ("latest.md", "safe to /clear",
@@ -264,13 +267,13 @@ def test_clear_signal_fires_once_per_commit(tmp_path, monkeypatch, capsys):
     assert "-projectnb-x-My-Proj" in h["additionalContext"]  # sanitized cwd
     _run_main(monkeypatch, tmp_path, tx, "c1")
     assert capsys.readouterr().out == ""  # same commit: silent
-    tx2 = _committed_tx(tmp_path, 190_000, tool_id="toolu_B", ts="2026-10-22T12:30:00Z")
+    tx2 = _committed_tx(tmp_path, 190_000, tool_id="toolu_B", ts="2026-10-22T12:30:00Z", cmd=WAVE_CMD)
     _run_main(monkeypatch, tmp_path, tx2, "c1")
-    assert "systemMessage" in json.loads(capsys.readouterr().out)  # a new commit re-arms
+    assert "systemMessage" in json.loads(capsys.readouterr().out)  # a new wave event re-arms
 
 
 def test_clear_signal_needs_clear_min_and_env_overrides(tmp_path, monkeypatch, capsys):
-    tx = _committed_tx(tmp_path, 120_000)
+    tx = _committed_tx(tmp_path, 120_000, cmd=WAVE_CMD)
     _run_main(monkeypatch, tmp_path, tx, "c2")
     assert capsys.readouterr().out == ""  # below 150k
     _run_main(monkeypatch, tmp_path, tx, "c3", clear_min=100_000)
@@ -290,13 +293,77 @@ def test_handoff_path_sanitizes_cwd():
 
 
 def test_clear_signal_replaces_the_compact_nudge(tmp_path, monkeypatch, capsys):
-    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 350_000), "c5")
+    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 350_000, cmd=WAVE_CMD), "c5")
     o = json.loads(capsys.readouterr().out)
     assert "systemMessage" in o and "/clear" in o["hookSpecificOutput"]["additionalContext"]
     assert "/compact" not in o["hookSpecificOutput"]["additionalContext"]
-    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 550_000, tool_id="toolu_Z"), "c6")
+    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 550_000, tool_id="toolu_Z", cmd=WAVE_CMD), "c6")
     assert "/compact" not in capsys.readouterr().out  # firm band too: one message, not two
 
 
 def test_compact_nudge_still_fires_without_clear_signal():
     assert "/compact" in cn.message(350_000, "next", {}, cn.DEFAULT_THRESHOLD, boundary="commit")[0]
+
+
+# --- owner 2026-11-26: /clear only at wave/phase boundaries; commit and idle give the compact nudge only ---
+def _agent(subagent, ts, tool="Agent"):
+    return {"type": "assistant", "timestamp": ts, "message": {"id": ts, "content": [
+        {"type": "tool_use", "id": "toolu_" + subagent, "name": tool, "input": {"subagent_type": subagent}}]}}
+
+
+def _with_usage(entries, ctx):
+    entries[-1]["message"]["usage"] = {"input_tokens": ctx, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0}
+    return entries
+
+
+NOW = cn.dt.datetime(2026, 10, 22, 12, 0, tzinfo=cn.dt.timezone.utc)
+
+
+def test_retro_officer_dispatch_is_a_wave_boundary(tmp_path, monkeypatch, capsys):
+    for sub, tool in (("retro-officer", "Agent"), ("aim-keeper", "Task")):
+        p = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _agent(sub, "2026-10-22T11:58:00Z", tool)])
+        assert cn.boundary(p, NOW) == "wave", sub
+    other = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _agent("implementer", "2026-10-22T11:58:00Z")])
+    assert cn.boundary(other, NOW) is None  # fail proof: only the subagent_type differs
+    tx = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z")] + _with_usage([_agent("retro-officer", "2026-10-22T11:58:00Z")], 250_000))
+    _run_main(monkeypatch, tmp_path, tx, "w1")
+    o = json.loads(capsys.readouterr().out)
+    assert "wave/phase boundary at 250k" in o["systemMessage"] and "/compact" not in o["hookSpecificOutput"]["additionalContext"]
+
+
+def test_phase_state_commit_is_a_wave_boundary(tmp_path, monkeypatch, capsys):
+    for cmd in (WAVE_CMD, "git add docs/phases/p3.md && git commit -m x", "git commit -m x PROJECT_STATE.md"):
+        p = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash(cmd, "2026-10-22T11:58:00Z")])
+        assert cn.boundary(p, NOW) == "wave", cmd
+    for cmd in ("git commit -m x", "cat PROJECT_STATE.md", "git add src/a.py && git commit -m 'x'\ngit log"):
+        p = _turns(tmp_path, [_user("go", "2026-10-22T11:50:00Z"), _bash(cmd, "2026-10-22T11:58:00Z")])
+        assert cn.boundary(p, NOW) == ("commit" if "commit" in cmd else None), cmd
+    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 250_000, cmd=WAVE_CMD), "w2")
+    assert "systemMessage" in json.loads(capsys.readouterr().out)
+
+
+def test_plain_commit_gives_compact_nudge_not_clear(tmp_path, monkeypatch, capsys):
+    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 250_000), "p1")
+    o = json.loads(capsys.readouterr().out)
+    assert "systemMessage" not in o and "/compact" in o["hookSpecificOutput"]["additionalContext"]
+    assert "/clear" not in o["hookSpecificOutput"]["additionalContext"]
+    _run_main(monkeypatch, tmp_path, _committed_tx(tmp_path, 180_000), "p2")
+    assert capsys.readouterr().out == ""  # below the 200k compact start; same commit at 250k above spoke
+
+
+def test_idle_gives_compact_nudge_not_clear(tmp_path, monkeypatch, capsys):
+    tx = _turns(tmp_path, [_user("go", "2026-10-22T11:00:00Z")] + _with_usage([_bash("ls", "2026-10-22T11:10:00Z")], 250_000))
+    _run_main(monkeypatch, tmp_path, tx, "i1")  # the real clock is years past the transcript: idle
+    o = json.loads(capsys.readouterr().out)
+    assert "systemMessage" not in o and "idle" in o["hookSpecificOutput"]["additionalContext"]
+    assert "/compact" in o["hookSpecificOutput"]["additionalContext"]
+
+
+def test_wave_marker_behind_a_later_commit_wins(tmp_path):
+    entries = [_user("go", "2026-10-22T11:50:00Z"), _agent("aim-keeper", "2026-10-22T11:55:00Z"),
+               _bash("git commit -m x", "2026-10-22T11:58:00Z")]
+    kind, key = cn.boundary_info(_turns(tmp_path, entries), NOW)
+    assert (kind, key) == ("wave", "toolu_aim-keeper")
+    assert cn.boundary(_turns(tmp_path, entries[:1] + entries[2:]), NOW) == "commit"  # fail proof: marker removed
+    old = [_agent("aim-keeper", "2026-10-22T11:40:00Z")] + entries[:1] + entries[2:]
+    assert cn.boundary(_turns(tmp_path, old), NOW) == "commit"  # a marker before the last prompt does not count
