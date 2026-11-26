@@ -234,6 +234,7 @@ def test_main_reads_the_tail_once(tmp_path, monkeypatch, capsys):
 # --- good point to /clear + handoff (owner 2026-11-25) ---
 def _run_main(monkeypatch, tmp_path, tx, sid, cwd="/projectnb/x/My Proj", clear_min=None):
     import io
+    monkeypatch.setenv("JOB_ID", "8963259")
     monkeypatch.setenv("TMPDIR", str(tmp_path))
     monkeypatch.setattr(cn, "RETRO_LOG", tmp_path / "none.md")
     monkeypatch.setenv("CLAUDE_HANDOFF_DIR", str(tmp_path / "handoffs"))
@@ -261,10 +262,13 @@ def test_clear_signal_fires_once_per_wave_event(tmp_path, monkeypatch, capsys):
     assert o["systemMessage"] == "Good point to /clear: wave/phase boundary at 180k context. Claude is writing a handoff first."
     h = o["hookSpecificOutput"]
     assert h["hookEventName"] == "UserPromptSubmit"
-    for w in ("latest.md", "safe to /clear",
+    for w in ("8963259.md", "safe to /clear",
               "UNVERIFIED", "SGE job", "uncommitted", "Next step"):
         assert w in h["additionalContext"], w
     assert "-projectnb-x-My-Proj" in h["additionalContext"]  # sanitized cwd
+    path = str(tmp_path / "handoffs" / "-projectnb-x-My-Proj" / "8963259.md")
+    assert f"{path}.tmp" in h["additionalContext"] and f"mv {path}.tmp {path}" in h["additionalContext"]
+    assert "latest.md" not in h["additionalContext"]
     _run_main(monkeypatch, tmp_path, tx, "c1")
     assert capsys.readouterr().out == ""  # same commit: silent
     tx2 = _committed_tx(tmp_path, 190_000, tool_id="toolu_B", ts="2026-10-22T12:30:00Z", cmd=WAVE_CMD)
@@ -288,8 +292,11 @@ def test_clear_signal_not_without_boundary(tmp_path, monkeypatch, capsys):
     assert capsys.readouterr().out == ""
 
 
-def test_handoff_path_sanitizes_cwd():
-    assert cn.handoff_path("/a/b c/d_e", "/h").as_posix() == "/h/-a-b-c-d-e/latest.md"
+def test_handoff_path_is_keyed_and_shared_with_session_handoff():
+    import session_handoff as sh
+    assert cn.handoff_path is sh.handoff_path  # one home for the path
+    assert cn.handoff_path("/a/b c/d_e", {"JOB_ID": "9"}, "/h").as_posix() == "/h/-a-b-c-d-e/9.md"
+    assert cn.handoff_path("/a", {"JOB_ID": "10"}, "/h") != cn.handoff_path("/a", {"JOB_ID": "11"}, "/h")
 
 
 def test_clear_signal_replaces_the_compact_nudge(tmp_path, monkeypatch, capsys):

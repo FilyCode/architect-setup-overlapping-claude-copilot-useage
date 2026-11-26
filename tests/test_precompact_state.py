@@ -123,13 +123,28 @@ def test_handoff_pointer_fresh_old_and_missing(tmp_path):
     cwd.mkdir()
     d = tmp_path / "ho" / re.sub(r"[^A-Za-z0-9]", "-", str(cwd))
     d.mkdir(parents=True)
-    f = d / "latest.md"
+    f = d / "8963259.md"
     f.write_text("SECRET BODY")
-    out = run(tmp_path, cwd)
-    assert str(f) in out and "SECRET BODY" not in out
+    legacy = d / "latest.md"
+    legacy.write_text("x")
+    mine = {"JOB_ID": "8963259"}
+    out = run(tmp_path, cwd, extra=mine)
+    assert str(f) in out and "SECRET BODY" not in out and "latest.md" not in out
+    assert str(f) not in run(tmp_path, cwd, extra={"JOB_ID": "1"})  # another session's key: not mine
+    assert f"{d}/pid{os.getpid()}.md" not in out
     old = time.time() - 13 * 3600
     os.utime(f, (old, old))
-    assert run(tmp_path, cwd) == ""
+    assert run(tmp_path, cwd, extra=mine) == ""
+
+
+def test_handoff_pointer_falls_back_to_parent_pid(tmp_path):
+    cwd = tmp_path / "plain"
+    cwd.mkdir()
+    d = tmp_path / "ho" / re.sub(r"[^A-Za-z0-9]", "-", str(cwd))
+    d.mkdir(parents=True)
+    f = d / f"pid{os.getpid()}.md"  # hook's parent is this pytest process
+    f.write_text("x")
+    assert str(f) in run(tmp_path, cwd)
 
 
 def test_cap_4000_with_marker(tmp_path):

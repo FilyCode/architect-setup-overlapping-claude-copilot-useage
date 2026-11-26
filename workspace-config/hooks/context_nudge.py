@@ -15,7 +15,8 @@ or previous prompt. At a wave/phase boundary (a retro-officer or aim-keeper disp
 PROJECT_STATE.md or a phases/ file, since the last prompt) with context >= CLAUDE_CLEAR_MIN (150k)
 it tells the owner it is a good point to /clear and has Claude write a handoff (once per boundary
 event; commit and idle boundaries never do); the
-SessionStart hook session_handoff.py points the next session at it.
+SessionStart hook session_handoff.py points the next session at it. The path (keyed per session) lives in
+session_handoff.py; the file is written via <path>.tmp and mv.
 """
 import datetime as dt
 import json
@@ -23,6 +24,9 @@ import os
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from session_handoff import handoff_path  # noqa: E402  (single home of the handoff path convention)
 
 DEFAULT_THRESHOLD = 200_000
 FIRM = 500_000
@@ -32,7 +36,6 @@ IDLE = dt.timedelta(minutes=30)
 TAIL_SMALL = 256 * 1024
 TAIL = 2_000_000  # fallback when the small tail holds no usage entry / previous prompt
 CLEAR_MIN = 150_000
-HANDOFF_DIR = "/projectnb/liu-scc/philipp/software/claude-handoffs"
 BAND = 100_000
 RETRO_LOG = Path(os.environ.get("CLAUDE_RETRO_LOG", "/projectnb/liu-scc/philipp/"
                  "architect-setup-overlapping-claude-copilot-useage/docs/retros/retro-log.md"))
@@ -128,21 +131,17 @@ def boundary(transcript: Path, now: dt.datetime):
     return boundary_info(transcript, now)[0]
 
 
-def handoff_path(cwd: str, base=None) -> Path:
-    base = base or os.environ.get("CLAUDE_HANDOFF_DIR") or HANDOFF_DIR
-    return Path(base) / re.sub(r"[^A-Za-z0-9]", "-", cwd) / "latest.md"
-
-
 def clear_signal(ctx, kind, key, state, clear_min, cwd):
     """(systemMessage, additionalContext, state) once per wave boundary event at ctx >= clear_min."""
     state = dict(state)
     if ctx is None or kind != "wave" or ctx < clear_min or state.get("clear_key") == f"{kind}:{key}":
         return None, None, state
     state["clear_key"] = f"{kind}:{key}"
-    path = handoff_path(cwd)
+    path = handoff_path(cwd, os.environ)
     sysmsg = f"Good point to /clear: wave/phase boundary at {ctx // 1000}k context. Claude is writing a handoff first."
-    extra = (f"Wave/phase boundary at {ctx // 1000}k context. Before anything else, write a handoff (overwrite it) to {path} "
-             f"(mkdir -p its directory) with these sections: done this session; files modified and uncommitted; running "
+    extra = (f"Wave/phase boundary at {ctx // 1000}k context. Before anything else, write a handoff to {path} "
+             f"atomically: mkdir -p its directory, write the content to {path}.tmp, then `mv {path}.tmp {path}` in the same "
+             f"command line (the path is keyed to this session, so other sessions' handoffs are not overwritten). Sections: done this session; files modified and uncommitted; running "
              f"SGE job ids and the artifact each should produce; findings and ledger paths; open owner approvals; "
              f"UNVERIFIED figures; the skill in use; Next step. Then tell the owner in one line it is safe to /clear "
              f"and that the next session is pointed at the handoff.")

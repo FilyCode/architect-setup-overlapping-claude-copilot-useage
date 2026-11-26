@@ -3,7 +3,7 @@
 
 Sections, each only when non-empty: (1) SGE jobs this session submitted (job_ledger.py ledger) still in `qstat -u $USER`
 (ledger ids marked `state unknown` when qstat fails); (2) uncommitted files of the git repo containing cwd, at most 30
-lines; (3) the handoff file path (session_handoff.py convention) when under 12 h old, never its body.
+lines; (3) the handoff file path (this session's keyed file, session_handoff.handoff_path) when under 12 h old, never its body.
 Output is capped at 4000 chars. Never blocks: any error exits 0 silently.
 """
 import json
@@ -12,7 +12,6 @@ import re
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -55,14 +54,10 @@ def git_section(cwd):
 
 
 def handoff_section(cwd, env):
-    f = Path(env.get("CLAUDE_HANDOFF_DIR") or _handoff_dir()) / re.sub(r"[^A-Za-z0-9]", "-", cwd) / "latest.md"
+    from session_handoff import handoff_path
+    f = handoff_path(cwd, env)
     age = time.time() - f.stat().st_mtime
     return f"Handoff file (read it after compaction): {f}" if age < MAX_AGE else None
-
-
-def _handoff_dir():
-    from session_handoff import HANDOFF_DIR
-    return HANDOFF_DIR
 
 
 def section(fn, *args):
