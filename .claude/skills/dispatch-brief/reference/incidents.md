@@ -86,3 +86,33 @@ wired two call sites and a typed enum, and nobody passed the value; its own test
 | Large rewrite, cross-cutting architecture, highest-stakes review | opus | medium-high |
 
 A judgment per task, not a lookup; no hook enforces it.
+
+## Detail moved out of SKILL.md (2026-11-26 size trim)
+
+Rule text stayed in SKILL.md; these are the figures and stories that used to sit inline.
+
+- API shape claims (2026-11-25, two brief errors): `273`'s rule was inline in `main()` and could not
+  be imported as the brief said; `anchor_gff_id` is not a unique key (60 anchors returned 79,098 rows).
+- Sourced survey sent to `research-scout` (2026-11-25): the scout obeyed its budget (one search, two
+  fetches) and the dispatch was wrong; the `investigator` re-run did 13 searches and 6 fetches and
+  graded each claim by how it was obtained.
+- Brief check before a costly dispatch (owner 2026-11-26): 37% of 1,680 runs reported a brief error,
+  wrong premise or mechanism the largest class.
+- Relayed figures: 1,577 vs 1,459 on two identity columns; `0.0717` was 16/223. 2026-09-01: eleven
+  of twelve implementers found a factual error in the controller's brief; the shortest brief had none.
+  W2 2026-09-21: six wrong citations, all the controller's. W2b-1 2026-09-23: the "lossy summary"
+  rule came from the implementer that read the full row instead of the controller's table.
+- 2026-08-24: one unchecked caller claim became the final review's only Critical.
+- Wait-and-report: agents stalled at 176k-555k tokens despite the rule in their brief (2026-08-29,
+  2026-09-05).
+- Shared worktrees: two index collisions on 2026-09-01, both caught by `git show --stat`.
+- Follow-up note as comment: `stages.py` had 81 comment lines and 12 code lines.
+- "The brief is wrong" (MqnE_cofactor_finding retrospective, 2026-08-24): five false claims caught
+  by the contradiction slot on 2026-08-29; fourteen in W14.
+- Findings written late: reviewers at 162,646 and 162,630 tokens (one sentence each) and 144,164 (the
+  append instruction but no file); W2b-1: the report was lost, the file held three findings, one Blocking.
+- No negative control in a review wave: W2b-1 2026-09-23.
+- Environment traps: W14, a `slow` marker excluded nothing without its env opt-in.
+- Task-brief generation: W14, a brief told its implementer to run a script a later task would create.
+- Memory write by a seat (R-20261110-2): a seat's `.claude/agent-memory/` write nearly failed a
+  running build's tree guard.

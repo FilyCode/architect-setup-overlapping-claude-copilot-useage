@@ -94,3 +94,32 @@ its paging bug was "fixed" with mocked tests.
 - A CI comment said the job ran Python 3.13 to justify a report-only type ratchet; it runs 3.11.13.
 - A newly live threshold shipped as 0.45 (a published cut for a binary question) where the code
   used 0.40; four tier tests (0.75, 0.50, 0.30, 0.60) had none in `[0.40, 0.45)`.
+
+## Detail moved out of SKILL.md (2026-11-26 size trim)
+
+Rule text stayed in SKILL.md; these are the figures and stories that used to sit inline.
+
+- Control-arm gate (2026-11-25): a sham-validity gate was ruled "the per-rank-class removed mass
+  must match the real arm's", from a fixture reading. A WORKING permuted-label control is supposed
+  to FLATTEN those classes; measured on the real corpus, every sham class landed on the corpus mean
+  (0.0157/0.0164/0.0162) against the real arm's (0.2366/0.2683/0.0068). The gate as ruled would
+  have rejected all five controls and made the pre-registered falsification unreadable.
+- Typed classification (2026-11-25): an identifiability check typed 8 of 8 clusters
+  `CROSS_FAMILY_identifiable` (100%) because one cluster spanned 362 families; the statistic was
+  only informative one level down (48 of 68 variants replicated, 20 single-family).
+- Liveness predicate (EnzymeFinder WF1a): 801 false / 0 true accepted as live.
+- Same-path comparison passing vacuously (2026-09-21). Gate output ordering: `report_ownership`.
+- Counts: 2026-09-05 a stage's input went 69 -> 10; grep counted 102/17 where an AST parse gave
+  78/10. "98.8% saved" had median zero. W2 2026-09-21: controller counts from grep, not a parser.
+- Joins: R-20261030-4 (SenC and MeMES); the broken join was 99.97% broken. Published zeros: both
+  errors were flattering, found by accident, and cost one run to check at the time of writing.
+- Stale comment numbers: 30.7 µs became 6.64 ms after a correct fix (2026-09-05).
+- Reachability: 53 of 196 modules unreachable (2026-09-01). Typed values: five collapses at a
+  boundary (2026-09-01). The re-tiered default: 0.45 vs 0.40.
+- Plans: W14 2026-09-06, 4 of ~15 draft tests defective; W14 six wrong plan claims; W2b-1
+  2026-09-23 fixes whose consumers were not grepped.
+- Dated one-liners now without date in SKILL.md: 2026-08-27 (test asserting the bug), 2026-09-01
+  (boundary/meaning, firing-is-not-moving), 2026-09-23 (RED proof run from inside `tests/`),
+  2026-08-29 (mocked transport). Helper edit a test parses as text: R-20261105-B3, fe1b242.
+  `test_fusion_is_monotone_in_each_signal_value` is the vacuous-by-change example.
+- Wrapper flag check: the 0-vs-1 discrepancy was `-i`.
